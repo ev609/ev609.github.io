@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /_design/
+Sitemap: https://alfafond.com/sitemap.xml

@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlfaFond /dev — инженерия торговой инфраструктуры (Python, crypto-native)</title>
+<meta name="description" content="Senior-инженер торговой инфраструктуры: подключение к биржам, пайплайны рыночных данных, backtest-фреймворки, исполнение. Контрактная работа, оплата в стейблкоинах.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://alfafond.com/dev/ru/">
+<meta property="og:title" content="AlfaFond /dev — инженерия торговой инфраструктуры">
+<meta property="og:description" content="Строю торговые системы, которые выживают в продакшене. Подключение к биржам, пайплайны данных, backtest, исполнение. Контрактная работа, оплата в USDC/USDT.">
+<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/dev/ru/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/dev/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/dev/ru/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/dev/">
+<!-- Заполнить перед публикацией: TG_HANDLE; GitHub-кнопка добавляется после создания публичного профиля -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0e'/%3E%3Cpath d='M16 6 8 26M16 6l8 20' stroke='%23f4f5f7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M11.4 19.6l3 2.9 5.6-6.6' stroke='%233ecf8e' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#717784;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --warn:#e0a23c; --bad:#e0675b;
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}  /* якорь не заезжает под липкую шапку */
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:600;font-size:1.02rem;letter-spacing:-.01em}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:680px){.bar nav{display:none}}  /* переключатель языков остаётся виден на мобиле */
+
+  .hero{padding:84px 28px 52px}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);margin-bottom:22px}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(2.2rem,5.4vw,3.6rem);
+    line-height:1.06;letter-spacing:-.035em;max-width:18ch;text-wrap:balance}
+  h1 .ok{color:var(--ok)}
+  .lead{color:var(--sub);max-width:60ch;margin-top:22px;font-size:1.04rem;text-wrap:pretty}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:26px}
+  .chip{font-family:var(--mono);font-size:.7rem;color:var(--sub);padding:5px 12px;
+    border:1px solid var(--line);border-radius:99px;background:var(--card)}
+  .chip.hl{color:var(--ok);background:var(--ok-dim);border-color:rgba(62,207,142,.25)}
+  .chip.wip{color:var(--warn);background:rgba(224,162,60,.12);border-color:rgba(224,162,60,.3)}
+  .cta-row{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;
+    padding:13px 24px;border-radius:9px;transition:transform .15s,box-shadow .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+
+  /* Вертикальный ритм секций. ВАЖНО: секции имеют класс .wrap{margin:0 auto;padding:0 28px},
+     который по специфичности (класс > тег) перебивает и padding, и margin на голом `section`.
+     Поэтому ритм задаём селектором `section.wrap` (специфичность выше .wrap). Плавно через clamp. */
+  section.wrap{margin-top:clamp(72px,8vw,124px)}
+  section.wrap:first-of-type{margin-top:clamp(44px,5vw,72px)}
+  section.wrap:last-of-type{padding-bottom:clamp(64px,7vw,96px)}
+  .sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);
+    display:flex;align-items:center;gap:16px;margin-bottom:14px}  /* лейбл прижат к своему h2 */
+  .sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(62,207,142,.35),transparent)}
+  h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.45rem,3vw,2rem);line-height:1.14;
+    letter-spacing:-.025em;text-wrap:balance}
+  h2 .ok{color:var(--ok)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .cell{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 24px;
+    transition:border-color .18s}
+  .cell:hover{border-color:var(--line-h)}
+  .cell h3{font-family:var(--disp);font-weight:600;font-size:.98rem;margin-bottom:10px;letter-spacing:-.01em}
+  .cell p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+  .cell .mono{font-family:var(--mono);font-size:.68rem;color:var(--dim);display:block;margin-top:12px;line-height:1.9}
+
+  .diff{border:1px solid rgba(62,207,142,.3);border-radius:16px;padding:36px 34px;margin-top:32px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .diff p{color:var(--sub);max-width:68ch;margin-top:12px;font-size:.92rem;text-wrap:pretty}
+  .diff .stat{font-family:var(--mono);font-size:.72rem;color:var(--ok);margin-top:18px;line-height:2}
+
+  ul.flat{list-style:none;margin-top:16px}
+  ul.flat li{padding-left:24px;position:relative;margin:8px 0;font-size:.88rem;color:var(--sub);text-wrap:pretty}
+  ul.flat li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  ul.flat b{color:var(--txt);font-weight:500}
+
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}
+  @media(max-width:760px){.modes{grid-template-columns:1fr}}
+  .mode{border:1px solid var(--line);border-radius:14px;padding:24px 22px;background:var(--card)}
+  .mode .t{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ok)}
+  .mode h3{font-family:var(--disp);font-weight:600;font-size:1rem;margin:10px 0 8px;letter-spacing:-.01em}
+  .mode p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+  .guard{display:flex;gap:14px;align-items:flex-start;margin-top:26px;padding:20px 22px;
+    border:1px solid rgba(62,207,142,.3);border-radius:14px;background:var(--ok-dim)}
+  .guard svg{flex:none;margin-top:2px}
+  .guard p{font-size:.88rem;color:var(--txt);text-wrap:pretty}
+  .guard b{font-weight:500}
+  .guard span{color:var(--sub)}
+
+  .figure{margin-top:24px;border:1px solid var(--line);border-radius:14px;padding:24px 24px 22px;background:var(--card)}
+  .figure .cap-top{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .figure svg{width:100%;height:auto;display:block}
+  .figure svg text{font-family:var(--mono)}
+  .figure .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-family:var(--mono);font-size:.66rem;color:var(--sub)}
+  .figure .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;vertical-align:middle}
+  .figure .take{font-size:.86rem;color:var(--sub);margin-top:16px;text-wrap:pretty;border-top:1px solid var(--line);padding-top:14px}
+  .figure .take b{color:var(--txt);font-weight:500}
+
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+  @media(max-width:680px){.flow{grid-template-columns:1fr}}
+  .fstep{display:flex;gap:12px;align-items:flex-start}
+  .fstep .fn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ok-dim);color:var(--ok);
+    font-family:var(--mono);font-size:.76rem;font-weight:500;display:flex;align-items:center;justify-content:center}
+  .fstep p{font-size:.85rem;color:var(--sub);text-wrap:pretty;margin:0}
+  .fstep b{color:var(--txt);font-weight:500}
+  .pay{font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-top:22px;
+    border-top:1px solid var(--line);padding-top:14px;line-height:1.8}
+  .pay b{color:var(--sub);font-weight:500}
+  .tryit-h{font-family:var(--disp);font-weight:600;font-size:1.05rem;letter-spacing:-.015em;margin-top:30px}
+  .tryit{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:16px}
+  @media(max-width:760px){.tryit{grid-template-columns:1fr}}
+  .tryit .ti{border:1px solid var(--line);border-radius:12px;padding:18px 18px;background:var(--card)}
+  .tryit .ti .tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase}
+  .tryit .ti .tag.free{color:var(--ok)}
+  .tryit .ti .tag.paid{color:var(--warn)}
+  .tryit .ti h4{font-family:var(--disp);font-weight:600;font-size:.92rem;margin:8px 0 7px;letter-spacing:-.01em}
+  .tryit .ti p{font-size:.81rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .tryit .ti a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.45)}
+  .tryit .ti a:hover{border-bottom-color:var(--ok)}
+  .lab{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:26px}
+  @media(max-width:820px){.lab{grid-template-columns:1fr}}
+  .lab .lc{border:1px solid var(--line);border-radius:12px;padding:20px 20px;background:var(--card);display:flex;flex-direction:column}
+  .lab .lc .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .lab .lc h4{font-family:var(--disp);font-weight:600;font-size:.95rem;margin:7px 0 8px;letter-spacing:-.01em}
+  .lab .lc .rule{font-size:.82rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .lab .lc .nums{font-family:var(--mono);font-size:.72rem;margin-top:14px;border-top:1px solid var(--line);padding-top:13px;line-height:2}
+  .lab .lc .nums .row{display:flex;justify-content:space-between;gap:10px}
+  .lab .lc .nums .is{color:var(--warn)}
+  .lab .lc .nums .pos{color:var(--ok)}
+  .lab .lc .nums .neg{color:var(--bad)}
+  .lab .lc .vd{margin-top:12px;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+    align-self:flex-start;border:1px solid var(--line-h);border-radius:20px;padding:3px 10px;color:var(--sub)}
+  .lab .lc .vd.overfit{color:var(--bad);border-color:var(--bad)}
+  .lab-run{margin-top:24px;border:1px solid var(--line);border-radius:12px;background:#06070a;
+    padding:18px 20px;font-family:var(--mono);font-size:.78rem;color:var(--sub);overflow-x:auto}
+  .lab-run .c{color:var(--ok)}
+  .lab-run .muted{color:var(--dim)}
+  .lab-note{font-size:.84rem;color:var(--sub);margin-top:16px;text-wrap:pretty}
+  .lab-note a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.45)}
+  .pipeline{display:grid;grid-template-columns:repeat(4,1fr);margin-top:26px;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+  @media(max-width:760px){.pipeline{grid-template-columns:1fr 1fr}}
+  @media(max-width:440px){.pipeline{grid-template-columns:1fr}}
+  .pstage{padding:20px 18px;border-right:1px solid var(--line)}
+  .pstage:last-child{border-right:0}
+  @media(max-width:760px){.pstage:nth-child(2){border-right:0}}
+  .pstage .pn{font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .pstage h4{font-family:var(--disp);font-weight:600;font-size:.92rem;margin:8px 0 6px;letter-spacing:-.01em}
+  .pstage p{font-size:.78rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .pstage.demo{background:var(--ok-dim)}
+  .pstage.demo h4{color:var(--ok)}
+  .pstage .tag{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);border-radius:20px;padding:3px 9px}
+  .contact{margin-top:26px;max-width:620px}
+  .f-row{display:flex;gap:10px;flex-wrap:wrap}
+  .f-row input{flex:1;min-width:200px}
+  .contact input,.contact textarea{width:100%;font-family:var(--body);font-size:.9rem;color:var(--txt);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+  .contact input::placeholder,.contact textarea::placeholder{color:var(--dim)}
+  .contact input:focus,.contact textarea:focus{outline:none;border-color:var(--ok)}
+  .contact textarea{resize:vertical}
+  .contact .btn{border:none;cursor:pointer;margin-top:2px}
+  .f-note{display:block;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:12px}
+
+  footer{border-top:1px solid var(--line);padding:32px 0 48px;margin-top:28px}
+  footer .cols{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+  .mono-s{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+
+  a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){
+    .btn,.cell{transition:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>AlfaFond <span class="path">/dev</span></span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="Разделы">
+        <a href="#work">Работа</a><a href="#tech">Технология</a><a href="#lab">Лаборатория</a><a href="#builder">Конструктор</a><a href="#method">Метод</a><a href="#stack">Стек</a><a href="#hire">Нанять</a>
+      </nav>
+      <div class="lang" role="group" aria-label="Язык">
+        <a href="/dev/ru/" hreflang="ru" class="on" aria-current="true">RU</a><a href="/dev/" hreflang="en">EN</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="hero wrap">
+  <div class="kicker">Торговая инфраструктура · Python · Crypto-native</div>
+  <h1>Строю торговые системы, которые <span class="ok">выживают в продакшене.</span></h1>
+  <p class="lead">Один senior-инженер, который ведёт живую multi-venue торговую платформу
+  целиком: подключение к биржам, пайплайны рыночных данных, исполнение, риск-контроль — и ту
+  исследовательскую дисциплину, которая отделяет реальные edge от переобучения. AI-assisted
+  workflow позволяет работать со скоростью небольшой команды.</p>
+  <div class="chips">
+    <span class="chip hl">контракт / retainer</span>
+    <span class="chip hl">оплата в USDC / USDT</span>
+    <span class="chip">полностью удалённо · async-first</span>
+    <span class="chip">примеры кода по запросу</span>
+  </div>
+  <div class="cta-row">
+    <a class="btn btn-ok" href="#hire">Работать со мной →</a>
+  </div>
+</header>
+
+<section id="work" class="wrap">
+  <div class="sec-label">01 · Избранные работы — одна продакшен-система</div>
+  <h2>Multi-venue платформа, <span class="ok">в одиночку</span></h2>
+  <div class="grid2">
+    <div class="cell">
+      <h3>Подключение к биржам (REST + WebSocket)</h3>
+      <p>Закалённые в продакшене интеграции: Binance futures &amp; options streams, Deribit
+      chains и DVOL-пайплайны, Polymarket CLOB (EIP-712 signing, on-chain CTF
+      redemptions, proxy-сеть), Hyperliquid, брокеры MOEX.</p>
+      <span class="mono">rate-limit-aware клиенты · time-sync singletons · дисциплина reconnect</span>
+    </div>
+    <div class="cell">
+      <h3>Архитектура &amp; ops</h3>
+      <p>Микросервисы (API / market-data / trading engine) поверх Redis Streams IPC,
+      TimescaleDB + PgBouncer, uvloop, Prometheus-метрики, property-based тесты для state
+      machines, watchdog-демоны для ~20 strategy runners, алертинг с дедупом.</p>
+      <span class="mono">FastAPI · Socket.IO · Svelte 5 front · документированные post-mortem инцидентов</span>
+    </div>
+    <div class="cell">
+      <h3>Контроль риска &amp; исполнения</h3>
+      <p>Pre-trade risk gate (лимиты по notional / позициям / дневному убытку с HTTP killswitch),
+      централизованный capital book против переаллокации между стратегиями, market-maker
+      quoting engine с управлением инвентарём.</p>
+      <span class="mono">никакого хардкода цен · только экономический (realized + unrealized) учёт</span>
+    </div>
+    <div class="cell">
+      <h3>Backtesting &amp; research-тулинг</h3>
+      <p>6-gate anti-overfit пайплайн валидации: tiered costs, Deflated Sharpe,
+      Bonferroni, out-of-sample hold-out, плато параметров, walk-forward. Честные fill-модели —
+      paper-fill только на реальном пересечении рынка, adverse selection измеряется через
+      markout-to-fair.</p>
+      <span class="mono">Monte-Carlo risk-of-ruin · Kelly sizing · аудит издержек исполнения</span>
+    </div>
+  </div>
+
+  <div class="diff">
+    <h2>Отличие: <span class="ok">я документирую, почему что-то не работает</span></h2>
+    <p>Протестировано более 200 кандидатов в стратегии, ~18 исследовательских арок закрыто с
+    письменными kill-вердиктами, 2 структурных edge валидированы 6/6 и идут в paper-forward до
+    любого капитала. Наивная paper fill-модель однажды показала +30% за round-trip; честная
+    модель adverse-selection убила её за 4 дня форвард-данных. Именно эта дисциплина защищает
+    продакшен-капитал — включая ваш.</p>
+    <div class="stat">200+ кандидатов протестировано · 6-gate валидация · каждый результат воспроизводим из сырых данных</div>
+  </div>
+</section>
+
+<section id="tech" class="wrap">
+  <div class="sec-label">02 · Технология — а не альфа</div>
+  <h2>Автоматическая торговля, <span class="ok">на ваших условиях</span></h2>
+  <p class="lead" style="margin-top:18px">Я строю и лицензирую <b>движок</b>, стратегию приносите
+  вы. Задаёте свои правила, проверяете их на anti-overfit пайплайне, затем запускаете в paper или
+  live — self-hosted, на ваших ключах, под вашим контролем. Никаких сигналов, никакого управления
+  деньгами.</p>
+  <div class="grid2">
+    <div class="cell">
+      <h3>Опишите свою стратегию</h3>
+      <p>Опишите логику входа, выхода и сайзинга в чистом Python-интерфейсе — или дайте мне спеку, и
+      я заведу её сам. Фреймворк берёт на себя обвязку: данные, состояние, расписание, восстановление.</p>
+      <span class="mono">ваши правила · ваши параметры · никакого чёрного ящика</span>
+    </div>
+    <div class="cell">
+      <h3>Тестируйте до того, как рискнуть</h3>
+      <p>Прогоните через ту же 6-gate валидацию, что охраняет мой собственный капитал: tiered costs,
+      Deflated Sharpe, out-of-sample hold-out, walk-forward, честные fill. Увидите, реален ли edge
+      <i>до</i> того, как на кону хоть цент.</p>
+      <span class="mono">Monte-Carlo risk-of-ruin · Kelly sizing · paper-forward</span>
+    </div>
+    <div class="cell">
+      <h3>Подключайтесь &amp; исполняйте</h3>
+      <p>Подключайтесь к площадкам, на которых торгуете — CEX REST/WS, опционы, perps, on-chain — со
+      встроенными pre-trade risk gate, лимитами капитала и HTTP killswitch.</p>
+      <span class="mono">rate-limit-aware · дисциплина reconnect · экономический учёт</span>
+    </div>
+    <div class="cell">
+      <h3>Self-hosted &amp; ваше</h3>
+      <p>Работает на вашей инфраструктуре с вашими API-ключами. Никакого хранения ваших средств,
+      никакого общего кошелька, никакого lock-in. Деплой и каждая строка конфига — ваши.</p>
+      <span class="mono">ваши ключи · ваши серверы · ваши данные</span>
+    </div>
+  </div>
+
+  <div class="pipeline">
+    <div class="pstage">
+      <span class="pn">Шаг 1</span>
+      <h4>Конфигурация</h4>
+      <p>Стратегия как параметры — символы, таймфрейм, правила входа/выхода, риск-лимиты. Без правок ядра движка.</p>
+    </div>
+    <div class="pstage">
+      <span class="pn">Шаг 2</span>
+      <h4>Backtest · IS&nbsp;→&nbsp;OOS</h4>
+      <p>Прогон на истории, затем повтор на out-of-sample. Если edge живёт только in-sample — это переобучение, и вы видите это здесь, а не капиталом.</p>
+    </div>
+    <div class="pstage demo">
+      <span class="pn">Шаг 3</span>
+      <h4>Paper / testnet</h4>
+      <p>Реальный рынок, реальная латентность, ноль реальных денег. Бот гоняется днями против живого стакана, пока поведение не совпадёт с backtest.</p>
+      <span class="tag">demo-режим</span>
+    </div>
+    <div class="pstage">
+      <span class="pn">Шаг 4</span>
+      <h4>В live</h4>
+      <p>Только после того, как paper устоял. Ваши API-ключи — только торговля, без вывода — self-hosted, killswitch наготове.</p>
+    </div>
+  </div>
+
+  <div class="figure">
+    <div class="cap-top">
+      <span>Пример вывода валидации — 8 крипто-активов · правило тренда SMA</span>
+      <span>прогон 2026-06-11 · воспроизводим из сырых данных</span>
+    </div>
+    <svg viewBox="0 0 640 250" role="img"
+      aria-label="Пример валидации: оптимизация по каждому инструменту дала в среднем +49.2% in-sample, но лишь +15.5% out-of-sample — ниже +23.3% у нетюненного фиксированного параметра.">
+      <!-- in-sample reference level -->
+      <line x1="70" y1="54" x2="570" y2="54" stroke="var(--warn)" stroke-width="1" stroke-dasharray="3 4" opacity=".4"/>
+      <text x="566" y="48" text-anchor="end" font-size="10" fill="var(--warn)" opacity=".8">in-sample оптимум</text>
+      <!-- baseline -->
+      <line x1="46" y1="205" x2="590" y2="205" stroke="var(--line-h)" stroke-width="1"/>
+      <text x="40" y="209" text-anchor="end" font-size="10" fill="var(--dim)">0%</text>
+      <!-- bars -->
+      <rect x="70"  y="54"  width="110" height="151" rx="4" fill="var(--warn)"/>
+      <rect x="265" y="157" width="110" height="48"  rx="4" fill="var(--bad)"/>
+      <rect x="460" y="133" width="110" height="72"  rx="4" fill="var(--ok)"/>
+      <!-- value labels -->
+      <text x="125" y="44"  text-anchor="middle" font-size="15" fill="var(--warn)" font-weight="500">+49.2%</text>
+      <text x="320" y="147" text-anchor="middle" font-size="15" fill="var(--bad)"  font-weight="500">+15.5%</text>
+      <text x="515" y="123" text-anchor="middle" font-size="15" fill="var(--ok)"   font-weight="500">+23.3%</text>
+      <!-- category labels -->
+      <text x="125" y="224" text-anchor="middle" font-size="10.5" fill="var(--sub)">ОПТИМИЗИРОВАНО</text>
+      <text x="125" y="238" text-anchor="middle" font-size="10.5" fill="var(--dim)">по активу · in-sample</text>
+      <text x="320" y="224" text-anchor="middle" font-size="10.5" fill="var(--sub)">ОПТИМИЗИРОВАНО</text>
+      <text x="320" y="238" text-anchor="middle" font-size="10.5" fill="var(--dim)">по активу · out-of-sample</text>
+      <text x="515" y="224" text-anchor="middle" font-size="10.5" fill="var(--sub)">БЕЗ ТЮНИНГА</text>
+      <text x="515" y="238" text-anchor="middle" font-size="10.5" fill="var(--dim)">фикс. параметр · out-of-sample</text>
+    </svg>
+    <div class="legend">
+      <span><i style="background:var(--warn)"></i>Оптимизировано — in-sample</span>
+      <span><i style="background:var(--bad)"></i>То же правило — out-of-sample</span>
+      <span><i style="background:var(--ok)"></i>Без тюнинга по активу — out-of-sample</span>
+    </div>
+    <p class="take"><b>Вот что вы получаете — честное out-of-sample число, а не backtest-число.</b>
+    Оптимизация по каждому активу сделала правило ~в 3× сильнее in-sample, но out-of-sample оно
+    проиграло стратегии вообще без тюнинга (распад на 33.8 п.п.). Валидация флагует переобучение
+    <i>до</i> того, как вложен капитал — в этом весь смысл её запуска.</p>
+  </div>
+
+  <div class="modes">
+    <div class="mode">
+      <span class="t">Режим A · Build-to-spec</span>
+      <h3>Кастомный бот по вашей идее</h3>
+      <p>Вы описываете стратегию и площадки; я отдаю протестированную, документированную,
+      готовую к деплою систему. Fixed-scope или retainer, оплата в стейблкоинах.</p>
+    </div>
+    <div class="mode">
+      <span class="t">Режим B · Framework + онбординг</span>
+      <h3>Адаптация существующего движка</h3>
+      <p>Лицензируете коннекторы / backtest / execution-тулкит и запускаете его под свои
+      стратегии, с онбордингом и поддержкой.</p>
+    </div>
+  </div>
+  <div class="guard">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" stroke="#3ecf8e" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M9 12l2 2 4-4.5" stroke="#3ecf8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p><b>Я продаю технологию, а не доходность.</b> <span>Вы сами настраиваете, тестируете и
+    запускаете свои стратегии и несёте риск. Я не обещаю доходность и никогда не беру в управление
+    ваш капитал — это инженерия, а не инвестсоветы и не управление активами.</span></p>
+  </div>
+</section>
+
+<section id="lab" class="wrap">
+  <div class="sec-label">03 · Лаборатория стратегий — запускаемое демо</div>
+  <h2>Три стратегии, которые можно <span class="ok">склонировать и запустить сегодня</span></h2>
+  <p class="lead" style="margin-top:18px">Публичный репозиторий без зависимостей с тремя
+  референсными архетипами стратегий, одним честным backtest-движком и той же проверкой
+  in-sample&nbsp;→&nbsp;out-of-sample, что я гоняю на собственном капитале. Реальные публичные дневные
+  данные BTC/USDT, без ключей, без сети. Это учебные артефакты — <b>не</b> прибыльные боты и
+  <b>не</b> проприетарные стратегии — сделаны показать метод и качество кода, а не пообещать доходность.</p>
+
+  <div class="lab">
+    <div class="lc">
+      <span class="k">trend</span>
+      <h4>SMA crossover</h4>
+      <p class="rule">Long, пока быстрая скользящая средняя выше медленной; иначе вне рынка.</p>
+      <div class="nums">
+        <div class="row"><span>тюнинг in-sample</span><span class="is">+69.9%</span></div>
+        <div class="row"><span>те же параметры, OOS</span><span class="neg">−9.7%</span></div>
+      </div>
+    </div>
+    <div class="lc">
+      <span class="k">meanrev</span>
+      <h4>Z-score цены</h4>
+      <p class="rule">Покупка, когда цена растянута ниже своей средней; выход по возврату к ней.</p>
+      <div class="nums">
+        <div class="row"><span>тюнинг in-sample</span><span class="is">+56.5%</span></div>
+        <div class="row"><span>те же параметры, OOS</span><span class="neg">−11.2%</span></div>
+      </div>
+    </div>
+    <div class="lc">
+      <span class="k">breakout</span>
+      <h4>Канал Дончиана</h4>
+      <p class="rule">Вход на новом N-дневном максимуме; выход на M-дневном минимуме.</p>
+      <div class="nums">
+        <div class="row"><span>тюнинг in-sample</span><span class="is">+80.7%</span></div>
+        <div class="row"><span>те же параметры, OOS</span><span class="pos">+3.9%</span></div>
+      </div>
+      <span class="vd overfit">переобучение · хуже нетюненного</span>
+    </div>
+  </div>
+
+  <div class="lab-run">
+    <span class="muted"># клонируй, затем — без установки, Python 3.10+</span><br>
+    <span class="c">python3</span> strategy_lab.py            <span class="muted"># сравнить все три (in-sample → OOS)</span><br>
+    <span class="c">python3</span> strategy_lab.py breakout paper <span class="muted"># стримить одну, fill за fill, ноль реальных денег</span>
+  </div>
+
+  <p class="lab-note">Каждый затюненный «победитель» распадается out-of-sample — этот разрыв и есть
+  весь смысл. Лестное backtest-число — не то, что вы получите; честное out-of-sample — то самое.
+  <a href="https://github.com/ev609/strategy-lab">открыть демо-репозиторий&nbsp;→</a></p>
+</section>
+
+<section id="builder" class="wrap">
+  <div class="sec-label">Ранний доступ · замеряю спрос</div>
+  <h2>Тот же честный движок, <span class="ok">без написания кода</span></h2>
+  <div class="chips" style="margin-top:18px">
+    <span class="chip wip">концепт · ещё не построено</span>
+    <span class="chip">только вейтлист</span>
+    <span class="chip">без custody · ваши ключи</span>
+  </div>
+  <p class="lead" style="margin-top:18px">Продукт, который я взвешиваю — <b>скажите, стали бы вы им
+  пользоваться.</b> No-code конструктор, где бот собирается из блоков вместо Python, и он прогоняет
+  вашу идею через ту же проверку на переобучение, что выше, а затем <i>честно</i> показывает,
+  выживает ли edge out-of-sample — до того, как вы рискнули хоть рублём. Большинство стратегий не
+  выживают; серьёзный инструмент говорит об этом сразу, а не продаёт вам красивый backtest.</p>
+
+  <div class="tryit">
+    <div class="ti">
+      <span class="tag free">без кода</span>
+      <h4>Сборка из блоков</h4>
+      <p>Выбираете архетип, задаёте вход/выход и сайзинг формами — без Python, без установки. Движок берёт на себя данные, состояние и исполнение.</p>
+    </div>
+    <div class="ti">
+      <span class="tag paid">честность по умолчанию</span>
+      <h4>Валидация, а не лесть</h4>
+      <p>Каждый бот автоматически гоняется in-sample&nbsp;→&nbsp;out-of-sample плюс risk-of-ruin. Переобучен — видите это красным. Задача инструмента — <i>отговорить</i> вас от плохих ботов.</p>
+    </div>
+    <div class="ti">
+      <span class="tag free">ваш риск</span>
+      <h4>Ваши ключи, self-hosted</h4>
+      <p>Работает на вашей инфраструктуре и trade-only ключах, или на testnet. Без custody средств, без сигналов, без управления деньгами, без обещаний доходности.</p>
+    </div>
+  </div>
+
+  <div class="guard">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" stroke="#3ecf8e" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M9 12l2 2 4-4.5" stroke="#3ecf8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p><b>Этого ещё не существует — и я не буду делать вид, что иначе.</b> <span>Я измеряю, достаточно
+    ли людей хотят честный no-code инструмент для ботов, прежде чем его строить. Запишитесь в
+    вейтлист — напишу, когда будет что попробовать вживую. Без оплаты, без обязательств, без спама.</span></p>
+  </div>
+
+  <!-- Вейтлист → отдельный subject, чтобы считать спрос отдельно от подрядных лидов (заполнить WEB3FORMS_KEY) -->
+  <form class="contact" action="https://api.web3forms.com/submit" method="POST">
+    <input type="hidden" name="access_key" value="WEB3FORMS_KEY">
+    <input type="hidden" name="subject" value="AlfaFond — bot-builder waitlist (ru)">
+    <input type="hidden" name="from_name" value="alfafond.com /dev/ru · builder waitlist">
+    <input type="text" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+    <div class="f-row">
+      <input type="text" name="contact" placeholder="Как с вами связаться: e-mail или @telegram" required aria-label="Контакт">
+      <input type="text" name="use_case" placeholder="Что бы вы собрали / чем торгуете?" aria-label="Сценарий">
+    </div>
+    <button type="submit" class="btn btn-ok">Запросить ранний доступ →</button>
+    <span class="f-note">Только вейтлист — напишу, когда будет реальная сборка для теста. Данные используются только для ответа.</span>
+  </form>
+</section>
+
+<section id="method" class="wrap">
+  <div class="sec-label">04 · Как я работаю</div>
+  <h2>Инженерные практики</h2>
+  <ul class="flat">
+    <li><b>Малые атомарные коммиты</b>, research log с указателями на сырые данные — всё под версией и воспроизводимо.</li>
+    <li><b>Паранойя реальных денег:</b> никаких синтетических данных в валидации, никакого хардкода, структурированное логирование, дебаг от метрик.</li>
+    <li><b>AI-augmented delivery:</b> спека → cheap-gate скрипт → валидация → forward runner; AI как множитель силы с человеческой проверкой на каждом gate.</li>
+    <li><b>Async-first коммуникация</b>, чёткие письменные апдейты, честный статус — в том числе когда что-то не вышло.</li>
+  </ul>
+</section>
+
+<section id="stack" class="wrap">
+  <div class="sec-label">05 · Стек</div>
+  <h2>Рабочие инструменты</h2>
+  <ul class="flat">
+    <li><b>Ядро:</b> Python 3.13 (asyncio, FastAPI, pandas/numpy), PostgreSQL/TimescaleDB, Redis Streams, Docker.</li>
+    <li><b>Рынки:</b> CEX REST/WS API, options chains &amp; IV-пайплайны, perpetuals/funding, основы EVM (web3.py, EIP-712, Polygon).</li>
+    <li><b>Front &amp; ops:</b> TypeScript/Svelte 5, lightweight-charts, Prometheus, launchd/systemd, Claude/LLM-тулинг.</li>
+  </ul>
+</section>
+
+<section id="hire" class="wrap">
+  <div class="diff">
+    <div class="sec-label">06 · Сотрудничество</div>
+    <h2>Контракт или retainer, <span class="ok">удобно part-time</span></h2>
+    <p>Лучше всего подходит: коннекторы и интеграции с биржами, инфраструктура рыночных данных,
+    backtest-фреймворки, bot/execution-системы, research-тулинг, честная валидация
+    существующей стратегии. Оплата в USDC/USDT (любая сеть) или банковским переводом.
+    Продакшен-репозиторий приватный; санитизированные примеры кода и архитектурные разборы — по запросу.</p>
+
+    <h3 class="tryit-h">Попробуйте, прежде чем решиться</h3>
+    <div class="tryit">
+      <div class="ti">
+        <span class="tag free">бесплатно · без обязательств</span>
+        <h4>Discovery-созвон</h4>
+        <p>Короткий созвон или async-тред, чтобы оценить объём и понять, подходим ли. Бесплатно, без обязательства продолжать.</p>
+      </div>
+      <div class="ti">
+        <span class="tag free">бесплатно · руками</span>
+        <h4>Запустите демо</h4>
+        <!-- демо-репо опубликован: https://github.com/ev609/strategy-lab -->
+        <p>Склонируйте публичный пример-бота и запустите его сами в paper-режиме — изучите код и валидацию IS&nbsp;→&nbsp;OOS до любой оплаты. <a href="https://github.com/ev609/strategy-lab">демо-репозиторий&nbsp;→</a></p>
+      </div>
+      <div class="ti">
+        <span class="tag paid">низкий риск · escrow</span>
+        <h4>Платный пилот</h4>
+        <p>Одна стратегия — backtest, paper-деплой, фиксированная небольшая плата в escrow. Оцените реальную работу, прежде чем браться за полную сборку.</p>
+      </div>
+    </div>
+
+    <h3 class="tryit-h">Готовы строить — как мы начинаем</h3>
+    <div class="flow">
+      <div class="fstep"><span class="fn">1</span><p><b>Пришлите объём</b> в форме ниже — что нужно построить и где.</p></div>
+      <div class="fstep"><span class="fn">2</span><p><b>Согласуем объём и смету</b> async — fixed-scope или retainer, с понятным результатом.</p></div>
+      <div class="fstep"><span class="fn">3</span><p><b>Соберём и отдадим</b> — протестировано, документировано, на вашей инфре или в приватном репо.</p></div>
+    </div>
+    <p class="pay"><b>Оплата:</b> USDC / USDT (любая сеть), escrow для первых проектов, или банковский перевод.<br>
+    Fixed-scope — по milestone · retainer — помесячно. Без хранения ваших средств.</p>
+    <!-- Form → email relay (fill WEB3FORMS_KEY). Degrades without JS: plain POST + redirect. -->
+    <form class="contact" action="https://api.web3forms.com/submit" method="POST">
+      <input type="hidden" name="access_key" value="WEB3FORMS_KEY">
+      <input type="hidden" name="subject" value="AlfaFond /dev (RU) — заявка">
+      <input type="hidden" name="from_name" value="AlfaFond /dev (RU) — заявка">
+      <input type="text" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+      <div class="f-row">
+        <input type="text" name="contact" placeholder="Как с вами связаться: e-mail или @telegram" required aria-label="Контакт">
+        <input type="text" name="scope" placeholder="Объём (коннектор, backtest, инфра…)" aria-label="Объём">
+      </div>
+      <textarea name="message" rows="2" placeholder="Что нужно построить? (необязательно)" aria-label="Сообщение"></textarea>
+      <button type="submit" class="btn btn-ok">Отправить заявку →</button>
+      <span class="f-note">Отвечу на указанный контакт. Данные используются только для ответа.</span>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap cols">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>AlfaFond <span class="path">/dev</span></span>
+    </div>
+    <span class="mono-s">alfafond.com/dev · инженерия торговой инфраструктуры</span>
+  </div>
+</footer>
+<script>
+/* Формы ещё не подключены к relay (WEB3FORMS_KEY placeholder) — честный fallback на GitHub.
+   Самоотключается: как только в access_key реальный ключ, обработчик не вешается. */
+document.querySelectorAll('form').forEach(function(f){
+  var k = f.querySelector('input[name="access_key"]');
+  if(k && k.value === 'WEB3FORMS_KEY'){
+    f.addEventListener('submit', function(e){
+      e.preventDefault();
+      if(f.querySelector('.fallback-note')) return;
+      var n = document.createElement('p');
+      n.className = 'fallback-note';
+      n.style.cssText = 'margin-top:10px;font-family:monospace;font-size:.78rem;color:#e0a23c';
+      n.innerHTML = 'Форма ещё не подключена — честно. Напишите через GitHub: <a href="https://github.com/ev609/strategy-lab/issues" style="color:#3ecf8e">github.com/ev609/strategy-lab</a>';
+      f.appendChild(n);
+    });
+  }
+});
+</script>
+</body>
+</html>

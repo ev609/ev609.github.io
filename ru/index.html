@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>АльфаФонд — разборы российских эмитентов, где каждое число проверено первоисточником</title>
+<meta name="description" content="Grounded AI-аналитика по акциям МосБиржи: 9 источников сверяются между собой, каждое число — с источником и бейджем верификации. Без галлюцинаций.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://alfafond.com/ru/">
+<meta property="og:title" content="АльфаФонд — каждое число с источником">
+<meta property="og:description" content="Разборы российских эмитентов: 9 источников сверяются между собой, каждая цифра несёт бейдж верификации. ИИ без права на галлюцинацию.">
+<meta property="og:image" content="https://alfafond.com/assets/og-ru.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/ru/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/ru/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/ru/en/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/ru/">
+<!-- Контакты: заменить TG_HANDLE на реальный telegram-хэндл перед публикацией -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0e'/%3E%3Cpath d='M16 6 8 26M16 6l8 20' stroke='%23f4f5f7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M11.4 19.6l3 2.9 5.6-6.6' stroke='%233ecf8e' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#717784;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --warn:#e0a83c; --err:#e06c6c;
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}  /* якорь не заезжает под липкую шапку */
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:600;font-size:1.02rem;letter-spacing:-.01em}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:760px){.bar nav{display:none}}  /* переключатель языков остаётся виден на мобиле */
+
+  .hero{padding:86px 28px 64px}
+  .badge-row{display:flex;gap:8px;margin-bottom:26px;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:.7rem;color:var(--ok);background:var(--ok-dim);
+    border:1px solid rgba(62,207,142,.25);padding:5px 12px;border-radius:99px}
+  .pill.n{color:var(--sub);background:var(--card);border-color:var(--line)}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(2.4rem,6vw,4.1rem);
+    line-height:1.05;letter-spacing:-.035em;text-wrap:balance;max-width:17ch}
+  h1 .ok{color:var(--ok)}
+  .lead{margin:24px 0 0;max-width:56ch;color:var(--sub);font-size:1.05rem;text-wrap:pretty}
+  .src-note{font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-top:14px}
+  .src-note .v{color:var(--ok)} .src-note .w{color:var(--warn)} .src-note .x{color:var(--err)}
+  .cta-row{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;
+    padding:13px 24px;border-radius:9px;transition:transform .15s,box-shadow .15s,background .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+
+  .badge{font-family:var(--mono);font-size:.66rem;letter-spacing:.03em;white-space:nowrap;
+    padding:2px 8px;border-radius:99px;vertical-align:middle}
+  .b-ok{color:var(--ok);background:var(--ok-dim)}
+  .b-warn{color:var(--warn);background:rgba(224,168,60,.12)}
+
+  .demo-card{margin-top:64px;border:1px solid var(--line);background:var(--card);
+    border-radius:14px;overflow-x:auto}
+  .demo-head{display:flex;justify-content:space-between;align-items:center;
+    padding:13px 20px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+  .demo-head b{color:var(--txt);font-weight:500}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:560px}
+  th,td{padding:11px 20px;text-align:left;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-weight:400;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-size:.84rem}
+  td .src{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+  tr:hover td{background:rgba(255,255,255,.015)}
+
+  /* Вертикальный ритм секций. ВАЖНО: секции имеют класс .wrap{margin:0 auto;padding:0 28px},
+     который по специфичности (класс > тег) перебивает и padding, и margin на голом `section`.
+     Поэтому ритм задаём селектором `section.wrap` (специфичность выше .wrap). Плавно через clamp. */
+  section.wrap{margin-top:clamp(72px,8vw,124px)}
+  section.wrap:first-of-type{margin-top:clamp(44px,5vw,72px)}
+  section.wrap:last-of-type{padding-bottom:clamp(64px,7vw,96px)}
+  .sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);
+    display:flex;align-items:center;gap:16px;margin-bottom:14px}  /* лейбл прижат к своему h2 */
+  .sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(62,207,142,.35),transparent)}
+  h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.12;
+    letter-spacing:-.025em;max-width:26ch;text-wrap:balance}
+  h2 .ok{color:var(--ok)}
+
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:40px}
+  @media(max-width:720px){.vs{grid-template-columns:1fr}}
+  .vs>div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 26px}
+  .vs .good{border-color:rgba(62,207,142,.3)}
+  .vs .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px}
+  .vs .bad .tag{color:var(--err)} .vs .good .tag{color:var(--ok)}
+  .vs blockquote{font-size:1.05rem;line-height:1.5;color:var(--sub)}
+  .vs .good blockquote{color:var(--txt)}
+  .vs .note{margin-top:16px;font-size:.8rem;color:var(--dim);text-wrap:pretty}
+  .strike{text-decoration:line-through;text-decoration-color:var(--err);text-decoration-thickness:2px}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:40px}
+  @media(max-width:820px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 26px}
+  .step .n{font-family:var(--mono);font-size:.72rem;color:var(--ok);background:var(--ok-dim);
+    display:inline-block;padding:3px 10px;border-radius:99px}
+  .step h3{font-family:var(--disp);font-weight:600;font-size:1.02rem;margin:16px 0 10px;letter-spacing:-.01em}
+  .step p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+  .step .mono{font-family:var(--mono);font-size:.68rem;color:var(--dim);display:block;margin-top:14px;line-height:1.9}
+
+  .samples{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:40px;align-items:start}
+  @media(max-width:820px){.samples{grid-template-columns:1fr}}
+  .sample{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  .sample[open]{border-color:var(--line-h)}
+  .sample summary{list-style:none;cursor:pointer;padding:20px 24px;display:flex;align-items:baseline;gap:14px;
+    transition:background .15s}
+  .sample summary::-webkit-details-marker{display:none}
+  .sample summary:hover{background:var(--card-h)}
+  .sample .tick{font-family:var(--mono);font-size:.9rem;color:var(--ok)}
+  .sample .nm{font-family:var(--disp);font-weight:600;font-size:1.12rem;letter-spacing:-.01em}
+  .sample .hint{font-family:var(--mono);font-size:.66rem;color:var(--dim);margin-left:auto}
+  .sample .body{padding:0 24px 22px;border-top:1px solid var(--line);overflow-x:auto}
+  .sample .body p{font-size:.85rem;color:var(--sub);margin:16px 0 8px;text-wrap:pretty}
+  .sample table{font-size:.8rem;min-width:0}
+  .sample th,.sample td{padding:8px 10px}
+
+  .access{border:1px solid rgba(62,207,142,.3);border-radius:16px;
+    background:radial-gradient(600px 260px at 85% 0%, rgba(62,207,142,.08), transparent 60%), var(--card);
+    padding:52px 46px;margin-top:8px}
+  @media(max-width:720px){.access{padding:34px 24px}}
+  .access h2{max-width:none}
+  .access p{max-width:62ch;color:var(--sub);margin-top:14px;text-wrap:pretty}
+  .access ul{margin:20px 0 0;list-style:none}
+  .access li{padding-left:24px;position:relative;font-size:.9rem;margin:9px 0;color:var(--sub);text-wrap:pretty}
+  .access li::before{content:"✓";position:absolute;left:0;color:var(--ok)}
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+  @media(max-width:680px){.flow{grid-template-columns:1fr}}
+  .fstep{display:flex;gap:12px;align-items:flex-start}
+  .fstep .fn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ok-dim);color:var(--ok);
+    font-family:var(--mono);font-size:.76rem;font-weight:500;display:flex;align-items:center;justify-content:center}
+  .fstep p{font-size:.85rem;color:var(--sub);text-wrap:pretty;margin:0}
+  .fstep b{color:var(--txt);font-weight:500}
+  .pay{font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-top:22px;
+    border-top:1px solid var(--line);padding-top:14px;line-height:1.8}
+  .pay b{color:var(--sub);font-weight:500}
+  .price-box{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:24px;
+    border:1px solid rgba(62,207,142,.3);background:var(--ok-dim);border-radius:12px;padding:16px 20px}
+  .pb-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--sub)}
+  .pb-val{font-family:var(--disp);font-weight:600;font-size:1.5rem;color:var(--ok);line-height:1}
+  .pb-note{font-family:var(--mono);font-size:.66rem;color:var(--dim)}
+  .contact{margin-top:28px;max-width:620px}
+  .f-row{display:flex;gap:10px;flex-wrap:wrap}
+  .f-row input{flex:1;min-width:200px}
+  .contact input,.contact textarea{width:100%;font-family:var(--body);font-size:.9rem;color:var(--txt);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+  .contact input::placeholder,.contact textarea::placeholder{color:var(--dim)}
+  .contact input:focus,.contact textarea:focus{outline:none;border-color:var(--ok)}
+  .contact textarea{resize:vertical}
+  .contact .btn{border:none;cursor:pointer;margin-top:2px}
+  .f-note{display:block;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:12px}
+
+  footer{border-top:1px solid var(--line);padding:36px 0 52px;margin-top:36px}
+  footer .cols{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;align-items:center}
+  footer .disc{font-size:.72rem;color:var(--dim);max-width:74ch;line-height:1.7;margin-top:20px;text-wrap:pretty}
+  .mono-s{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+
+  .rise{opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.2,.7,.3,1),transform .6s cubic-bezier(.2,.7,.3,1)}
+  .rise.in{opacity:1;transform:none}
+  .hero .rise:nth-child(1){transition-delay:.04s}.hero .rise:nth-child(2){transition-delay:.1s}
+  .hero .rise:nth-child(3){transition-delay:.18s}.hero .rise:nth-child(4){transition-delay:.26s}
+  .hero .rise:nth-child(5){transition-delay:.34s}.hero .rise:nth-child(6){transition-delay:.42s}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){
+    .rise{transition:none;opacity:1;transform:none}
+    .btn{transition:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+<noscript><style>.rise{opacity:1!important;transform:none!important}</style></noscript>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/" aria-label="АльфаФонд — на главную">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>АльфаФонд</span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="Разделы">
+        <a href="#problem">Проблема</a>
+        <a href="#how">Метод</a>
+        <a href="#samples">Образцы</a>
+        <a href="#access">Ранний доступ</a>
+      </nav>
+      <div class="lang" role="group" aria-label="Язык">
+        <a href="/ru/" hreflang="ru" class="on" aria-current="true">RU</a><a href="/ru/en/" hreflang="en">EN</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="hero wrap">
+  <div class="badge-row rise">
+    <span class="pill">✓ каждое число проверено</span>
+    <span class="pill n">мосбиржа · аудит-трейл</span>
+  </div>
+  <h1 class="rise">Каждое число — <span class="ok">с источником.</span></h1>
+  <p class="lead rise">Разборы российских эмитентов, в которых ИИ не имеет права на галлюцинацию:
+  девять источников данных сверяются между собой, каждая цифра несёт бейдж верификации,
+  каждый вывод воспроизводим по аудит-трейлу.</p>
+  <div class="src-note rise"><span class="v">✓ проверено первоисточником</span> &nbsp;·&nbsp; <span class="w">⚠ один источник / прогноз</span> &nbsp;·&nbsp; <span class="x">✗ конфликт данных</span></div>
+  <div class="cta-row rise">
+    <a class="btn btn-ok" href="#access">Получить разбор эмитента →</a>
+    <a class="btn btn-ghost" href="#samples">Смотреть образцы</a>
+  </div>
+
+  <!-- самодемонстрация: реальный снимок из разбора SBER -->
+  <div class="demo-card rise">
+    <div class="demo-head">
+      <span><b>SBER</b> · Сбербанк — снимок grounded-разбора</span>
+      <span>данные на 2026-05-31</span>
+    </div>
+    <table>
+      <thead><tr><th>Метрика</th><th>Значение</th><th>Источник</th><th>Бейдж</th></tr></thead>
+      <tbody>
+        <tr><td>Цена</td><td class="num">321,47 ₽</td><td><span class="src">moex_iss</span></td><td><span class="badge b-ok">✓ проверено</span></td></tr>
+        <tr><td>Капитализация</td><td class="num">6 939,6 млрд ₽</td><td><span class="src">moex_iss</span></td><td><span class="badge b-ok">✓ проверено</span></td></tr>
+        <tr><td>Дивиденд FY2025</td><td class="num">34,84 ₽ &nbsp;(≈10,8% TTM)</td><td><span class="src">moex_iss · факт выплаты</span></td><td><span class="badge b-ok">✓ проверено</span></td></tr>
+        <tr><td>P/E (LTM)</td><td class="num">≈3,9</td><td><span class="src">расчёт по smart_lab</span></td><td><span class="badge b-warn">⚠ один источник</span></td></tr>
+        <tr><td>Прогноз дивиденда NTM</td><td class="num">37,64 ₽</td><td><span class="src">dohod · прогноз</span></td><td><span class="badge b-warn">⚠ прогноз</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+<section id="problem" class="wrap">
+  <div class="sec-label">01 · Зачем это нужно</div>
+  <h2>Обычный ИИ уверенно <span class="ok">выдумывает</span> финансовые цифры</h2>
+  <div class="vs">
+    <div class="bad">
+      <div class="tag">✗ ИИ без grounding — реальный случай</div>
+      <blockquote>«Европлан (LEAS): IPO в <span class="strike">2024</span> году, дивиденд за 2024 — <span class="strike">около 50 ₽</span>, доходность <span class="strike">~7,5%</span>»</blockquote>
+      <p class="note">Обе цифры выдуманы. Звучит убедительно — проверить нечем: источника нет.</p>
+    </div>
+    <div class="good">
+      <div class="tag">✓ АльфаФонд — сверено с первоисточником</div>
+      <blockquote>«LEAS: IPO <b>23.03.2017</b>, дивиденд FY2024 — <b>75,00 ₽</b> (25,00 июнь + 50,00 декабрь), доходность <b>11,3%</b>»</blockquote>
+      <p class="note">Источник: moex_iss + tinkoff_api, кросс-сверка <span class="badge b-ok">✓</span>. Расхождение двух ИИ-ответов — повод не доверять ни одному без бейджа.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="wrap">
+  <div class="sec-label">02 · Метод</div>
+  <h2>Девять источников, кросс-сверка, <span class="ok">аудит-трейл</span></h2>
+  <div class="steps">
+    <div class="step">
+      <span class="n">шаг 1</span>
+      <h3>Сбор из первоисточников</h3>
+      <p>Котировки и корп-действия — с биржи, отчётность — из центра раскрытия, дивиденды — по факту выплат. Не из пересказов.</p>
+      <span class="mono">MOEX ISS · e-disclosure · ЦБ РФ<br>smart-lab IFRS · dohod · Tinkoff · ОФЗ ZCYC</span>
+    </div>
+    <div class="step">
+      <span class="n">шаг 2</span>
+      <h3>Кросс-сверка и trust-скоринг</h3>
+      <p>Каждое число сверяется между независимыми источниками с учётом периода. Совпало — ✓. Один источник или прогноз — ⚠. Конфликт — ✗ и число не публикуется как факт.</p>
+      <span class="mono">period-aware matching · anomaly detection<br>staleness-контроль</span>
+    </div>
+    <div class="step">
+      <span class="n">шаг 3</span>
+      <h3>Разбор с цитатами</h3>
+      <p>ИИ пишет аналитику только поверх проверенных фактов. Любое утверждение можно раскрутить до источника — полный аудит-трейл каждого разбора хранится и воспроизводим.</p>
+      <span class="mono">авто-цитирование · immutable audit-trail<br>финальный QA — вручную</span>
+    </div>
+  </div>
+</section>
+
+<section id="samples" class="wrap">
+  <div class="sec-label">03 · Образцы</div>
+  <h2>Фрагменты реальных разборов</h2>
+  <div class="samples">
+    <details class="sample">
+      <summary>
+        <span class="tick">SBER</span><span class="nm">Сбербанк</span>
+        <span class="hint">раскрыть ↓</span>
+      </summary>
+      <div class="body">
+        <p><b>Дивиденды</b> (moex_iss, факт выплат — trust 1.00):</p>
+        <table>
+          <thead><tr><th>FY</th><th>₽/акц</th><th>FY</th><th>₽/акц</th></tr></thead>
+          <tbody>
+            <tr><td>2019</td><td class="num">16,00</td><td>2023</td><td class="num">25,00</td></tr>
+            <tr><td>2020</td><td class="num">18,70</td><td>2024</td><td class="num">33,30</td></tr>
+            <tr><td>2021</td><td class="num">18,70</td><td>2025</td><td class="num"><b>34,84</b> <span class="badge b-ok">✓</span></td></tr>
+            <tr><td>2022</td><td class="num">0,00 <span class="badge b-warn">⚠</span></td><td>NTM</td><td class="num">37,64 <span class="badge b-warn">⚠ прогноз</span></td></tr>
+          </tbody>
+        </table>
+        <p>P/E (LTM) ≈3,9 · earnings yield ≈25,6% · ROE ≈24,4% — производные помечены
+        <span class="badge b-warn">⚠ расчёт</span>, чтобы не выдавать оценку за факт.</p>
+      </div>
+    </details>
+    <details class="sample">
+      <summary>
+        <span class="tick">LEAS</span><span class="nm">Европлан</span>
+        <span class="hint">раскрыть ↓</span>
+      </summary>
+      <div class="body">
+        <p><b>Дивидендная история</b> (кросс-сверка moex_iss + tinkoff_api):</p>
+        <table>
+          <thead><tr><th>FY</th><th>₽/акц</th><th>Бейдж</th></tr></thead>
+          <tbody>
+            <tr><td>2025 (частично)</td><td class="num">87,00</td><td><span class="badge b-warn">⚠ tinkoff</span></td></tr>
+            <tr><td>2024</td><td class="num"><b>75,00</b></td><td><span class="badge b-ok">✓ две базы</span></td></tr>
+            <tr><td>2023</td><td class="num">48,34</td><td><span class="badge b-ok">✓ две базы</span></td></tr>
+            <tr><td>2022</td><td class="num">29,17</td><td><span class="badge b-ok">✓ две базы</span></td></tr>
+          </tbody>
+        </table>
+        <p>Единственный крупный независимый автолизинг РФ; главный драйвер — ключевая
+        ставка ЦБ (NIM expansion при снижении). TTM-доходность ~4,4%, FY2024 run-rate — 11,3%.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section id="access" class="wrap">
+  <div class="access">
+    <div class="sec-label">04 · Ранний доступ</div>
+    <h2>Разбор интересующего вас эмитента — <span class="ok">по запросу</span></h2>
+    <p>Сервис в стадии раннего доступа: разборы готовятся индивидуально на нашем
+    pipeline и проходят ручной контроль качества. Напишите тикер — пришлём условия и срок.</p>
+    <ul>
+      <li>Полный разбор: бизнес-модель, драйверы, дивиденды, мультипликаторы, риски — каждое число с источником</li>
+      <li>Бейджи верификации и список расхождений между источниками</li>
+      <li>Для советников и авторов каналов: формат с цитатами, на который не стыдно ссылаться</li>
+    </ul>
+    <div class="flow">
+      <div class="fstep"><span class="fn">1</span><p><b>Оставляете тикер</b> в форме ниже — плюс куда прислать ответ.</p></div>
+      <div class="fstep"><span class="fn">2</span><p><b>Присылаем условия и срок.</b> Готовим разбор на pipeline + ручной QA каждого числа.</p></div>
+      <div class="fstep"><span class="fn">3</span><p><b>Получаете отчёт</b> на ваш контакт. Оплата — после согласования объёма.</p></div>
+    </div>
+    <div class="price-box">
+      <span class="pb-label">Стоимость разбора</span>
+      <span class="pb-val" id="priceVal">по запросу</span>
+      <span class="pb-note">за одного эмитента · глубокий разбор с верификацией</span>
+    </div>
+    <p class="pay"><b>Оплата:</b> перевод / СБП, чек самозанятого (легально, с документом). Платите после готового разбора.</p>
+    <!-- Форма → почта через relay (заполнить WEB3FORMS_KEY). Без раскрытия контактов автора.
+         Деградирует без JS: обычный POST с редиректом обратно. -->
+    <form class="contact" action="https://api.web3forms.com/submit" method="POST">
+      <input type="hidden" name="access_key" value="WEB3FORMS_KEY">
+      <input type="hidden" name="subject" value="АльфаФонд — заявка на разбор эмитента">
+      <input type="hidden" name="from_name" value="alfafond.com /ru">
+      <input type="text" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+      <!-- Price A/B: цена, которую видел посетитель, едет с каждой заявкой -->
+      <input type="hidden" name="price_variant" id="fldPriceVar" value="control">
+      <input type="hidden" name="price_rub" id="fldPriceRub" value="">
+      <div class="f-row">
+        <input type="text" name="ticker" placeholder="Тикер (напр. SBER, LKOH)" required aria-label="Тикер">
+        <input type="text" name="contact" placeholder="Куда ответить: e-mail или @telegram" required aria-label="Контакт для ответа">
+      </div>
+      <textarea name="message" rows="2" placeholder="Комментарий (необязательно)" aria-label="Комментарий"></textarea>
+      <button type="submit" class="btn btn-ok">Отправить заявку →</button>
+      <span class="f-note">Ответим на указанный контакт. Данные используются только для ответа.</span>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>АльфаФонд</span>
+      </div>
+      <div class="mono-s"><a href="/" style="color:inherit;text-decoration:none">alfafond.com</a> · grounded-аналитика российских эмитентов</div>
+    </div>
+    <p class="disc">Материалы сайта — аналитическая информация, подготовленная с использованием
+    автоматизированной сверки открытых источников (MOEX ISS, центр раскрытия корпоративной
+    информации, ЦБ РФ и др.). Не является индивидуальной инвестиционной рекомендацией;
+    упомянутые инструменты могут не подходить вашему инвестиционному профилю. Решения
+    принимаются вами самостоятельно. Историческая доходность не определяет будущую.
+    Данные могут содержать неточности источников — бейджи верификации отражают степень
+    подтверждения на дату подготовки.</p>
+  </div>
+</footer>
+
+<script>
+  // Price A/B — равномерное случайное распределение по ценам, фиксируется в localStorage
+  // (один посетитель → одна цена). Цена пишется в скрытые поля формы, поэтому каждая
+  // заявка несёт цену, которую видел человек → conversion-by-price. Ручной override: ?p=a|b|c.
+  // Без JS / при ошибке остаётся «по запросу» — concierge-фоллбэк, ничего не ломается.
+  (function(){
+    var PRICES = { a: 2900, b: 5900, c: 9900 };   // тестовая лестница цен, ₽ — править здесь
+    function pick(){
+      try {
+        var p = new URLSearchParams(location.search).get('p');
+        if (p && PRICES[p]) { localStorage.setItem('af_pv', p); return p; }
+        var s = localStorage.getItem('af_pv');
+        if (s && PRICES[s]) return s;
+        var keys = Object.keys(PRICES);
+        var v = keys[Math.floor(Math.random() * keys.length)];
+        localStorage.setItem('af_pv', v);
+        return v;
+      } catch (e) { return null; }
+    }
+    var v = pick();
+    if (!v || !PRICES[v]) return;
+    var rub = PRICES[v];
+    var el = document.getElementById('priceVal');
+    if (el) el.textContent = rub.toLocaleString('ru-RU') + ' ₽';
+    var fv = document.getElementById('fldPriceVar'); if (fv) fv.value = v;
+    var fr = document.getElementById('fldPriceRub'); if (fr) fr.value = String(rub);
+  })();
+
+  // Reveal — только enhancement: контент обязан быть видим в любой среде.
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: 0.05 });
+  document.querySelectorAll('.vs, .steps, .sample, .access, .sec-label, h2').forEach(el => {
+    el.classList.add('rise');
+  });
+  document.querySelectorAll('.rise').forEach(el => {
+    if (el.getBoundingClientRect().top < innerHeight) el.classList.add('in');
+    else io.observe(el);
+  });
+  setTimeout(() => document.querySelectorAll('.rise').forEach(el => el.classList.add('in')), 2500);
+</script>
+<script>
+/* Формы ещё не подключены к relay (WEB3FORMS_KEY placeholder) — честный fallback на GitHub.
+   Самоотключается: как только в access_key реальный ключ, обработчик не вешается. */
+document.querySelectorAll('form').forEach(function(f){
+  var k = f.querySelector('input[name="access_key"]');
+  if(k && k.value === 'WEB3FORMS_KEY'){
+    f.addEventListener('submit', function(e){
+      e.preventDefault();
+      if(f.querySelector('.fallback-note')) return;
+      var n = document.createElement('p');
+      n.className = 'fallback-note';
+      n.style.cssText = 'margin-top:10px;font-family:monospace;font-size:.78rem;color:#e0a23c';
+      n.innerHTML = 'Форма ещё не подключена — честно. Напишите через GitHub: <a href="https://github.com/ev609/strategy-lab/issues" style="color:#3ecf8e">github.com/ev609/strategy-lab</a>';
+      f.appendChild(n);
+    });
+  }
+});
+</script>
+</body>
+</html>
