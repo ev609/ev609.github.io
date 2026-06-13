@@ -240,6 +240,33 @@
   .xcard .xk{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);display:block}
   .xcard .xt{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);display:block;margin:8px 0 6px;letter-spacing:-.01em}
   .xcard .xd{font-size:.85rem;color:var(--sub);display:block;text-wrap:pretty}
+  /* Мок-дашборд аналитики (иллюстрация, демо-данные) */
+  .dash{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:20px 22px}
+  .dash-head{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);margin-bottom:16px}
+  .dash-head span{color:var(--dim)}
+  .dash-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:620px){.dash-tiles{grid-template-columns:1fr 1fr}}
+  .dash-tile{border:1px solid var(--line);border-radius:11px;padding:14px;background:rgba(255,255,255,.02)}
+  .dash-n{display:block;font-family:var(--disp);font-weight:600;font-size:1.5rem;color:var(--txt);letter-spacing:-.02em}
+  .dash-l{display:block;font-size:.74rem;color:var(--sub);margin-top:4px;text-wrap:pretty}
+  .dash-bars{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .dash-bars-h{font-size:.8rem;color:var(--sub);margin-bottom:12px}
+  .dash-bars-h b{color:var(--ok);font-weight:500}
+  .dash-bar{display:grid;grid-template-columns:150px 1fr 26px;align-items:center;gap:10px;margin:8px 0;font-size:.78rem;color:var(--sub)}
+  @media(max-width:620px){.dash-bar{grid-template-columns:92px 1fr 22px}}
+  .dash-bar>span{text-align:right}
+  .dash-bar .track{height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+  .dash-bar .track i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,rgba(62,207,142,.4),var(--ok))}
+  .dash-bar b{color:var(--txt);font-family:var(--mono);font-size:.72rem}
+  .dash-foot{font-size:.72rem;color:var(--dim);margin-top:14px;text-wrap:pretty}
+  /* Блок цен */
+  .price{margin-top:18px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  .price-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line)}
+  .price-svc{font-size:.92rem;color:var(--txt)}
+  .price-svc b{color:var(--ok);font-weight:500}
+  .price-val{font-family:var(--mono);font-size:.9rem;color:var(--ok);white-space:nowrap;font-weight:500}
+  .price-note{font-size:.82rem;color:var(--sub);padding:15px 20px;text-wrap:pretty;margin:0}
+  .price-note b{color:var(--txt);font-weight:500}
 </style>
 </head>
 <body>
@@ -399,6 +426,23 @@
     <li><b>Доля решённых без человека</b> — сколько обращений бот закрыл сам, не дёргая менеджера.</li>
     <li><b>Темы и пики нагрузки</b> — о чём и когда спрашивают чаще.</li>
   </ul>
+  <div class="dash">
+    <div class="dash-head">Пример дашборда <span>· иллюстративные данные, не реальный клиент</span></div>
+    <div class="dash-tiles">
+      <div class="dash-tile"><span class="dash-n">47</span><span class="dash-l">заявок за месяц</span></div>
+      <div class="dash-tile"><span class="dash-n">18%</span><span class="dash-l">диалог → заявка</span></div>
+      <div class="dash-tile"><span class="dash-n">64%</span><span class="dash-l">решено без человека</span></div>
+      <div class="dash-tile"><span class="dash-n">31</span><span class="dash-l">вопроса без ответа</span></div>
+    </div>
+    <div class="dash-bars">
+      <div class="dash-bars-h">Где теряются клиенты в воронке заявки — <b>что чинить в сценарии</b></div>
+      <div class="dash-bar"><span>дошли до меню</span><div class="track"><i style="width:100%"></i></div><b>100%</b></div>
+      <div class="dash-bar"><span>начали заявку</span><div class="track"><i style="width:54%"></i></div><b>54%</b></div>
+      <div class="dash-bar"><span>оставили контакт</span><div class="track"><i style="width:31%"></i></div><b>31%</b></div>
+      <div class="dash-bar"><span>заявка оформлена</span><div class="track"><i style="width:18%"></i></div><b>18%</b></div>
+    </div>
+    <p class="dash-foot">Так выглядит панель, которую подключаем опцией: сколько заявок, где отваливаются клиенты и чем дополнить сценарий. Цифры — иллюстрация.</p>
+  </div>
   <p class="pay"><b>Приватность:</b> данные собираются на вашей стороне, третьим лицам не передаются. Объём — от простого лога заявок до полной панели.</p>
 </section>
 
@@ -414,9 +458,15 @@
       <li><b>Админка и аналитика</b> — сколько заявок, что спрашивают, где отваливаются.</li>
       <li><b>Деплой 24/7</b> — на вашем сервере, с мониторингом и автоперезапуском.</li>
     </ul>
+    <h3 class="tryit-h">Сколько это стоит</h3>
+    <div class="price">
+      <div class="price-row"><span class="price-svc"><b>Telegram-бот под ключ</b></span><span class="price-val">от 25 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">ИИ-чатбот с базой знаний</span><span class="price-val">от 50 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">Интеграция / автоматизация</span><span class="price-val">от 20 000 ₽</span></div>
+      <p class="price-note">Это ориентиры — точная цена после короткого обсуждения (зависит от сценария и интеграций: CRM, оплаты, база знаний). <b>Без риска:</b> бесплатный разбор задачи и открытый код до оплаты; оплата по этапам, первый заказ — через безопасную сделку/эскроу; бесплатные правки по ТЗ 2 недели после сдачи.</p>
+    </div>
     <p class="pay"><b>Как начинаем:</b> вы описываете задачу и сценарий → я оцениваю объём и
-    называю фиксированную цену → собираю, показываю в тестовом боте, передаю с документацией.<br>
-    <b>Оплата:</b> по этапам; первый заказ — через безопасную сделку биржи или эскроу.</p>
+    называю фиксированную цену → собираю, показываю в тестовом боте, передаю с документацией.</p>
 
     <h3 class="tryit-h">Без обязательств</h3>
     <div class="tryit">
@@ -489,5 +539,6 @@
   </div>
 </footer>
 <script src="tg-demo.js"></script>
+<script src="/assistant.js"></script>
 </body>
 </html>

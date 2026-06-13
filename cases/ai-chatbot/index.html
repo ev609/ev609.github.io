@@ -231,6 +231,33 @@
   .xcard .xk{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);display:block}
   .xcard .xt{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);display:block;margin:8px 0 6px;letter-spacing:-.01em}
   .xcard .xd{font-size:.85rem;color:var(--sub);display:block;text-wrap:pretty}
+  /* Мок-дашборд аналитики (иллюстрация, демо-данные) */
+  .dash{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:20px 22px}
+  .dash-head{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);margin-bottom:16px}
+  .dash-head span{color:var(--dim)}
+  .dash-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:620px){.dash-tiles{grid-template-columns:1fr 1fr}}
+  .dash-tile{border:1px solid var(--line);border-radius:11px;padding:14px;background:rgba(255,255,255,.02)}
+  .dash-n{display:block;font-family:var(--disp);font-weight:600;font-size:1.5rem;color:var(--txt);letter-spacing:-.02em}
+  .dash-l{display:block;font-size:.74rem;color:var(--sub);margin-top:4px;text-wrap:pretty}
+  .dash-bars{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .dash-bars-h{font-size:.8rem;color:var(--sub);margin-bottom:12px}
+  .dash-bars-h b{color:var(--ok);font-weight:500}
+  .dash-bar{display:grid;grid-template-columns:150px 1fr 26px;align-items:center;gap:10px;margin:8px 0;font-size:.78rem;color:var(--sub)}
+  @media(max-width:620px){.dash-bar{grid-template-columns:92px 1fr 22px}}
+  .dash-bar>span{text-align:right}
+  .dash-bar .track{height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+  .dash-bar .track i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,rgba(62,207,142,.4),var(--ok))}
+  .dash-bar b{color:var(--txt);font-family:var(--mono);font-size:.72rem}
+  .dash-foot{font-size:.72rem;color:var(--dim);margin-top:14px;text-wrap:pretty}
+  /* Блок цен */
+  .price{margin-top:18px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  .price-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line)}
+  .price-svc{font-size:.92rem;color:var(--txt)}
+  .price-svc b{color:var(--ok);font-weight:500}
+  .price-val{font-family:var(--mono);font-size:.9rem;color:var(--ok);white-space:nowrap;font-weight:500}
+  .price-note{font-size:.82rem;color:var(--sub);padding:15px 20px;text-wrap:pretty;margin:0}
+  .price-note b{color:var(--txt);font-weight:500}
   @media(max-width:560px){.rag-form{flex-direction:column}.rag-msg{max-width:94%}}
 
   footer{border-top:1px solid var(--line);padding:32px 0 48px;margin-top:28px}
@@ -438,6 +465,22 @@
     <li><b>Удовлетворённость (CSAT)</b> — оценка ответов пользователями; отраслевой ориентир — 75%+.</li>
     <li><b>Темы и пики нагрузки</b> — о чём спрашивают чаще и когда.</li>
   </ul>
+  <div class="dash">
+    <div class="dash-head">Пример дашборда <span>· иллюстративные данные, не реальный клиент</span></div>
+    <div class="dash-tiles">
+      <div class="dash-tile"><span class="dash-n">61%</span><span class="dash-l">решено без человека</span></div>
+      <div class="dash-tile"><span class="dash-n">14%</span><span class="dash-l">конверсия в заявку</span></div>
+      <div class="dash-tile"><span class="dash-n">88%</span><span class="dash-l">CSAT</span></div>
+      <div class="dash-tile"><span class="dash-n">23</span><span class="dash-l">вопроса без ответа</span></div>
+    </div>
+    <div class="dash-bars">
+      <div class="dash-bars-h">Частые вопросы без ответа — <b>готовый план пополнения базы</b></div>
+      <div class="dash-bar"><span>возврат средств</span><div class="track"><i style="width:88%"></i></div><b>14</b></div>
+      <div class="dash-bar"><span>интеграция с 1С</span><div class="track"><i style="width:56%"></i></div><b>9</b></div>
+      <div class="dash-bar"><span>мобильное приложение</span><div class="track"><i style="width:38%"></i></div><b>6</b></div>
+    </div>
+    <p class="dash-foot">Так выглядит панель, которую подключаем опцией: видно, что бот закрывает сам, где теряет клиентов и чем пополнить базу. Цифры — иллюстрация.</p>
+  </div>
   <p class="pay"><b>Приватность:</b> данные собираются на вашей стороне, третьим лицам не передаются. Объём дашборда — под вашу задачу, от простого лога вопросов до полной панели.</p>
 </section>
 
@@ -457,10 +500,16 @@
       <li><b>Хостинг по-вашему</b> — на вашем сервере или в облаке; ключи и данные остаются
       у вас.</li>
     </ul>
+    <h3 class="tryit-h">Сколько это стоит</h3>
+    <div class="price">
+      <div class="price-row"><span class="price-svc"><b>ИИ-чатбот с базой знаний</b></span><span class="price-val">от 50 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">Telegram-бот под ключ</span><span class="price-val">от 25 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">Интеграция / автоматизация</span><span class="price-val">от 20 000 ₽</span></div>
+      <p class="price-note">Это ориентиры — точная цена после короткого обсуждения (зависит от объёма базы знаний и нужных интеграций). <b>Без риска:</b> бесплатный разбор задачи и открытое демо до оплаты; оплата по этапам, первый заказ — через безопасную сделку/эскроу; бесплатные правки по ТЗ 2 недели после сдачи.</p>
+    </div>
     <p class="pay"><b>Как начинаем:</b> вы описываете задачу и присылаете пример документов →
     я оцениваю объём и называю фиксированную цену → собираю, показываю на ваших данных,
-    передаю с документацией.<br>
-    <b>Оплата:</b> по этапам; первый заказ — через безопасную сделку биржи или эскроу.</p>
+    передаю с документацией.</p>
 
     <h3 class="tryit-h">Без обязательств</h3>
     <div class="tryit">
@@ -533,5 +582,6 @@
   </div>
 </footer>
 <script src="demo.js"></script>
+<script src="/assistant.js"></script>
 </body>
 </html>
