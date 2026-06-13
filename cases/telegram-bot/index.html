@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Telegram-бот под ключ — кейс AlfaFond /dev</title>
+<meta name="description" content="Telegram-бот для бизнеса: меню, приём заявок, ответы по базе знаний, уведомление менеджеру. Проверьте бота прямо на странице. Открытый код + внедрение под ключ с интеграцией CRM и оплат.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://alfafond.com/cases/telegram-bot/">
+<meta property="og:title" content="Telegram-бот под ключ — кейс AlfaFond /dev">
+<meta property="og:description" content="Меню, приём заявок, ответы по базе знаний. Живое демо на странице + внедрение под ключ.">
+<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/cases/telegram-bot/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0e'/%3E%3Cpath d='M16 6 8 26M16 6l8 20' stroke='%23f4f5f7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M11.4 19.6l3 2.9 5.6-6.6' stroke='%233ecf8e' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#717784;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --warn:#e0a23c; --bad:#e0675b;
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}  /* якорь не заезжает под липкую шапку */
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:600;font-size:1.02rem;letter-spacing:-.01em}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:680px){.bar nav{display:none}}  /* переключатель языков остаётся виден на мобиле */
+
+  .hero{padding:84px 28px 52px}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);margin-bottom:22px}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(2.2rem,5.4vw,3.6rem);
+    line-height:1.06;letter-spacing:-.035em;max-width:18ch;text-wrap:balance}
+  h1 .ok{color:var(--ok)}
+  .lead{color:var(--sub);max-width:60ch;margin-top:22px;font-size:1.04rem;text-wrap:pretty}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:26px}
+  .chip{font-family:var(--mono);font-size:.7rem;color:var(--sub);padding:5px 12px;
+    border:1px solid var(--line);border-radius:99px;background:var(--card)}
+  .chip.hl{color:var(--ok);background:var(--ok-dim);border-color:rgba(62,207,142,.25)}
+  .chip.wip{color:var(--warn);background:rgba(224,162,60,.12);border-color:rgba(224,162,60,.3)}
+  .cta-row{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;
+    padding:13px 24px;border-radius:9px;transition:transform .15s,box-shadow .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+
+  /* Вертикальный ритм секций. ВАЖНО: секции имеют класс .wrap{margin:0 auto;padding:0 28px},
+     который по специфичности (класс > тег) перебивает и padding, и margin на голом `section`.
+     Поэтому ритм задаём селектором `section.wrap` (специфичность выше .wrap). Плавно через clamp. */
+  section.wrap{margin-top:clamp(72px,8vw,124px)}
+  section.wrap:first-of-type{margin-top:clamp(44px,5vw,72px)}
+  section.wrap:last-of-type{padding-bottom:clamp(64px,7vw,96px)}
+  .sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);
+    display:flex;align-items:center;gap:16px;margin-bottom:14px}  /* лейбл прижат к своему h2 */
+  .sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(62,207,142,.35),transparent)}
+  h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.45rem,3vw,2rem);line-height:1.14;
+    letter-spacing:-.025em;text-wrap:balance}
+  h2 .ok{color:var(--ok)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .cell{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 24px;
+    transition:border-color .18s}
+  .cell:hover{border-color:var(--line-h)}
+  .cell h3{font-family:var(--disp);font-weight:600;font-size:.98rem;margin-bottom:10px;letter-spacing:-.01em}
+  .cell p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+  .cell .mono{font-family:var(--mono);font-size:.68rem;color:var(--dim);display:block;margin-top:12px;line-height:1.9}
+
+  .diff{border:1px solid rgba(62,207,142,.3);border-radius:16px;padding:36px 34px;margin-top:32px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .diff p{color:var(--sub);max-width:68ch;margin-top:12px;font-size:.92rem;text-wrap:pretty}
+  .diff .stat{font-family:var(--mono);font-size:.72rem;color:var(--ok);margin-top:18px;line-height:2}
+
+  ul.flat{list-style:none;margin-top:16px}
+  ul.flat li{padding-left:24px;position:relative;margin:8px 0;font-size:.88rem;color:var(--sub);text-wrap:pretty}
+  ul.flat li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  ul.flat b{color:var(--txt);font-weight:500}
+
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}
+  @media(max-width:760px){.modes{grid-template-columns:1fr}}
+  .mode{border:1px solid var(--line);border-radius:14px;padding:24px 22px;background:var(--card)}
+  .mode .t{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ok)}
+  .mode h3{font-family:var(--disp);font-weight:600;font-size:1rem;margin:10px 0 8px;letter-spacing:-.01em}
+  .mode p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+  .guard{display:flex;gap:14px;align-items:flex-start;margin-top:26px;padding:20px 22px;
+    border:1px solid rgba(62,207,142,.3);border-radius:14px;background:var(--ok-dim)}
+  .guard svg{flex:none;margin-top:2px}
+  .guard p{font-size:.88rem;color:var(--txt);text-wrap:pretty}
+  .guard b{font-weight:500}
+  .guard span{color:var(--sub)}
+
+  .figure{margin-top:24px;border:1px solid var(--line);border-radius:14px;padding:24px 24px 22px;background:var(--card)}
+  .figure .cap-top{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .figure svg{width:100%;height:auto;display:block}
+  .figure svg text{font-family:var(--mono)}
+  .figure .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-family:var(--mono);font-size:.66rem;color:var(--sub)}
+  .figure .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;vertical-align:middle}
+  .figure .take{font-size:.86rem;color:var(--sub);margin-top:16px;text-wrap:pretty;border-top:1px solid var(--line);padding-top:14px}
+  .figure .take b{color:var(--txt);font-weight:500}
+
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+  @media(max-width:680px){.flow{grid-template-columns:1fr}}
+  .fstep{display:flex;gap:12px;align-items:flex-start}
+  .fstep .fn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ok-dim);color:var(--ok);
+    font-family:var(--mono);font-size:.76rem;font-weight:500;display:flex;align-items:center;justify-content:center}
+  .fstep p{font-size:.85rem;color:var(--sub);text-wrap:pretty;margin:0}
+  .fstep b{color:var(--txt);font-weight:500}
+  .pay{font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-top:22px;
+    border-top:1px solid var(--line);padding-top:14px;line-height:1.8}
+  .pay b{color:var(--sub);font-weight:500}
+  .tryit-h{font-family:var(--disp);font-weight:600;font-size:1.05rem;letter-spacing:-.015em;margin-top:30px}
+  .tryit{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:16px}
+  @media(max-width:760px){.tryit{grid-template-columns:1fr}}
+  .tryit .ti{border:1px solid var(--line);border-radius:12px;padding:18px 18px;background:var(--card)}
+  .tryit .ti .tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase}
+  .tryit .ti .tag.free{color:var(--ok)}
+  .tryit .ti .tag.paid{color:var(--warn)}
+  .tryit .ti h4{font-family:var(--disp);font-weight:600;font-size:.92rem;margin:8px 0 7px;letter-spacing:-.01em}
+  .tryit .ti p{font-size:.81rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .tryit .ti a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.45)}
+  .tryit .ti a:hover{border-bottom-color:var(--ok)}
+  .lab{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:26px}
+  @media(max-width:820px){.lab{grid-template-columns:1fr}}
+  .lab .lc{border:1px solid var(--line);border-radius:12px;padding:20px 20px;background:var(--card);display:flex;flex-direction:column}
+  .lab .lc .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .lab .lc h4{font-family:var(--disp);font-weight:600;font-size:.95rem;margin:7px 0 8px;letter-spacing:-.01em}
+  .lab .lc .rule{font-size:.82rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .lab .lc .nums{font-family:var(--mono);font-size:.72rem;margin-top:14px;border-top:1px solid var(--line);padding-top:13px;line-height:2}
+  .lab .lc .nums .row{display:flex;justify-content:space-between;gap:10px}
+  .lab .lc .nums .is{color:var(--warn)}
+  .lab .lc .nums .pos{color:var(--ok)}
+  .lab .lc .nums .neg{color:var(--bad)}
+  .lab .lc .vd{margin-top:12px;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+    align-self:flex-start;border:1px solid var(--line-h);border-radius:20px;padding:3px 10px;color:var(--sub)}
+  .lab .lc .vd.overfit{color:var(--bad);border-color:var(--bad)}
+  .lab-run{margin-top:24px;border:1px solid var(--line);border-radius:12px;background:#06070a;
+    padding:18px 20px;font-family:var(--mono);font-size:.78rem;color:var(--sub);overflow-x:auto}
+  .lab-run .c{color:var(--ok)}
+  .lab-run .muted{color:var(--dim)}
+  .lab-note{font-size:.84rem;color:var(--sub);margin-top:16px;text-wrap:pretty}
+  .lab-note a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.45)}
+  .pipeline{display:grid;grid-template-columns:repeat(4,1fr);margin-top:26px;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+  @media(max-width:760px){.pipeline{grid-template-columns:1fr 1fr}}
+  @media(max-width:440px){.pipeline{grid-template-columns:1fr}}
+  .pstage{padding:20px 18px;border-right:1px solid var(--line)}
+  .pstage:last-child{border-right:0}
+  @media(max-width:760px){.pstage:nth-child(2){border-right:0}}
+  .pstage .pn{font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .pstage h4{font-family:var(--disp);font-weight:600;font-size:.92rem;margin:8px 0 6px;letter-spacing:-.01em}
+  .pstage p{font-size:.78rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .pstage.demo{background:var(--ok-dim)}
+  .pstage.demo h4{color:var(--ok)}
+  .pstage .tag{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);border-radius:20px;padding:3px 9px}
+  .contact{margin-top:26px;max-width:620px}
+  .f-row{display:flex;gap:10px;flex-wrap:wrap}
+  .f-row input{flex:1;min-width:200px}
+  .contact input,.contact textarea{width:100%;font-family:var(--body);font-size:.9rem;color:var(--txt);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+  .contact input::placeholder,.contact textarea::placeholder{color:var(--dim)}
+  .contact input:focus,.contact textarea:focus{outline:none;border-color:var(--ok)}
+  .contact textarea{resize:vertical}
+  .contact .btn{border:none;cursor:pointer;margin-top:2px}
+  .f-note{display:block;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:12px}
+
+  footer{border-top:1px solid var(--line);padding:32px 0 48px;margin-top:28px}
+  footer .cols{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+  .mono-s{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+
+  a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){
+    .btn,.cell{transition:none}
+    html{scroll-behavior:auto}
+  }
+</style><style>
+  /* Виджет живого Telegram-бота (tg-demo.js) — переиспользует .rag-msg/.rag-u/.rag-b */
+  .rag-demo{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 18px 16px}
+  .rag-log{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding:6px 4px 10px}
+  .rag-msg{max-width:86%;padding:11px 14px;border-radius:13px;font-size:.88rem;line-height:1.5;text-wrap:pretty;white-space:pre-line}
+  .rag-u{align-self:flex-end;background:var(--ok);color:#07120c;border-bottom-right-radius:4px;font-weight:500}
+  .rag-b{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .rag-b.rag-no{border-color:rgba(224,162,60,.4);background:rgba(224,162,60,.08)}
+  .rag-txt{color:var(--txt)}
+  .rag-src{margin-top:8px;font-family:var(--mono);font-size:.64rem;color:var(--ok);letter-spacing:.02em}
+  .tg-btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+  .tg-btn{font-family:var(--body);font-size:.82rem;color:var(--ok);background:rgba(62,207,142,.08);
+    border:1px solid rgba(62,207,142,.3);border-radius:9px;padding:8px 13px;cursor:pointer;transition:background .15s}
+  .tg-btn:hover{background:rgba(62,207,142,.16)}
+  .rag-form{display:flex;gap:10px;margin-top:14px}
+  .rag-form input{flex:1;font-family:var(--body);font-size:.9rem;color:var(--txt);background:rgba(0,0,0,.25);
+    border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .rag-form input::placeholder{color:var(--dim)}
+  .rag-form input:focus{outline:none;border-color:var(--ok)}
+  .rag-form .btn{border:none;cursor:pointer;white-space:nowrap}
+  .rag-foot{font-size:.74rem;color:var(--dim);margin-top:12px;text-wrap:pretty}
+  @media(max-width:560px){.rag-form{flex-direction:column}.rag-msg{max-width:94%}}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>AlfaFond <span class="path">/dev</span></span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="Разделы">
+        <a href="#what">Что делает</a><a href="#demo">Демо</a><a href="#how">Как устроено</a><a href="#build">Внедрение</a><a href="#contact">Заказать</a>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<header class="hero wrap">
+  <div class="kicker">Кейс · Telegram-бот под ключ</div>
+  <h1>Telegram-бот, который <span class="ok">принимает заявки и отвечает клиентам.</span></h1>
+  <p class="lead">Меню, пошаговый приём заявок с уведомлением менеджеру, ответы на вопросы
+  по вашей базе знаний — круглосуточно и без вашего участия. Бот снимает с вас рутину
+  первого контакта: квалифицирует клиента, собирает контакты и задачу, отвечает на типовое.</p>
+  <div class="chips">
+    <span class="chip hl">меню + кнопки</span>
+    <span class="chip">приём заявок</span>
+    <span class="chip">ответы по базе знаний</span>
+    <span class="chip">уведомление менеджеру</span>
+    <span class="chip">CRM · оплаты</span>
+  </div>
+  <div class="cta-row">
+    <a class="btn btn-ok" href="#demo">Попробовать бота →</a>
+    <a class="btn btn-ghost" href="https://github.com/ev609/telegram-bot">Открытый код</a>
+  </div>
+</header>
+
+<section class="wrap" id="what">
+  <div class="sec-label">01 · Что он делает</div>
+  <h2>Работает за вас <span class="ok">в первом контакте</span></h2>
+  <div class="grid2">
+    <div class="cell">
+      <h3>Меню на кнопках</h3>
+      <p>Клиент не теряется: услуги, цены, заявка, вопрос — всё в одно нажатие. Никаких «напишите менеджеру и ждите».</p>
+    </div>
+    <div class="cell">
+      <h3>Принимает заявки пошагово</h3>
+      <p>Бот спрашивает имя, контакт и задачу, показывает сводку на подтверждение и тут же присылает заявку менеджеру в Telegram.</p>
+    </div>
+    <div class="cell">
+      <h3>Отвечает по базе знаний</h3>
+      <p>Типовые вопросы (сроки, оплата, гарантии) — мгновенно. Чего не знает — честно говорит и предлагает оставить заявку, а не выдумывает.</p>
+    </div>
+    <div class="cell">
+      <h3>24/7 без вас</h3>
+      <p>Ночью, в выходные, в наплыв — бот отвечает сразу. Вы получаете готовые заявки с контактами, а не пропущенные сообщения.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="demo">
+  <div class="sec-label">02 · Попробуйте прямо здесь</div>
+  <h2>Живой бот <span class="ok">демо-студии</span></h2>
+  <p class="lead">Нажимайте кнопки, как в Telegram. Пройдите «Оставить заявку» до конца —
+  увидите, как бот собирает данные и передаёт их менеджеру. Спросите про сроки или оплату.
+  Работает прямо в браузере.</p>
+
+  <div class="rag-demo">
+    <div class="rag-log" id="tg-log" aria-live="polite"></div>
+    <form class="rag-form" id="tg-form" autocomplete="off">
+      <input type="text" id="tg-q" placeholder="Напишите боту или нажмите кнопку…" aria-label="Сообщение боту">
+      <button type="submit" class="btn btn-ok">Отправить</button>
+    </form>
+    <p class="rag-foot">Это тот же код диалога, что и в боевом боте (github.com/ev609/telegram-bot),
+    запущенный прямо в браузере. В реальном проекте бот живёт в Telegram и шлёт заявки вам.</p>
+  </div>
+</section>
+
+<section class="wrap" id="how">
+  <div class="sec-label">03 · Как устроено</div>
+  <h2>Чистая архитектура — <span class="ok">логика отдельно от Telegram</span></h2>
+  <p class="lead">Сценарий бота отделён от транспорта. Поэтому его можно запустить и проверить
+  без токена и без зависимостей (офлайн-симулятор), а Telegram подключается тонким слоем.
+  Это и значит «бот под ключ», а не хрупкий скрипт.</p>
+  <div class="pipeline">
+    <div class="pstage">
+      <div class="pn">01</div>
+      <h4>Меню</h4>
+      <p>Клиент выбирает: услуги, цены, заявка, вопрос.</p>
+    </div>
+    <div class="pstage">
+      <div class="pn">02</div>
+      <h4>Диалог</h4>
+      <p>Пошаговый сбор заявки или ответ по базе знаний.</p>
+    </div>
+    <div class="pstage">
+      <div class="pn">03</div>
+      <h4>Заявка / ответ</h4>
+      <p>Подтверждение данных или честный ответ (без выдумок).</p>
+    </div>
+    <div class="pstage demo">
+      <div class="pn">04</div>
+      <h4>Уведомление</h4>
+      <p>Готовая заявка падает менеджеру в Telegram / CRM.</p>
+      <span class="tag">вам</span>
+    </div>
+  </div>
+  <p class="lab-note" style="margin-top:24px">Открытый код с офлайн-симулятором (запуск без токена):
+  <a href="https://github.com/ev609/telegram-bot">github.com/ev609/telegram-bot →</a></p>
+</section>
+
+<section class="wrap" id="build">
+  <div class="diff">
+    <div class="sec-label">04 · Внедрение под ключ</div>
+    <h2>Демо — это каркас. <span class="ok">Под ваш бизнес добавляется</span></h2>
+    <ul class="flat">
+      <li><b>Интеграция с CRM</b> — заявки сразу в amoCRM, Bitrix24 или Google Sheets, без ручного переноса.</li>
+      <li><b>Приём оплат</b> — оплата услуг или бронирование прямо в боте.</li>
+      <li><b>Серьёзная база знаний</b> — полноценный поиск по вашим документам вместо простого FAQ (наш отдельный движок RAG).</li>
+      <li><b>Рассылки и напоминания</b> — по событию или расписанию, сегментам клиентов.</li>
+      <li><b>Админка и аналитика</b> — сколько заявок, что спрашивают, где отваливаются.</li>
+      <li><b>Деплой 24/7</b> — на вашем сервере, с мониторингом и автоперезапуском.</li>
+    </ul>
+    <p class="pay"><b>Как начинаем:</b> вы описываете задачу и сценарий → я оцениваю объём и
+    называю фиксированную цену → собираю, показываю в тестовом боте, передаю с документацией.<br>
+    <b>Оплата:</b> по этапам; первый заказ — через безопасную сделку биржи или эскроу.</p>
+
+    <h3 class="tryit-h">Без обязательств</h3>
+    <div class="tryit">
+      <div class="ti">
+        <span class="tag free">бесплатно</span>
+        <h4>Разбор задачи</h4>
+        <p>Обсудим сценарий бота и интеграции под ваш бизнес, прикину объём и цену.</p>
+      </div>
+      <div class="ti">
+        <span class="tag free">руками</span>
+        <h4>Открытый код</h4>
+        <p>Запустите офлайн-симулятор и посмотрите архитектуру сами. <a href="https://github.com/ev609/telegram-bot">репозиторий →</a></p>
+      </div>
+      <div class="ti">
+        <span class="tag paid">пилот</span>
+        <h4>Платный пилот</h4>
+        <p>Рабочий бот с вашим меню и приёмом заявок за фиксированную небольшую сумму.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="contact">
+  <div class="sec-label">05 · Заказать</div>
+  <h2>Опишите задачу — <span class="ok">отвечу по вашему контакту</span></h2>
+  <p class="lead">Какой бизнес, что должен делать бот (меню, заявки, вопросы, оплаты),
+  с чем интегрировать (CRM, таблицы). Этого хватит для оценки.</p>
+  <form class="contact" action="https://api.web3forms.com/submit" method="POST">
+    <input type="hidden" name="access_key" value="500d8f26-693d-481a-9062-b02aa72a97db">
+    <input type="hidden" name="subject" value="AlfaFond — Telegram-бот под ключ, заявка">
+    <input type="hidden" name="from_name" value="alfafond.com /cases/telegram-bot">
+    <input type="text" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+    <div class="f-row">
+      <input type="text" name="contact" placeholder="Как с вами связаться: e-mail или @telegram" required aria-label="Контакт">
+      <input type="text" name="task" placeholder="Что должен делать бот?" aria-label="Задача">
+    </div>
+    <textarea name="message" rows="2" placeholder="Бизнес и сценарий, интеграции (необязательно)" aria-label="Сообщение"></textarea>
+    <button type="submit" class="btn btn-ok">Отправить заявку →</button>
+    <span class="f-note">Отвечу на указанный вами контакт. Данные использую только чтобы ответить.</span>
+  </form>
+</section>
+
+<footer>
+  <div class="wrap cols">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>AlfaFond <span class="path">/dev</span></span>
+    </div>
+    <span class="mono-s">alfafond.com/dev · инженерия ИИ и автоматизации</span>
+  </div>
+</footer>
+<script src="tg-demo.js"></script>
+</body>
+</html>
