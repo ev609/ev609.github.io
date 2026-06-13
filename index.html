@@ -93,6 +93,10 @@
   .door .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
   .door h2{font-family:var(--disp);font-weight:600;font-size:1.32rem;letter-spacing:-.02em;margin:12px 0 8px}
   .door p{font-size:.88rem;color:var(--sub);text-wrap:pretty}
+  .door.primary{border-color:rgba(62,207,142,.4);
+    background:radial-gradient(600px 220px at 85% 0%, rgba(62,207,142,.10), transparent 60%), var(--card)}
+  .door.primary .tag{color:var(--ok)}
+  .door.primary::after{color:var(--ok)}
   .door .meta{font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:18px;display:block}
 
   footer{border-top:1px solid var(--line);padding:20px 0;font-family:var(--mono);font-size:.7rem;color:var(--dim)}
@@ -125,8 +129,8 @@
   </div>
   <div class="bar-right">
     <nav class="nav" aria-label="Sections">
-      <a href="/ru/">research /ru</a>
       <a href="/dev/">engineering /dev</a>
+      <a href="/ru/">research /ru</a>
     </nav>
     <div class="lang" role="group" aria-label="Language">
       <a href="/ru/" hreflang="ru">RU</a><a href="/" hreflang="en" class="on" aria-current="true">EN</a>
@@ -152,19 +156,19 @@
     </div>
 
     <div class="doors rise" id="enter">
+      <a class="door primary" href="/dev/">
+        <span class="tag">Engineering · hire</span>
+        <h2>Software &amp; AI engineering</h2>
+        <p>AI chatbots, Telegram bots, parsers, integrations, web services — plus production
+        trading infrastructure. Build-to-spec with live demos and open code you can try.</p>
+        <span class="meta">in English / Russian · /dev · live demos</span>
+      </a>
       <a class="door" href="/ru/">
         <span class="tag">Research</span>
         <h2>Grounded equity research</h2>
         <p>Issuer deep-dives where every number is cross-checked against primary sources
         and carries a verification badge. Currently covering MOEX-listed companies.</p>
         <span class="meta">in Russian · /ru</span>
-      </a>
-      <a class="door" href="/dev/">
-        <span class="tag">Engineering</span>
-        <h2>Software &amp; AI engineering</h2>
-        <p>AI chatbots, Telegram bots, parsers, integrations and automation — plus trading
-        infrastructure. Contract work with live demos you can try.</p>
-        <span class="meta">in English · /dev · live demos</span>
       </a>
     </div>
   </div>

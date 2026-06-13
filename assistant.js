@@ -199,6 +199,28 @@ padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit}\
     }
     hid("Страница", location.pathname + location.search);
     hid("Источник", document.referrer || "(прямой переход)");
+    // Inline-успех вместо голой JSON-страницы web3forms (правило проекта: inline, не alert).
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var btn = f.querySelector('button[type="submit"], .btn-ok');
+      if (btn) { btn.disabled = true; btn.textContent = "Отправляю…"; }
+      fetch(f.action, { method: "POST", body: new FormData(f) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.success) throw 0;
+          var ok = document.createElement("p");
+          ok.style.cssText = "margin-top:14px;color:#3ecf8e;font-size:.92rem";
+          ok.textContent = "✓ Заявка отправлена — отвечу лично по указанному контакту. Спасибо!";
+          f.innerHTML = ""; f.appendChild(ok);
+        })
+        .catch(function () {
+          if (btn) { btn.disabled = false; btn.textContent = "Отправить заявку →"; }
+          var er = f.querySelector(".f-err") || document.createElement("p");
+          er.className = "f-err"; er.style.cssText = "margin-top:12px;color:#e0a23c;font-size:.85rem";
+          er.textContent = "Не удалось отправить — проверьте соединение и попробуйте ещё раз, или напишите на контакт в подвале.";
+          if (!er.parentNode) f.appendChild(er);
+        });
+    });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire); else wire();
 })();
