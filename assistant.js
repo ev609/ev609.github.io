@@ -62,6 +62,11 @@ overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);font-family:'Golos Text',s
 .afa-chip{font:400 12px 'IBM Plex Mono',monospace;color:#a0a6b0;background:rgba(255,255,255,.03);\
 border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:6px 11px;cursor:pointer}\
 .afa-chip:hover{color:#f4f5f7;border-color:rgba(255,255,255,.2)}\
+.afa-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}\
+.afa-act{font:400 12.5px 'Golos Text',sans-serif;color:#3ecf8e;background:rgba(62,207,142,.08);\
+border:1px solid rgba(62,207,142,.3);border-radius:9px;padding:7px 12px;cursor:pointer}\
+.afa-act:hover{background:rgba(62,207,142,.16)}\
+.afa-act.afa-act-dim{color:#a0a6b0;background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.12)}\
 .afa-form{display:flex;gap:8px;padding:12px 14px;border-top:1px solid rgba(255,255,255,.08)}\
 .afa-form input{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:9px;\
 padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit}\
@@ -93,15 +98,77 @@ padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit}\
     var log=panel.querySelector("#afa-log"), chips=panel.querySelector("#afa-chips"),
         form=panel.querySelector("#afa-form"), input=panel.querySelector("#afa-q");
     var greeted=false, nudged=false;
+    // Конверсия (детерминированно, без LLM): value-first CTA только на high-intent →
+    // захват лида в чате (FSM) → отправка Web3forms. Гардрейлы честности: без ложного
+    // SLA, без давления, отмена на каждом шаге, валидация контакта, без транскрипта.
+    var WEB3="500d8f26-693d-481a-9062-b02aa72a97db";
+    var HIGH=["стоит","стоимост","цена","ценан","сколько","бюджет","срок","когда","как начать","начать","заказ","оплат","эскроу","usdt","договор"];
+    var TASK_OPTS=["ИИ-чатбот по базе знаний","Telegram-бот","Парсер / интеграция","Другое — напишу сам"];
+    var fsm=null, ctaOff=false, ctaCd=0;
+    function highIntent(q){q=(q||"").toLowerCase();for(var i=0;i<HIGH.length;i++)if(q.indexOf(HIGH[i])>=0)return true;return false;}
+    function validContact(v){v=(v||"").trim();return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)||/^@?[A-Za-z0-9_]{4,32}$/.test(v);}
 
     function addUser(q){log.appendChild(el("div","afa-msg afa-u",q));log.scrollTop=log.scrollHeight;}
-    function addBot(res){var m=el("div","afa-msg afa-b"+(res.ok?"":" afa-no"));m.appendChild(el("div",null,res.text));
-      if(res.src)m.appendChild(el("div","afa-src","раздел: "+res.src));log.appendChild(m);log.scrollTop=log.scrollHeight;}
-    function ask(q){q=(q||"").trim();if(!q)return;addUser(q);setTimeout(function(){addBot(answer(q));},150);}
+    function botMsg(text,opts){opts=opts||{};
+      var m=el("div","afa-msg afa-b"+(opts.no?" afa-no":""));
+      m.appendChild(el("div",null,text));
+      if(opts.src)m.appendChild(el("div","afa-src","раздел: "+opts.src));
+      if(opts.acts&&opts.acts.length){var row=el("div","afa-acts");opts.acts.forEach(function(a){var b=el("button","afa-act"+(a.dim?" afa-act-dim":""),a.label);b.type="button";b.addEventListener("click",function(){a.fn();});row.appendChild(b);});m.appendChild(row);}
+      log.appendChild(m);log.scrollTop=log.scrollHeight;return m;}
+    function cancelAct(){return {label:"← Отмена",dim:true,fn:function(){fsm=null;botMsg("Без проблем — смотрите, сколько нужно. Будет вопрос по цене, срокам или технологиям — спрашивайте, я рядом.");}};}
+
+    // ----- Захват лида в чате (FSM) -----
+    function startCapture(prefillTask){
+      fsm={step:"task",lead:{},tries:0};
+      if(prefillTask){fsm.lead.task=prefillTask;askScope();return;}
+      botMsg("Опишу пару вопросов — задача, объём, контакт. Это быстро. Что нужно сделать и где будет работать?",
+        {acts:TASK_OPTS.map(function(o){return {label:o,fn:function(){pickTask(o);}};}).concat([cancelAct()])});
+    }
+    function pickTask(o){addUser(o);
+      if(o.indexOf("Другое")>=0){fsm.step="task_free";botMsg("Опишите задачу в двух словах.",{acts:[cancelAct()]});}
+      else{fsm.lead.task=o;askScope();}}
+    function askScope(){fsm.step="scope";
+      botMsg("Примерный объём — для точной оценки: сколько документов в базе и какие интеграции (CRM, оплаты, Sheets)? Не знаете — пропустите.",
+        {acts:[{label:"Пропустить",dim:true,fn:function(){addUser("(пропустить)");fsm.lead.scope="не указан";askContact();}},cancelAct()]});}
+    function askContact(){fsm.step="contact";
+      botMsg("Куда прислать оценку? Оставьте e-mail или @telegram — отвечу лично. Данные использую только чтобы ответить, третьим лицам не передаю.",{acts:[cancelAct()]});}
+    function askConfirm(){fsm.step="confirm";var l=fsm.lead;
+      botMsg("Проверим:\n• Задача: "+(l.task||"—")+"\n• Объём: "+(l.scope||"не указан")+"\n• Контакт: "+l.contact+"\n\nОтправляю — заявку получит живой человек и ответит лично.",
+        {acts:[{label:"Отправить →",fn:submitLead},{label:"Поправить",dim:true,fn:function(){startCapture();}},cancelAct()]});}
+    function submitLead(){var l=fsm.lead;fsm=null;ctaOff=true;botMsg("Отправляю…");
+      var fd=new FormData();fd.append("access_key",WEB3);fd.append("subject","AlfaFond /dev — заявка из чат-ассистента");fd.append("from_name","alfafond.com /dev · chat");
+      fd.append("Контакт",l.contact);fd.append("Задача",l.task||"—");fd.append("Объём",l.scope||"не указан");
+      fd.append("Страница",location.pathname+location.search);fd.append("Источник",document.referrer||"(прямой)");
+      fetch("https://api.web3forms.com/submit",{method:"POST",body:fd}).then(function(r){return r.json();}).then(function(j){
+        if(j&&j.success)botMsg("Готово — заявка ушла на "+l.contact+". Её получит живой человек (я бот-ассистент, заявку передал) и ответит лично. Пока можно глянуть открытый код: github.com/ev609/rag-chatbot");
+        else throw 0;
+      }).catch(function(){botMsg("Не получилось отправить из чата. Продублируйте контакт и задачу через форму в разделе «Заказать» — она шлёт на ту же почту.",
+        {no:true,acts:[{label:"Открыть форму «Заказать»",fn:function(){close();var c=document.getElementById("contact");if(c)c.scrollIntoView({behavior:"smooth"});}}]});});}
+
+    function ask(q){q=(q||"").trim();if(!q)return;addUser(q);
+      if(fsm){handleFsm(q);return;}
+      setTimeout(function(){
+        var res=answer(q);if(ctaCd>0)ctaCd--;
+        if(res.ok){var acts=null;
+          if(!ctaOff&&ctaCd<=0&&highIntent(q)){ctaCd=2;acts=[{label:"Оценить мою задачу →",fn:function(){startCapture();}},{label:"Просто смотрю",dim:true,fn:function(){ctaOff=true;}}];}
+          botMsg(res.text,{src:res.src,acts:acts});
+        }else{
+          botMsg(res.text,{no:true,acts:ctaOff?null:[{label:"Передать вопрос человеку →",dim:true,fn:function(){startCapture(q);}}]});
+        }
+      },150);}
+    function handleFsm(q){
+      if(fsm.step==="task_free"){fsm.lead.task=q;askScope();return;}
+      if(fsm.step==="scope"){fsm.lead.scope=q;askContact();return;}
+      if(fsm.step==="contact"){
+        if(validContact(q)||fsm.tries>=1){fsm.lead.contact=q;askConfirm();}
+        else{fsm.tries++;botMsg("Кажется, это не похоже на e-mail или @telegram. Проверьте — куда удобнее ответить?",{no:true,acts:[cancelAct()]});}
+        return;}
+      botMsg("Нажмите кнопку ниже, чтобы продолжить.");
+    }
     function renderChips(){chips.innerHTML="";CHIPS.forEach(function(c){var b=el("button","afa-chip",c);b.type="button";b.addEventListener("click",function(){ask(c);});chips.appendChild(b);});}
 
     function open(){panel.classList.add("open");launch.style.display="none";nudge.remove();
-      if(!greeted){greeted=true;addBot({ok:true,text:GREETING,src:""});renderChips();}input.focus();}
+      if(!greeted){greeted=true;botMsg(GREETING);renderChips();}input.focus();}
     function close(){panel.classList.remove("open");launch.style.display="flex";}
 
     launch.addEventListener("click",open);
@@ -109,8 +176,10 @@ padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit}\
     form.addEventListener("submit",function(e){e.preventDefault();ask(input.value);input.value="";});
     nudge.addEventListener("click",function(e){if(e.target.classList.contains("afa-x")){nudge.remove();return;}open();});
 
-    // Проактивный пузырь (best practice: проактив >> пассив), но без агрессии — через 7с, один раз
-    setTimeout(function(){if(!greeted&&!nudged){nudged=true;document.body.appendChild(nudge);}},7000);
+    // Проактивный пузырь — по поведению (≥12с + скролл/короткая страница, ИЛИ exit-intent), один раз, НЕ на load
+    function showNudge(){if(!greeted&&!nudged){nudged=true;document.body.appendChild(nudge);}}
+    setTimeout(function(){if(window.scrollY>200||document.documentElement.scrollHeight<=window.innerHeight*1.5)showNudge();},12000);
+    document.addEventListener("mouseout",function(e){if(e.clientY<=0)showNudge();});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
