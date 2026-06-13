@@ -24,6 +24,8 @@ h1 {
   background: linear-gradient(180deg, #ffffff, #d7dbe2);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
+  /* descenders не обрезаются: расширяем область покраски вниз, layout-нейтрально */
+  padding-bottom: .2em; margin-bottom: -.2em;
 }
 h1 .ok {
   -webkit-text-fill-color: var(--ok); color: var(--ok);

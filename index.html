@@ -72,7 +72,10 @@
     line-height:1.04;letter-spacing:-.035em;text-wrap:balance;
     /* объём через тонкий градиент-филл «свет сверху» (не тень — best practice тёмной темы) */
     background:linear-gradient(180deg,#ffffff,#d7dbe2);-webkit-background-clip:text;
-    background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+    background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    /* descenders («y/g/p») не обрезаются background-clip:text при тесном line-height:
+       расширяем область покраски вниз, раскладку нейтрализуем отрицательным margin */
+    padding-bottom:.2em;margin-bottom:-.2em}
   h1 .ln{display:block}
   h1 .ok{-webkit-text-fill-color:var(--ok);color:var(--ok);text-shadow:0 0 28px rgba(62,207,142,.28)}
   .lead{color:var(--sub);max-width:58ch;margin-top:24px;font-size:1.06rem;text-wrap:pretty}
