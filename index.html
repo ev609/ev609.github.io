@@ -69,9 +69,12 @@
     border:1px solid rgba(62,207,142,.25);padding:5px 12px;border-radius:99px}
   .pill.n{color:var(--sub);background:var(--card);border-color:var(--line)}
   h1{font-family:var(--disp);font-weight:600;font-size:clamp(2.6rem,6.2vw,4.4rem);
-    line-height:1.04;letter-spacing:-.035em;text-wrap:balance}
+    line-height:1.04;letter-spacing:-.035em;text-wrap:balance;
+    /* объём через тонкий градиент-филл «свет сверху» (не тень — best practice тёмной темы) */
+    background:linear-gradient(180deg,#ffffff,#d7dbe2);-webkit-background-clip:text;
+    background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
   h1 .ln{display:block}
-  h1 .ok{color:var(--ok)}
+  h1 .ok{-webkit-text-fill-color:var(--ok);color:var(--ok);text-shadow:0 0 28px rgba(62,207,142,.28)}
   .lead{color:var(--sub);max-width:58ch;margin-top:24px;font-size:1.06rem;text-wrap:pretty}
 
   /* живая строка верифицированных чисел — продукт показывает себя */
