@@ -114,3 +114,22 @@ padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit}\
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
+
+/* Атрибуция лида: в форму заявки (form.contact) добавляем скрытые поля «откуда пришёл» —
+   страница + реферер + UTM из URL. Web3forms включает их в письмо → видно, какая статья/
+   страница принесла заявку, без отдельной аналитики. */
+(function () {
+  "use strict";
+  function wire() {
+    var f = document.querySelector("form.contact");
+    if (!f || f.dataset.attr) return;
+    f.dataset.attr = "1";
+    function hid(name, val) {
+      var i = document.createElement("input");
+      i.type = "hidden"; i.name = name; i.value = val; f.appendChild(i);
+    }
+    hid("Страница", location.pathname + location.search);
+    hid("Источник", document.referrer || "(прямой переход)");
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire); else wire();
+})();
