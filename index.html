@@ -23,7 +23,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0e'/%3E%3Crect x='1' y='1' width='30' height='30' rx='6' fill='none' stroke='%233ecf8e' stroke-opacity='.4' stroke-width='1.4'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial,sans-serif' font-weight='700' font-size='15'%3E%3Ctspan fill='%23f4f5f7'%3EA%3C/tspan%3E%3Ctspan fill='%233ecf8e'%3EF%3C/tspan%3E%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#101217; --bg2:#141821;
@@ -111,9 +111,15 @@
   .rise:nth-child(2){animation-delay:.08s}.rise:nth-child(3){animation-delay:.16s}
   .rise:nth-child(4){animation-delay:.26s}.rise:nth-child(5){animation-delay:.36s}
   @keyframes rise{to{opacity:1;transform:none}}
+  /* тихая «жизнь»: дышащий фон + поэлементное появление верификаций (всё transform/opacity) */
+  .glow{animation:drift 16s ease-in-out infinite alternate;will-change:transform}
+  @keyframes drift{from{transform:translateY(0) scale(1)}to{transform:translateY(8px) scale(1.03)}}
+  .chip .v,.chip .w{display:inline-block;animation:pop .45s ease .7s both}
+  @keyframes pop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.12)}to{transform:scale(1);opacity:1}}
   a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
   @media (prefers-reduced-motion: reduce){
     .rise{animation:none;opacity:1;transform:none}
+    .glow,.chip .v,.chip .w{animation:none;transform:none;opacity:1}
     .door,.nav a{transition:none}
     html{scroll-behavior:auto}
   }
@@ -178,7 +184,7 @@
 
 <footer>
   <div class="wrap">
-    <span>alfafond.com · <a href="/dev/">engineering /dev →</a></span>
+    <span>alfafond.com · designed &amp; built in-house · <a href="/dev/">engineering /dev →</a></span>
     <span>research material is not investment advice</span>
   </div>
 </footer>
