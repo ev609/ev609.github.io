@@ -241,10 +241,10 @@
     <a class="btn btn-ghost" href="#samples">Смотреть образцы</a>
   </div>
 
-  <!-- самодемонстрация: реальный снимок из разбора SBER -->
+  <!-- самодемонстрация: пример вывода pipeline на SBER -->
   <div class="demo-card rise">
     <div class="demo-head">
-      <span><b>SBER</b> · Сбербанк — снимок grounded-разбора</span>
+      <span><b>SBER</b> · Сбербанк — пример вывода pipeline</span>
       <span>данные на 2026-05-31</span>
     </div>
     <table>
@@ -265,14 +265,14 @@
   <h2>Обычный ИИ уверенно <span class="ok">выдумывает</span> финансовые цифры</h2>
   <div class="vs">
     <div class="bad">
-      <div class="tag">✗ ИИ без grounding — реальный случай</div>
-      <blockquote>«Европлан (LEAS): IPO в <span class="strike">2024</span> году, дивиденд за 2024 — <span class="strike">около 50 ₽</span>, доходность <span class="strike">~7,5%</span>»</blockquote>
-      <p class="note">Обе цифры выдуманы. Звучит убедительно — проверить нечем: источника нет.</p>
+      <div class="tag">✗ ИИ без grounding — типичный случай</div>
+      <blockquote>«Европлан (LEAS): IPO в <span class="strike">2021</span> году, дивиденд за 2024 — <span class="strike">около 50 ₽</span>, доходность <span class="strike">~7,5%</span>»</blockquote>
+      <p class="note">Цифры выдуманы. Звучит убедительно — проверить нечем: источника нет.</p>
     </div>
     <div class="good">
       <div class="tag">✓ АльфаФонд — сверено с первоисточником</div>
-      <blockquote>«LEAS: IPO <b>23.03.2017</b>, дивиденд FY2024 — <b>75,00 ₽</b> (25,00 июнь + 50,00 декабрь), доходность <b>11,3%</b>»</blockquote>
-      <p class="note">Источник: moex_iss + tinkoff_api, кросс-сверка <span class="badge b-ok">✓</span>. Расхождение двух ИИ-ответов — повод не доверять ни одному без бейджа.</p>
+      <blockquote>«LEAS: IPO на МосБирже <b>29.03.2024</b>, тикер LEAS — сверено с moex_iss <span class="badge b-ok">✓</span>. Дивиденды публикуем только по факту выплаты, с источником и бейджем»</blockquote>
+      <p class="note">Конкретное число попадает в разбор лишь после кросс-сверки источников. Нет подтверждения — нет факта.</p>
     </div>
   </div>
 </section>
@@ -304,7 +304,7 @@
 
 <section id="samples" class="wrap">
   <div class="sec-label">03 · Образцы</div>
-  <h2>Фрагменты реальных разборов</h2>
+  <h2>Примеры вывода pipeline</h2>
   <div class="samples">
     <details class="sample">
       <summary>

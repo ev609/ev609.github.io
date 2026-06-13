@@ -9,7 +9,7 @@
 <meta property="og:url" content="https://alfafond.com/cases/ai-chatbot/">
 <meta property="og:title" content="ИИ-чатбот по базе знаний — кейс AlfaFond /dev">
 <meta property="og:description" content="Отвечает по вашим документам, ссылается на источники, не выдумывает. Открытое демо одной командой + внедрение под ключ.">
-<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta property="og:image" content="https://alfafond.com/assets/og-ru.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://alfafond.com/cases/ai-chatbot/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0e'/%3E%3Cpath d='M16 6 8 26M16 6l8 20' stroke='%23f4f5f7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M11.4 19.6l3 2.9 5.6-6.6' stroke='%233ecf8e' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -283,24 +283,24 @@
    </div>
   </div>
   <div class="hero-demo">
-    <span class="demo-tag">↓ Проверьте прямо здесь — на демо-базе «Окта»</span>
+    <span class="demo-tag">↓ Проверьте прямо здесь — спросите про наш сервис</span>
     <div class="rag-demo">
       <div class="rag-log" id="rag-log" aria-live="polite">
         <div class="rag-msg rag-b">
-          <div class="rag-txt">Здравствуйте! Я отвечаю по базе знаний сервиса «Окта». Спросите что-нибудь — или нажмите подсказку ниже.</div>
+          <div class="rag-txt">Здравствуйте! Я ИИ-ассистент AlfaFond — отвечаю по нашему сервису со ссылкой на раздел. Это и есть тот бот, которого мы делаем: спросите про цены, сроки или технологии.</div>
         </div>
       </div>
       <div class="rag-chips">
-        <button type="button" class="rag-chip">Сколько стоит командный тариф?</button>
-        <button type="button" class="rag-chip">Какие лимиты у API и что будет при превышении?</button>
-        <button type="button" class="rag-chip">Можно ли пригласить клиента в один проект?</button>
+        <button type="button" class="rag-chip">Сколько стоит чат-бот?</button>
+        <button type="button" class="rag-chip">Какие сроки?</button>
+        <button type="button" class="rag-chip">Бот может выдумать ответ?</button>
         <button type="button" class="rag-chip">Какая завтра погода?</button>
       </div>
       <form class="rag-form" id="rag-form" autocomplete="off">
-        <input type="text" id="rag-q" placeholder="Ваш вопрос к базе знаний…" aria-label="Вопрос">
+        <input type="text" id="rag-q" placeholder="Спросите про наш сервис…" aria-label="Вопрос">
         <button type="submit" class="btn btn-ok">Спросить</button>
       </form>
-      <p class="rag-foot">Демо: поиск работает офлайн в браузере. В проекте ответ формулирует ИИ-модель по найденным фрагментам (см. «Какой ИИ внутри»).</p>
+      <p class="rag-foot">Два в одном: это и пример работы бота, и реальные ответы по нашему сервису. Поиск работает офлайн в браузере; в проекте ответ формулирует ИИ-модель (см. «Какой ИИ внутри»).</p>
     </div>
   </div>
  </div>
@@ -373,9 +373,9 @@
 <section class="wrap" id="demo">
   <div class="sec-label">03 · Открытый код</div>
   <h2>Тот же движок, <span class="ok">запуск одной командой</span></h2>
-  <p class="lead">Живой чат в шапке — это лексический слой того же движка, что в открытом
-  репозитории. Код можно прочитать и запустить самому одной командой, без ключей, до любого
-  разговора об оплате.</p>
+  <p class="lead">Живой чат в шапке отвечает по нашей базе знаний. В открытом репозитории тот
+  же движок работает на нейтральной демо-базе (вымышленный SaaS) — чтобы любой мог прочитать
+  код и запустить одной командой, без ключей, до разговора об оплате.</p>
   <div class="lab-run">
     <span class="muted"># вопрос, ответ которого есть в базе</span><br>
     $ <span class="c">python3 rag_chatbot.py "сколько стоит командный тариф?"</span><br>
@@ -432,10 +432,10 @@
   <p class="lead">Подключается как опция — дашборд по диалогам, чтобы бот не был «чёрным ящиком».
   Метрики выбраны по делу: меряем пользу, а не число сообщений (это частая ошибка — vanity-метрики).</p>
   <ul class="flat">
-    <li><b>Доля решённых без человека</b> (containment / resolution) — сколько вопросов бот закрыл сам. Ориентир зрелого RAG-бота — 55–65%.</li>
+    <li><b>Доля решённых без человека</b> (containment / resolution) — сколько вопросов бот закрыл сам. По отраслевым данным зрелые RAG-боты закрывают 55–65% (бенчмарк, не наш результат).</li>
     <li><b>Вопросы без ответа</b> — что бот не нашёл в базе. Это прямой, приоритизированный план, чем пополнять базу знаний.</li>
     <li><b>Конверсия в заявку</b> — сколько диалогов перешло в лид (для продающих сценариев).</li>
-    <li><b>Удовлетворённость (CSAT)</b> — оценка ответов пользователями; цель — 75%+.</li>
+    <li><b>Удовлетворённость (CSAT)</b> — оценка ответов пользователями; отраслевой ориентир — 75%+.</li>
     <li><b>Темы и пики нагрузки</b> — о чём спрашивают чаще и когда.</li>
   </ul>
   <p class="pay"><b>Приватность:</b> данные собираются на вашей стороне, третьим лицам не передаются. Объём дашборда — под вашу задачу, от простого лога вопросов до полной панели.</p>
@@ -529,10 +529,9 @@
       </svg>
       <span>AlfaFond <span class="path">/dev</span></span>
     </div>
-    <span class="mono-s">alfafond.com/dev · инженерия ИИ и автоматизации</span>
+    <span class="mono-s"><a href="/dev/ru/" style="color:var(--ok);text-decoration:none">alfafond.com/dev</a> · инженерия ИИ и автоматизации</span>
   </div>
 </footer>
 <script src="demo.js"></script>
-<script src="assistant.js"></script>
 </body>
 </html>
