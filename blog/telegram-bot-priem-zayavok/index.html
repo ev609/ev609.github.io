@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Блог — ИИ и автоматизация | AlfaFond /dev</title>
-<meta name="description" content="Практические статьи про ИИ-чатботы, Telegram-боты, автоматизацию и разработку под ключ. Без воды — с примерами, кодом и живыми демо.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://alfafond.com/blog/">
-<meta property="og:title" content="Блог — ИИ и автоматизация | AlfaFond /dev">
-<meta property="og:description" content="Практические статьи про ИИ-ботов, автоматизацию и разработку под ключ. С примерами и живыми демо.">
+<title>Telegram-бот для приёма заявок: архитектура | AlfaFond /dev</title>
+<meta name="description" content="Как собрать Telegram-бота приёма заявок, который не разваливается: меню, пошаговый сбор (FSM), уведомление менеджеру, ответы по базе знаний. Разделение логики и транспорта, грабли, интеграции.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://alfafond.com/blog/telegram-bot-priem-zayavok/">
+<meta property="og:title" content="Telegram-бот для приёма заявок: архитектура">
+<meta property="og:description" content="Меню, пошаговый сбор заявки (FSM), уведомление менеджеру, ответы по базе. Архитектура, которая масштабируется. С живым демо.">
 <meta property="og:image" content="https://alfafond.com/assets/og-ru.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://alfafond.com/blog/">
+<link rel="canonical" href="https://alfafond.com/blog/telegram-bot-priem-zayavok/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0e'/%3E%3Cpath d='M16 6 8 26M16 6l8 20' stroke='%23f4f5f7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M11.4 19.6l3 2.9 5.6-6.6' stroke='%233ecf8e' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -269,7 +269,29 @@
     .btn,.cell{transition:none}
     html{scroll-behavior:auto}
   }
-</style></head>
+</style><style>
+  .art{max-width:740px;margin:0 auto}
+  .art-meta{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--dim);margin-bottom:14px}
+  .art h1{font-size:clamp(1.9rem,4.5vw,2.8rem);max-width:20ch;margin-bottom:8px}
+  .art .lede{color:var(--sub);font-size:1.1rem;line-height:1.7;margin:18px 0 8px;text-wrap:pretty}
+  .art h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.25rem,2.6vw,1.6rem);letter-spacing:-.02em;margin:40px 0 12px;text-wrap:balance}
+  .art h3{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);margin:24px 0 8px}
+  .art p{color:var(--sub);font-size:1.04rem;line-height:1.78;margin:14px 0;text-wrap:pretty}
+  .art ul{margin:14px 0;padding:0;list-style:none}
+  .art ul li{position:relative;padding-left:22px;margin:9px 0;color:var(--sub);font-size:1.04rem;line-height:1.7}
+  .art ul li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  .art b,.art strong{color:var(--txt);font-weight:500}
+  .art a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.4)}
+  .art a:hover{border-bottom-color:var(--ok)}
+  .art code{font-family:var(--mono);font-size:.85em;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:5px;color:var(--txt)}
+  .art pre{background:#06070a;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:18px 0;font-family:var(--mono);font-size:.82rem;color:var(--sub);line-height:1.7}
+  .art blockquote{border-left:2px solid var(--ok);padding:4px 0 4px 18px;margin:18px 0;color:var(--txt);font-size:1.05rem}
+  .art-cta{border:1px solid rgba(62,207,142,.3);border-radius:14px;padding:26px 28px;margin-top:38px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .art-cta h3{margin-top:0}
+  .art-cta p{font-size:.95rem}
+</style>
+</head>
 <body>
 <div class="glow" aria-hidden="true"></div>
 
@@ -284,33 +306,88 @@
     </a></div>
     <div class="bar-right">
       <nav aria-label="Разделы">
-        <a href="/dev/ru/">Услуги</a><a href="/cases/ai-chatbot/">Кейсы</a><a href="/dev/ru/#contact">Заказать</a>
+        <a href="/blog/">Блог</a><a href="/dev/ru/">Услуги</a><a href="/cases/telegram-bot/">Кейсы</a>
       </nav>
     </div>
   </div>
 </div>
 
-<header class="hero wrap">
-  <div class="kicker">Блог · ИИ и автоматизация</div>
-  <h1>Практика без воды — <span class="ok">с кодом и живыми демо</span></h1>
-  <p class="lead">Как делать ИИ-чатботы, Telegram-боты и автоматизацию, которые работают в
-  продакшене. Каждую статью можно проверить — рядом живое демо и открытый код.</p>
-</header>
+<article class="hero wrap art">
+  <div class="art-meta">Блог · Telegram-боты · 2026</div>
+  <h1>Telegram-бот для приёма заявок: <span class="ok">архитектура, которая не разваливается</span></h1>
+  <p class="lede">Бизнес теряет клиентов в первом контакте: сообщение пришло ночью, менеджер
+  не ответил за минуту, человек ушёл к конкуренту. Бот закрывает это 24/7 — но большинство
+  ботов это хрупкие скрипты, которые ломаются на первом нестандартном вводе. Разберём
+  архитектуру, на которой бот растёт от «меню» до полноценного приёма заявок с интеграциями.</p>
 
-<section class="wrap">
-  <div class="grid2">
-    <a class="cell" href="/blog/ai-chatbot-bez-vydumok/" style="text-decoration:none;display:block;color:var(--txt)">
-      <span class="mono" style="color:var(--ok)">ИИ · RAG</span>
-      <h3>ИИ-чатбот, который не врёт →</h3>
-      <p>Почему боты выдумывают факты и как RAG это закрывает: поиск по вашим документам, ссылки на источник, честный «не знаю». С живым демо.</p>
-    </a>
-    <a class="cell" href="/blog/telegram-bot-priem-zayavok/" style="text-decoration:none;display:block;color:var(--txt)">
-      <span class="mono" style="color:var(--ok)">Telegram · FSM</span>
-      <h3>Telegram-бот для приёма заявок: архитектура →</h3>
-      <p>Меню, пошаговый сбор заявки (FSM), уведомление менеджеру, ответы по базе знаний — как собрать бота, который не разваливается. С живым демо.</p>
-    </a>
+  <h2>Три работы бизнес-бота</h2>
+  <p>Полезный бот делает три вещи, и их стоит проектировать раздельно:</p>
+  <ul>
+    <li><b>Навигация (меню).</b> Клиент не теряется: услуги, цены, заявка, вопрос — в одно нажатие, а не «напишите менеджеру и ждите».</li>
+    <li><b>Приём заявки.</b> Пошагово собирает имя, контакт, задачу, показывает сводку на подтверждение и <b>тут же уведомляет менеджера</b>.</li>
+    <li><b>Ответы на вопросы.</b> Типовое (сроки, оплата, гарантии) — мгновенно; чего не знает — честно говорит и предлагает оставить заявку.</li>
+  </ul>
+
+  <h2>Главный принцип: логика отдельно от Telegram</h2>
+  <p>Ошибка №1 — писать всю логику прямо в обработчиках Telegram. Тогда бота нельзя ни
+  протестировать, ни перенести. Правильно — вынести сценарий в чистое ядро, не знающее про
+  Telegram:</p>
+  <pre>def handle(session, text) -> Reply:
+    # чистая логика: вход — сообщение и состояние,
+    # выход — текст ответа + кнопки. Ни Telegram, ни сети.</pre>
+  <p>Что это даёт: ядро гоняется в <b>офлайн-симуляторе без токена</b> (быстрые тесты и демо),
+  Telegram подключается тонким адаптером (aiogram), а при необходимости тот же сценарий
+  переносится в WhatsApp или виджет на сайт. Это и отличает «бота под ключ» от одноразового скрипта.</p>
+
+  <h2>Приём заявки — это конечный автомат (FSM)</h2>
+  <p>Сбор заявки — последовательность шагов с состоянием: <code>имя → контакт → задача →
+  подтверждение → готово</code>. Городить это на вложенных <code>if</code> — путь к хаосу:
+  бот забывает, на каком шаге клиент, ломается на «назад» и «отмена». Конечный автомат (FSM)
+  держит состояние явно: на каждом шаге понятно, что бот ждёт и куда перейдёт.</p>
+  <p>Обязательные мелочи, которые отличают живой бот: <b>подтверждение перед отправкой</b>
+  (клиент видит сводку), <b>отмена и возврат</b> в меню на любом шаге, и <b>сохранение
+  состояния</b> — чтобы перезапуск сервера не сбрасывал диалог на полуслове.</p>
+
+  <h2>Уведомление менеджеру — момент конверсии</h2>
+  <p>Как только заявка подтверждена, бот <b>сразу шлёт её в чат менеджера</b> (или в группу):
+  имя, контакт, задача. Это и есть точка, ради которой всё затевалось — вы получаете готовый
+  лид с контактами, а не «пропущенное сообщение» в три часа ночи. Дальше заявка уходит в CRM.</p>
+
+  <h2>Ответы на вопросы: от FAQ до базы знаний</h2>
+  <p>Простой FAQ (по ключевым словам) закрывает типовое. Когда вопросов много и они про ваши
+  документы — FAQ заменяется на <b>полноценный поиск по базе знаний (RAG)</b>: бот находит
+  ответ во всей вашей базе и даёт его со ссылкой на источник, а не по жёстко прописанным темам.
+  Как сделать так, чтобы при этом бот <b>не выдумывал</b> — отдельная тема, разобрали в статье
+  <a href="/blog/ai-chatbot-bez-vydumok/">«ИИ-чатбот, который не врёт»</a>.</p>
+
+  <h2>Интеграции и надёжность</h2>
+  <ul>
+    <li><b>CRM</b> — заявки сразу в amoCRM, Bitrix24 или Google Sheets, без ручного переноса.</li>
+    <li><b>Оплаты</b> — приём платежей или бронирование прямо в боте.</li>
+    <li><b>Рассылки и напоминания</b> — по событию или расписанию, сегментам.</li>
+    <li><b>Эксплуатация 24/7</b> — деплой на вашем сервере, мониторинг, автоперезапуск. Чините не вы.</li>
+  </ul>
+
+  <h2>Частые грабли</h2>
+  <ul>
+    <li><b>Нет сохранения состояния.</b> Перезапуск — и бот забыл всех на полушаге. Состояние должно жить в БД/Redis, не только в памяти.</li>
+    <li><b>Блокирующие обработчики.</b> Долгая операция в одном диалоге подвешивает бота для всех. Нужен асинхронный код.</li>
+    <li><b>Нет «отмены».</b> Клиент застрял в форме без выхода — закрывает бота. Всегда давайте «отмена»/«меню».</li>
+    <li><b>Нет аналитики воронки.</b> Не видно, на каком шаге отваливаются клиенты — нечего чинить. Логируйте переходы.</li>
+  </ul>
+
+  <h2>Проверьте на живом боте</h2>
+  <p>Мы собрали такой каркас и поставили рабочего бота прямо на страницу: пройдите «Оставить
+  заявку» до конца и увидите, как он собирает данные и «передаёт менеджеру». Код открыт,
+  с офлайн-симулятором.</p>
+
+  <div class="art-cta">
+    <h3>Нужен бот приёма заявок под ваш бизнес?</h3>
+    <p>Посмотрите <a href="/cases/telegram-bot/">живое демо и кейс Telegram-бота</a> — бот
+    работает прямо на странице, код открыт. Нужна умная база знаний вместо простого FAQ —
+    это <a href="/cases/ai-chatbot/">кейс ИИ-чатбота</a>. Опишите задачу — оценю объём и назову цену.</p>
   </div>
-</section>
+</article>
 
 <footer>
   <div class="wrap cols">
