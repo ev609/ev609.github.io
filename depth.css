@@ -16,3 +16,16 @@
 .sample, .track, .figure, .lc, .ti, .price, .cell, .mode, .step, .vs {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 8px 24px -16px rgba(0, 0, 0, .5);
 }
+
+/* Объём геро-заголовку (как на главной): градиент-филл «свет сверху» + glow акцента.
+ * На каждой внутренней странице ровно один <h1>=геро, акцентное слово = h1 .ok (зелёное).
+ * НЕ тень по тексту (best practice тёмной темы). .ok вне h1 не затрагивается (скоуп h1 .ok). */
+h1 {
+  background: linear-gradient(180deg, #ffffff, #d7dbe2);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+h1 .ok {
+  -webkit-text-fill-color: var(--ok); color: var(--ok);
+  text-shadow: 0 0 28px rgba(62, 207, 142, .28);
+}
