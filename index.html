@@ -79,6 +79,9 @@
   h1 .ln{display:block}
   h1 .ok{-webkit-text-fill-color:var(--ok);color:var(--ok);text-shadow:0 0 28px rgba(62,207,142,.28)}
   .lead{color:var(--sub);max-width:58ch;margin-top:24px;font-size:1.06rem;text-wrap:pretty}
+  /* выделение ключевых фраз — белым+жирным (вес+светлота), НЕ акцент-цветом (берём зелёный
+     только для геро/CTA, иначе размытие бренда). Доступно: эмфазис не только цветом. */
+  .lead b{color:var(--txt)}
 
   /* живая строка верифицированных чисел — продукт показывает себя */
   .tape{display:flex;gap:10px;margin-top:34px;flex-wrap:wrap}
