@@ -21,7 +21,7 @@
     --bg:#0a0b0e;
     --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
     --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
-    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#717784;
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#8a909b;
     --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
     --warn:#e0a23c; --bad:#e0675b;
     --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
@@ -198,7 +198,7 @@
 
   /* Живое демо-окно чат-бота (работает на demo.js прямо в браузере) */
   /* Двухколоночный герой: текст слева, живой чат справа (сразу видно где проверить) */
-  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:44px;align-items:center}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:44px;align-items:start}
   @media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:30px}}
   .hero-demo{position:relative}
   .hero-demo .demo-tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;

@@ -5,17 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>404 — AlfaFond</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0f15'/%3E%3Crect x='1.2' y='1.2' width='29.6' height='29.6' rx='6' fill='none' stroke='%238c7443' stroke-width='1.4'/%3E%3Ctext x='14' y='23' font-family='Georgia,serif' font-style='italic' font-weight='600' font-size='19' fill='%23c8a55f' text-anchor='middle'%3EA%3C/text%3E%3Cpath d='M20.5 8.5l2.1 2.1 3.6-4' stroke='%2357b87b' stroke-width='1.9' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233ecf8e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial,sans-serif' font-weight='700' font-size='15' fill='%230a0b0e'%3EAF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  :root{--bg:#101217;--txt:#f4f5f7;--sub:#a0a6b0;--dim:#8a909b;--ok:#3ecf8e;
+    --disp:'Geologica',sans-serif;--mono:'IBM Plex Mono',monospace}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{min-height:100vh;display:grid;place-items:center;background:#0b0f15;color:#e9e4d6;
-    font-family:'Cormorant Garamond',serif;text-align:center;
-    background-image:radial-gradient(800px 400px at 70% -10%, rgba(200,165,95,.1), transparent 60%)}
-  .n{font-size:6rem;font-weight:600;font-style:italic;color:#c8a55f;line-height:1}
-  p{font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:#8b8a7e;margin-top:14px;letter-spacing:.12em}
-  a{color:#c8a55f}
+  body{min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--txt);
+    font-family:var(--disp);text-align:center;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(720px 360px at 50% -10%, rgba(62,207,142,.07), transparent 70%)}
+  .wrap{padding:24px}
+  .brand{display:inline-flex;align-items:center;gap:10px;margin-bottom:30px;font-family:var(--disp);
+    font-weight:700;font-size:1.1rem;letter-spacing:.04em;text-transform:uppercase;color:var(--txt);text-decoration:none}
+  .brand svg{flex:none}
+  .n{font-family:var(--disp);font-weight:700;font-size:clamp(4rem,12vw,7rem);line-height:1;letter-spacing:-.03em}
+  .n .ok{color:var(--ok)}
+  p{font-family:var(--mono);font-size:.78rem;color:var(--dim);margin-top:16px;letter-spacing:.1em}
+  a.home{color:var(--ok);text-decoration:none}
+  a.home:hover{text-decoration:underline}
 </style>
 </head>
-<body><div><div class="n">404</div><p>page not found · <a href="/">alfafond.com</a></p></div></body>
+<body>
+  <div class="wrap">
+    <a class="brand" href="/">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#3ecf8e"/><text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="600" font-size="15"><tspan fill="#0a0b0e">A</tspan><tspan fill="#0a0b0e">F</tspan></text></svg>
+      ALFAFOND
+    </a>
+    <div class="n">4<span class="ok">0</span>4</div>
+    <p>page not found · <a class="home" href="/">go home →</a></p>
+  </div>
+</body>
 </html>
