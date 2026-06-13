@@ -8,3 +8,11 @@
  * на главной — в её инлайн-стилях (там <header> = навигация, своя верстка).
  */
 :root { --bg: #101217; --bg2: #141821; }
+
+/* Лёгкая elevation карточным поверхностям внутренних страниц (как .door на главной):
+ * верхний inset-блик + мягкая тень. Только панели-поверхности (background:var(--card),
+ * radius 11-14). Исключены pill-чипы (.chip/.pill/.n) и нав (.bar). */
+.dash, .dash-tile, .xcard, .demo-card, .rag-demo, .tryit, .lab, .pipeline,
+.sample, .track, .figure, .lc, .ti, .price, .cell, .mode, .step, .vs {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 8px 24px -16px rgba(0, 0, 0, .5);
+}
