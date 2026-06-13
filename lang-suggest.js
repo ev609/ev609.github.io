@@ -34,11 +34,12 @@
     var bar = document.createElement('div');
     bar.setAttribute('role', 'region');
     bar.setAttribute('aria-label', 'Language suggestion');
-    bar.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;' +
+    // нижний-ЛЕВЫЙ угол: не сталкивается с кнопкой ассистента (она bottom-right)
+    bar.style.cssText = 'position:fixed;left:18px;bottom:18px;' +
       'z-index:9998;display:flex;gap:10px;align-items:center;flex-wrap:wrap;' +
       'justify-content:center;padding:10px 14px;background:#11141a;border:1px solid #2a2f3a;' +
       'border-radius:12px;color:#e8eaed;box-shadow:0 8px 30px rgba(0,0,0,.45);' +
-      'max-width:calc(100% - 32px);' +
+      'max-width:min(400px, calc(100% - 36px));' +
       'font:500 14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
 
     var span = document.createElement('span');
