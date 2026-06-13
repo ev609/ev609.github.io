@@ -43,7 +43,7 @@
   .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
     background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
   .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
-  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:600;font-size:1.02rem;letter-spacing:-.01em}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.18rem;letter-spacing:.04em;text-transform:uppercase}
   .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
   .logo svg{flex:none}
   .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
@@ -210,6 +210,7 @@
     html{scroll-behavior:auto}
   }
 </style>
+  <link rel="stylesheet" href="/depth.css">
 </head>
 <body>
 <div class="glow" aria-hidden="true"></div>
@@ -217,8 +218,8 @@
 <div class="bar">
   <div class="wrap">
     <div class="logo"><a href="/">
-      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
-        <rect x="1" y="1" width="30" height="30" rx="7" fill="#0a0b0e" stroke="#3ecf8e" stroke-opacity=".4" stroke-width="1.5"/><text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="600" font-size="15"><tspan fill="#f4f5f7">A</tspan><tspan fill="#3ecf8e">F</tspan></text>
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="0" y="0" width="32" height="32" rx="8" fill="#3ecf8e"/><text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="600" font-size="15"><tspan fill="#0a0b0e">A</tspan><tspan fill="#0a0b0e">F</tspan></text>
       </svg>
       <span>AlfaFond <span class="path">/dev</span></span>
     </a></div>
@@ -636,7 +637,7 @@
   <div class="wrap cols">
     <div class="logo">
       <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
-        <rect x="1" y="1" width="30" height="30" rx="7" fill="#0a0b0e" stroke="#3ecf8e" stroke-opacity=".4" stroke-width="1.5"/><text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="600" font-size="15"><tspan fill="#f4f5f7">A</tspan><tspan fill="#3ecf8e">F</tspan></text>
+        <rect x="0" y="0" width="32" height="32" rx="8" fill="#3ecf8e"/><text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="600" font-size="15"><tspan fill="#0a0b0e">A</tspan><tspan fill="#0a0b0e">F</tspan></text>
       </svg>
       <span>AlfaFond <span class="path">/dev</span></span>
     </div>
@@ -661,5 +662,6 @@ document.querySelectorAll('form').forEach(function(f){
   }
 });
 </script>
+  <script src="/lang-suggest.js"></script>
 </body>
 </html>

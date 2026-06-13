@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlfaFond — галерея вариантов дизайна</title>
+<meta name="robots" content="noindex">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#101114;color:#e8e9eb;font-family:-apple-system,'Segoe UI',sans-serif;padding:40px 28px;line-height:1.5}
+  .wrap{max-width:1280px;margin:0 auto}
+  h1{font-size:1.4rem;font-weight:600;margin-bottom:6px}
+  .sub{color:#8b8f98;font-size:.85rem;margin-bottom:30px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  a.card{display:block;text-decoration:none;color:inherit;border:1px solid #2a2c32;border-radius:12px;
+    overflow:hidden;background:#16181d;transition:border-color .15s,transform .15s}
+  a.card:hover{border-color:#4a4e58;transform:translateY(-3px)}
+  .card img{width:100%;display:block;aspect-ratio:16/10;object-fit:cover;object-position:top;border-bottom:1px solid #2a2c32}
+  .card .cap{padding:14px 18px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .card .nm{font-weight:600;font-size:.95rem}
+  .card .d{color:#8b8f98;font-size:.78rem;font-family:monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Варианты дизайна alfafond.com</h1>
+  <div class="sub">Кликни вариант → откроется живая страница; внизу каждой — переключатель v1-v4. Контент одинаковый, школы разные.</div>
+  <div class="grid">
+    <a class="card" href="v1.html"><img src="shots/v1.png" alt="v1 heritage"><span class="cap"><span class="nm">v1 · Heritage editorial</span><span class="d">Cormorant serif · латунь · печать</span></span></a>
+    <a class="card" href="v2.html"><img src="shots/v2.png" alt="v2 precision"><span class="cap"><span class="nm">v2 · Precision dark (Linear/Vercel)</span><span class="d">Geologica · near-black · зелёный акцент</span></span></a>
+    <a class="card" href="v3.html"><img src="shots/v3.png" alt="v3 light"><span class="cap"><span class="nm">v3 · Light fintech (Stripe/Mercury)</span><span class="d">та же система, светлая · trust</span></span></a>
+    <a class="card" href="v4.html"><img src="shots/v4.png" alt="v4 brutal"><span class="cap"><span class="nm">v4 · Editorial brutalism</span><span class="d">Unbounded · крем · жёсткие тени</span></span></a>
+  </div>
+</div>
+</body>
+</html>
