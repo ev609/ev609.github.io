@@ -196,6 +196,29 @@
   .contact .btn{border:none;cursor:pointer;margin-top:2px}
   .f-note{display:block;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:12px}
 
+  /* Живое демо-окно чат-бота (работает на demo.js прямо в браузере) */
+  .rag-demo{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 18px 16px}
+  .rag-log{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow-y:auto;padding:6px 4px 10px}
+  .rag-msg{max-width:86%;padding:11px 14px;border-radius:13px;font-size:.88rem;line-height:1.5;text-wrap:pretty}
+  .rag-u{align-self:flex-end;background:var(--ok);color:#07120c;border-bottom-right-radius:4px;font-weight:500}
+  .rag-b{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .rag-b.rag-no{border-color:rgba(224,162,60,.4);background:rgba(224,162,60,.08)}
+  .rag-txt{color:var(--txt)}
+  .rag-src{margin-top:8px;font-family:var(--mono);font-size:.64rem;color:var(--ok);letter-spacing:.02em}
+  .rag-no .rag-src{color:var(--warn)}
+  .rag-chips{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 12px}
+  .rag-chip{font-family:var(--mono);font-size:.68rem;color:var(--sub);background:rgba(255,255,255,.03);
+    border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;transition:border-color .15s,color .15s}
+  .rag-chip:hover{border-color:var(--line-h);color:var(--txt)}
+  .rag-form{display:flex;gap:10px}
+  .rag-form input{flex:1;font-family:var(--body);font-size:.9rem;color:var(--txt);background:rgba(0,0,0,.25);
+    border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .rag-form input::placeholder{color:var(--dim)}
+  .rag-form input:focus{outline:none;border-color:var(--ok)}
+  .rag-form .btn{border:none;cursor:pointer;white-space:nowrap}
+  .rag-foot{font-size:.74rem;color:var(--dim);margin-top:12px;text-wrap:pretty}
+  @media(max-width:560px){.rag-form{flex-direction:column}.rag-msg{max-width:94%}}
+
   footer{border-top:1px solid var(--line);padding:32px 0 48px;margin-top:28px}
   footer .cols{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
   .mono-s{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
@@ -311,11 +334,33 @@
 </section>
 
 <section class="wrap" id="demo">
-  <div class="sec-label">03 · Попробуйте сами</div>
-  <h2>Рабочее демо, <span class="ok">запуск одной командой</span></h2>
-  <p class="lead">Открытый репозиторий: тот же движок на вымышленной базе знаний SaaS-сервиса.
-  Без установки, без ключей и без сети — нужен только Python. Посмотрите код и поведение
-  до любого разговора об оплате.</p>
+  <div class="sec-label">03 · Попробуйте прямо здесь</div>
+  <h2>Спросите бота <span class="ok">на демо-базе знаний</span></h2>
+  <p class="lead">Это вымышленный SaaS-сервис «Окта». Спросите про тарифы, сброс пароля,
+  API или экспорт — бот ответит по документам и укажет источник. Спросите то, чего в базе
+  нет (например, про погоду) — честно скажет «не знаю». Работает прямо в браузере.</p>
+
+  <div class="rag-demo">
+    <div class="rag-log" id="rag-log" aria-live="polite">
+      <div class="rag-msg rag-b">
+        <div class="rag-txt">Здравствуйте! Я отвечаю по базе знаний сервиса «Окта». Спросите что-нибудь — или нажмите подсказку ниже.</div>
+      </div>
+    </div>
+    <div class="rag-chips">
+      <button type="button" class="rag-chip">Сколько стоит командный тариф?</button>
+      <button type="button" class="rag-chip">Как сбросить пароль?</button>
+      <button type="button" class="rag-chip">Можно ли выгрузить данные через API?</button>
+      <button type="button" class="rag-chip">Какая завтра погода?</button>
+    </div>
+    <form class="rag-form" id="rag-form" autocomplete="off">
+      <input type="text" id="rag-q" placeholder="Ваш вопрос к базе знаний…" aria-label="Вопрос">
+      <button type="submit" class="btn btn-ok">Спросить</button>
+    </form>
+    <p class="rag-foot">Демо работает офлайн в вашем браузере (лексический поиск + цитаты).
+    В реальном проекте — семантический поиск и естественные ответы Claude по вашим документам.</p>
+  </div>
+
+  <p class="lab-note" style="margin-top:34px">То же самое из кода — открытый репозиторий, запуск одной командой, без ключей:</p>
   <div class="lab-run">
     <span class="muted"># вопрос, ответ которого есть в базе</span><br>
     $ <span class="c">python3 rag_chatbot.py "сколько стоит командный тариф?"</span><br>
@@ -406,5 +451,6 @@
     <span class="mono-s">alfafond.com/dev · инженерия ИИ и автоматизации</span>
   </div>
 </footer>
+<script src="demo.js"></script>
 </body>
 </html>
