@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SaaS CRM под ключ — кейс Ladero | AlfaFond /dev</title>
+<meta name="description" content="Построили и эксплуатируем production SaaS: облачная CRM для сервисного бизнеса (FastAPI/React/PostgreSQL, мультитенантность, биллинг, мессенджеры). Живой продукт ladero.ru. Разработка SaaS и веб-сервисов под ключ.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://alfafond.com/cases/saas-crm/">
+<meta property="og:title" content="SaaS CRM под ключ — кейс Ladero | AlfaFond /dev">
+<meta property="og:description" content="Production SaaS, который мы построили и ведём: CRM для сервисного бизнеса, мультитенантность, биллинг, интеграции мессенджеров. Живой продукт.">
+<meta property="og:image" content="https://alfafond.com/assets/og-ru.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/cases/saas-crm/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0e'/%3E%3Cpath d='M16 6 8 26M16 6l8 20' stroke='%23f4f5f7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M11.4 19.6l3 2.9 5.6-6.6' stroke='%233ecf8e' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#717784;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --warn:#e0a23c; --bad:#e0675b;
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}  /* якорь не заезжает под липкую шапку */
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:600;font-size:1.02rem;letter-spacing:-.01em}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:680px){.bar nav{display:none}}  /* переключатель языков остаётся виден на мобиле */
+
+  .hero{padding:84px 28px 52px}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);margin-bottom:22px}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(2.2rem,5.4vw,3.6rem);
+    line-height:1.06;letter-spacing:-.035em;max-width:18ch;text-wrap:balance}
+  h1 .ok{color:var(--ok)}
+  .lead{color:var(--sub);max-width:60ch;margin-top:22px;font-size:1.04rem;text-wrap:pretty}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:26px}
+  .chip{font-family:var(--mono);font-size:.7rem;color:var(--sub);padding:5px 12px;
+    border:1px solid var(--line);border-radius:99px;background:var(--card)}
+  .chip.hl{color:var(--ok);background:var(--ok-dim);border-color:rgba(62,207,142,.25)}
+  .chip.wip{color:var(--warn);background:rgba(224,162,60,.12);border-color:rgba(224,162,60,.3)}
+  .cta-row{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;
+    padding:13px 24px;border-radius:9px;transition:transform .15s,box-shadow .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+
+  /* Вертикальный ритм секций. ВАЖНО: секции имеют класс .wrap{margin:0 auto;padding:0 28px},
+     который по специфичности (класс > тег) перебивает и padding, и margin на голом `section`.
+     Поэтому ритм задаём селектором `section.wrap` (специфичность выше .wrap). Плавно через clamp. */
+  section.wrap{margin-top:clamp(72px,8vw,124px)}
+  section.wrap:first-of-type{margin-top:clamp(44px,5vw,72px)}
+  section.wrap:last-of-type{padding-bottom:clamp(64px,7vw,96px)}
+  .sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);
+    display:flex;align-items:center;gap:16px;margin-bottom:14px}  /* лейбл прижат к своему h2 */
+  .sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(62,207,142,.35),transparent)}
+  h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.45rem,3vw,2rem);line-height:1.14;
+    letter-spacing:-.025em;text-wrap:balance}
+  h2 .ok{color:var(--ok)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .cell{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 24px;
+    transition:border-color .18s}
+  .cell:hover{border-color:var(--line-h)}
+  .cell h3{font-family:var(--disp);font-weight:600;font-size:.98rem;margin-bottom:10px;letter-spacing:-.01em}
+  .cell p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+  .cell .mono{font-family:var(--mono);font-size:.68rem;color:var(--dim);display:block;margin-top:12px;line-height:1.9}
+
+  .diff{border:1px solid rgba(62,207,142,.3);border-radius:16px;padding:36px 34px;margin-top:32px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .diff p{color:var(--sub);max-width:68ch;margin-top:12px;font-size:.92rem;text-wrap:pretty}
+  .diff .stat{font-family:var(--mono);font-size:.72rem;color:var(--ok);margin-top:18px;line-height:2}
+
+  ul.flat{list-style:none;margin-top:16px}
+  ul.flat li{padding-left:24px;position:relative;margin:8px 0;font-size:.88rem;color:var(--sub);text-wrap:pretty}
+  ul.flat li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  ul.flat b{color:var(--txt);font-weight:500}
+
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}
+  @media(max-width:760px){.modes{grid-template-columns:1fr}}
+  .mode{border:1px solid var(--line);border-radius:14px;padding:24px 22px;background:var(--card)}
+  .mode .t{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ok)}
+  .mode h3{font-family:var(--disp);font-weight:600;font-size:1rem;margin:10px 0 8px;letter-spacing:-.01em}
+  .mode p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+  .guard{display:flex;gap:14px;align-items:flex-start;margin-top:26px;padding:20px 22px;
+    border:1px solid rgba(62,207,142,.3);border-radius:14px;background:var(--ok-dim)}
+  .guard svg{flex:none;margin-top:2px}
+  .guard p{font-size:.88rem;color:var(--txt);text-wrap:pretty}
+  .guard b{font-weight:500}
+  .guard span{color:var(--sub)}
+
+  .figure{margin-top:24px;border:1px solid var(--line);border-radius:14px;padding:24px 24px 22px;background:var(--card)}
+  .figure .cap-top{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .figure svg{width:100%;height:auto;display:block}
+  .figure svg text{font-family:var(--mono)}
+  .figure .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-family:var(--mono);font-size:.66rem;color:var(--sub)}
+  .figure .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;vertical-align:middle}
+  .figure .take{font-size:.86rem;color:var(--sub);margin-top:16px;text-wrap:pretty;border-top:1px solid var(--line);padding-top:14px}
+  .figure .take b{color:var(--txt);font-weight:500}
+
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+  @media(max-width:680px){.flow{grid-template-columns:1fr}}
+  .fstep{display:flex;gap:12px;align-items:flex-start}
+  .fstep .fn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ok-dim);color:var(--ok);
+    font-family:var(--mono);font-size:.76rem;font-weight:500;display:flex;align-items:center;justify-content:center}
+  .fstep p{font-size:.85rem;color:var(--sub);text-wrap:pretty;margin:0}
+  .fstep b{color:var(--txt);font-weight:500}
+  .pay{font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-top:22px;
+    border-top:1px solid var(--line);padding-top:14px;line-height:1.8}
+  .pay b{color:var(--sub);font-weight:500}
+  .tryit-h{font-family:var(--disp);font-weight:600;font-size:1.05rem;letter-spacing:-.015em;margin-top:30px}
+  .tryit{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:16px}
+  @media(max-width:760px){.tryit{grid-template-columns:1fr}}
+  .tryit .ti{border:1px solid var(--line);border-radius:12px;padding:18px 18px;background:var(--card)}
+  .tryit .ti .tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase}
+  .tryit .ti .tag.free{color:var(--ok)}
+  .tryit .ti .tag.paid{color:var(--warn)}
+  .tryit .ti h4{font-family:var(--disp);font-weight:600;font-size:.92rem;margin:8px 0 7px;letter-spacing:-.01em}
+  .tryit .ti p{font-size:.81rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .tryit .ti a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.45)}
+  .tryit .ti a:hover{border-bottom-color:var(--ok)}
+  .lab{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:26px}
+  @media(max-width:820px){.lab{grid-template-columns:1fr}}
+  .lab .lc{border:1px solid var(--line);border-radius:12px;padding:20px 20px;background:var(--card);display:flex;flex-direction:column}
+  .lab .lc .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .lab .lc h4{font-family:var(--disp);font-weight:600;font-size:.95rem;margin:7px 0 8px;letter-spacing:-.01em}
+  .lab .lc .rule{font-size:.82rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .lab .lc .nums{font-family:var(--mono);font-size:.72rem;margin-top:14px;border-top:1px solid var(--line);padding-top:13px;line-height:2}
+  .lab .lc .nums .row{display:flex;justify-content:space-between;gap:10px}
+  .lab .lc .nums .is{color:var(--warn)}
+  .lab .lc .nums .pos{color:var(--ok)}
+  .lab .lc .nums .neg{color:var(--bad)}
+  .lab .lc .vd{margin-top:12px;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+    align-self:flex-start;border:1px solid var(--line-h);border-radius:20px;padding:3px 10px;color:var(--sub)}
+  .lab .lc .vd.overfit{color:var(--bad);border-color:var(--bad)}
+  .lab-run{margin-top:24px;border:1px solid var(--line);border-radius:12px;background:#06070a;
+    padding:18px 20px;font-family:var(--mono);font-size:.78rem;color:var(--sub);overflow-x:auto}
+  .lab-run .c{color:var(--ok)}
+  .lab-run .muted{color:var(--dim)}
+  .lab-note{font-size:.84rem;color:var(--sub);margin-top:16px;text-wrap:pretty}
+  .lab-note a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.45)}
+  .pipeline{display:grid;grid-template-columns:repeat(4,1fr);margin-top:26px;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+  @media(max-width:760px){.pipeline{grid-template-columns:1fr 1fr}}
+  @media(max-width:440px){.pipeline{grid-template-columns:1fr}}
+  .pstage{padding:20px 18px;border-right:1px solid var(--line)}
+  .pstage:last-child{border-right:0}
+  @media(max-width:760px){.pstage:nth-child(2){border-right:0}}
+  .pstage .pn{font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .pstage h4{font-family:var(--disp);font-weight:600;font-size:.92rem;margin:8px 0 6px;letter-spacing:-.01em}
+  .pstage p{font-size:.78rem;color:var(--sub);margin:0;text-wrap:pretty}
+  .pstage.demo{background:var(--ok-dim)}
+  .pstage.demo h4{color:var(--ok)}
+  .pstage .tag{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);border-radius:20px;padding:3px 9px}
+  .contact{margin-top:26px;max-width:620px}
+  .f-row{display:flex;gap:10px;flex-wrap:wrap}
+  .f-row input{flex:1;min-width:200px}
+  .contact input,.contact textarea{width:100%;font-family:var(--body);font-size:.9rem;color:var(--txt);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+  .contact input::placeholder,.contact textarea::placeholder{color:var(--dim)}
+  .contact input:focus,.contact textarea:focus{outline:none;border-color:var(--ok)}
+  .contact textarea{resize:vertical}
+  .contact .btn{border:none;cursor:pointer;margin-top:2px}
+  .f-note{display:block;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:12px}
+
+  /* Живое демо-окно чат-бота (работает на demo.js прямо в браузере) */
+  /* Двухколоночный герой: текст слева, живой чат справа (сразу видно где проверить) */
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:44px;align-items:center}
+  @media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:30px}}
+  .hero-demo{position:relative}
+  .hero-demo .demo-tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ok);margin-bottom:10px;display:block}
+  .hero-demo .rag-demo{margin-top:0}
+  .rag-demo{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 18px 16px}
+  .rag-log{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow-y:auto;padding:6px 4px 10px}
+  .rag-msg{max-width:86%;padding:11px 14px;border-radius:13px;font-size:.88rem;line-height:1.5;text-wrap:pretty}
+  .rag-u{align-self:flex-end;background:var(--ok);color:#07120c;border-bottom-right-radius:4px;font-weight:500}
+  .rag-b{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .rag-b.rag-no{border-color:rgba(224,162,60,.4);background:rgba(224,162,60,.08)}
+  .rag-txt{color:var(--txt)}
+  .rag-src{margin-top:8px;font-family:var(--mono);font-size:.64rem;color:var(--ok);letter-spacing:.02em}
+  .rag-no .rag-src{color:var(--warn)}
+  .rag-chips{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 12px}
+  .rag-chip{font-family:var(--mono);font-size:.68rem;color:var(--sub);background:rgba(255,255,255,.03);
+    border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;transition:border-color .15s,color .15s}
+  .rag-chip:hover{border-color:var(--line-h);color:var(--txt)}
+  .rag-form{display:flex;gap:10px}
+  .rag-form input{flex:1;font-family:var(--body);font-size:.9rem;color:var(--txt);background:rgba(0,0,0,.25);
+    border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .rag-form input::placeholder{color:var(--dim)}
+  .rag-form input:focus{outline:none;border-color:var(--ok)}
+  .rag-form .btn{border:none;cursor:pointer;white-space:nowrap}
+  .rag-foot{font-size:.74rem;color:var(--dim);margin-top:12px;text-wrap:pretty}
+  /* Карточка-ссылка на связанный кейс (перекрёстная конверсия) */
+  .xcard{display:block;margin-top:22px;border:1px solid var(--line);border-radius:14px;padding:22px 24px;
+    background:var(--card);text-decoration:none;transition:border-color .18s,transform .18s}
+  .xcard:hover{border-color:var(--line-h);transform:translateY(-2px)}
+  .xcard .xk{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);display:block}
+  .xcard .xt{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);display:block;margin:8px 0 6px;letter-spacing:-.01em}
+  .xcard .xd{font-size:.85rem;color:var(--sub);display:block;text-wrap:pretty}
+  /* Мок-дашборд аналитики (иллюстрация, демо-данные) */
+  .dash{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:20px 22px}
+  .dash-head{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);margin-bottom:16px}
+  .dash-head span{color:var(--dim)}
+  .dash-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:620px){.dash-tiles{grid-template-columns:1fr 1fr}}
+  .dash-tile{border:1px solid var(--line);border-radius:11px;padding:14px;background:rgba(255,255,255,.02)}
+  .dash-n{display:block;font-family:var(--disp);font-weight:600;font-size:1.5rem;color:var(--txt);letter-spacing:-.02em}
+  .dash-l{display:block;font-size:.74rem;color:var(--sub);margin-top:4px;text-wrap:pretty}
+  .dash-bars{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .dash-bars-h{font-size:.8rem;color:var(--sub);margin-bottom:12px}
+  .dash-bars-h b{color:var(--ok);font-weight:500}
+  .dash-bar{display:grid;grid-template-columns:150px 1fr 26px;align-items:center;gap:10px;margin:8px 0;font-size:.78rem;color:var(--sub)}
+  @media(max-width:620px){.dash-bar{grid-template-columns:92px 1fr 22px}}
+  .dash-bar>span{text-align:right}
+  .dash-bar .track{height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+  .dash-bar .track i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,rgba(62,207,142,.4),var(--ok))}
+  .dash-bar b{color:var(--txt);font-family:var(--mono);font-size:.72rem}
+  .dash-foot{font-size:.72rem;color:var(--dim);margin-top:14px;text-wrap:pretty}
+  /* Блок цен */
+  .price{margin-top:18px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  .price-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line)}
+  .price-svc{font-size:.92rem;color:var(--txt)}
+  .price-svc b{color:var(--ok);font-weight:500}
+  .price-val{font-family:var(--mono);font-size:.9rem;color:var(--ok);white-space:nowrap;font-weight:500}
+  .price-note{font-size:.82rem;color:var(--sub);padding:15px 20px;text-wrap:pretty;margin:0}
+  .price-note b{color:var(--txt);font-weight:500}
+  @media(max-width:560px){.rag-form{flex-direction:column}.rag-msg{max-width:94%}}
+
+  footer{border-top:1px solid var(--line);padding:32px 0 48px;margin-top:28px}
+  footer .cols{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+  .mono-s{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+
+  a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){
+    .btn,.cell{transition:none}
+    html{scroll-behavior:auto}
+  }
+</style></head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>AlfaFond <span class="path">/dev</span></span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="Разделы">
+        <a href="#what">Что это</a><a href="#tech">Инженерия</a><a href="#proof">Живой продукт</a><a href="#build">Что построим вам</a><a href="#contact">Заказать</a>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<header class="hero wrap">
+ <div class="hero-grid">
+  <div class="hero-copy">
+   <div class="kicker">Кейс · SaaS CRM в продакшене</div>
+   <h1>Мы строим не только боты — <span class="ok">а полноценные SaaS в продакшене.</span></h1>
+   <p class="lead">Ladero — облачная CRM для сервисного бизнеса, которую мы спроектировали,
+   построили и эксплуатируем. Мультитенантная архитектура, биллинг, интеграции мессенджеров,
+   работа 24/7 с реальными пользователями. Это доказательство, что мы доводим продукт от идеи
+   до живого сервиса, а не только пишем скрипты.</p>
+   <div class="chips">
+     <span class="chip hl">production SaaS</span>
+     <span class="chip">FastAPI · React</span>
+     <span class="chip">PostgreSQL</span>
+     <span class="chip">мультитенантность</span>
+     <span class="chip">биллинг · мессенджеры</span>
+   </div>
+   <div class="cta-row">
+     <a class="btn btn-ok" href="https://ladero.ru" target="_blank" rel="noopener">Открыть живой продукт →</a>
+     <a class="btn btn-ghost" href="#contact">Обсудить задачу</a>
+   </div>
+  </div>
+  <div class="hero-demo">
+    <span class="demo-tag">↗ Это не макет — рабочий сервис</span>
+    <div class="rag-demo" style="padding:22px">
+      <div class="dash-head" style="margin-bottom:14px">Что внутри платформы</div>
+      <ul class="flat" style="margin-top:0">
+        <li><b>Заказ-наряды и клиенты</b> — учёт работ, история, статусы.</li>
+        <li><b>KPI и аналитика</b> — по мастерам и заявкам.</li>
+        <li><b>Мессенджеры</b> — WhatsApp, Telegram, MAX в одном окне.</li>
+        <li><b>Уведомления</b> — о сроках и событиях, автоматически.</li>
+      </ul>
+      <p class="rag-foot" style="margin-top:14px">Мультибренд: на одной платформе работают Ladero и сеть сервис-центров (atkweb.ru).</p>
+    </div>
+  </div>
+ </div>
+</header>
+
+<section class="wrap" id="what">
+  <div class="sec-label">01 · Что это</div>
+  <h2>CRM для сервисного бизнеса, <span class="ok">в реальной эксплуатации</span></h2>
+  <div class="grid2">
+    <div class="cell">
+      <h3>Полноценный продукт</h3>
+      <p>Не лендинг и не прототип: регистрация, тарифы, биллинг, изолированные данные клиентов, рассылки — всё, что нужно живому SaaS.</p>
+    </div>
+    <div class="cell">
+      <h3>Реальные пользователи</h3>
+      <p>Платформа работает 24/7 с реальными аккаунтами и оплатами. На ней же — коммерческий сайт сети сервис-центров.</p>
+    </div>
+    <div class="cell">
+      <h3>Своя ниша</h3>
+      <p>Специализация под сервисный бизнес (мастерские, автосервисы): заказ-наряды, сроки, мессенджеры — дешевле и точнее, чем универсальные CRM.</p>
+    </div>
+    <div class="cell">
+      <h3>Мультибренд</h3>
+      <p>Одна кодовая база обслуживает несколько брендов с раздельными доменами, почтой и оформлением — без дублирования.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="tech">
+  <div class="sec-label">02 · Инженерия</div>
+  <h2>Что доказывает этот проект <span class="ok">для вашей задачи</span></h2>
+  <ul class="flat">
+    <li><b>Бэкенд на FastAPI + PostgreSQL</b> — REST API, аутентификация (пароль, код, magic-link), фоновые задачи.</li>
+    <li><b>Фронтенд на React/TypeScript</b> — лендинги, кабинеты, дашборды; lazy-загрузка, мультибренд по домену.</li>
+    <li><b>Мультитенантность</b> — данные каждого клиента изолированы (tenant_id), что критично для безопасности SaaS.</li>
+    <li><b>Биллинг и тарифы</b> — лимиты планов, приём платежей, закрывающие документы.</li>
+    <li><b>Интеграции</b> — WhatsApp Business, Telegram, MAX, e-mail per-tenant, платёжные системы.</li>
+    <li><b>Эксплуатация</b> — продакшн-деплой, мониторинг, работа без простоев. Мы это не только строим, но и ведём.</li>
+  </ul>
+  <div class="guard">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 8.3 8 10 4.6-1.7 8-5 8-10V5l-8-3Z" stroke="#3ecf8e" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="#3ecf8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <p><b>Честно про кейс.</b> <span>Ladero — наш собственный продукт, а не заказ клиента. Мы показываем его как доказательство инженерной зрелости: можем спроектировать, построить и годами эксплуатировать SaaS в продакшене.</span></p>
+  </div>
+</section>
+
+<section class="wrap" id="proof">
+  <div class="sec-label">03 · Живой продукт</div>
+  <h2>Не верьте на слово — <span class="ok">откройте и посмотрите</span></h2>
+  <p class="lead">Оба сайта работают в продакшене прямо сейчас. Откройте, потыкайте — это та же инженерия, которую мы применим к вашему проекту.</p>
+  <div class="grid2">
+    <a class="cell" href="https://ladero.ru" target="_blank" rel="noopener" style="text-decoration:none;display:block;color:var(--txt)">
+      <h3>ladero.ru →</h3>
+      <p>Лендинг и продукт CRM-платформы: тарифы, регистрация, кабинет.</p>
+    </a>
+    <a class="cell" href="https://atkweb.ru" target="_blank" rel="noopener" style="text-decoration:none;display:block;color:var(--txt)">
+      <h3>atkweb.ru →</h3>
+      <p>Коммерческий сайт сети сервис-центров, работающий на этой же платформе.</p>
+    </a>
+  </div>
+</section>
+
+<section class="wrap" id="build">
+  <div class="diff">
+    <div class="sec-label">04 · Что построим вам</div>
+    <h2>Веб-сервис или SaaS <span class="ok">под вашу задачу</span></h2>
+    <ul class="flat">
+      <li><b>MVP за обозримый срок</b> — рабочая первая версия, а не бесконечная стройка.</li>
+      <li><b>Личные кабинеты, тарифы, оплаты</b> — если нужна монетизация с первого дня.</li>
+      <li><b>Интеграции</b> — мессенджеры, CRM, платёжные системы, ваши внешние сервисы.</li>
+      <li><b>Аналитика и админка</b> — чтобы видеть, что происходит, и управлять.</li>
+      <li><b>Хостинг по-вашему</b> — на вашем сервере или в облаке; код и данные остаются у вас.</li>
+      <li><b>Не нужно быть технарём</b> — вы получаете рабочий продукт и инструкцию, а не «код, который надо самому запускать».</li>
+    </ul>
+    <h3 class="tryit-h">Сколько это стоит</h3>
+    <div class="price">
+      <div class="price-row"><span class="price-svc"><b>Веб-сервис / SaaS-MVP</b></span><span class="price-val">от 150 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">Лендинг / сайт</span><span class="price-val">от 30 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">Интеграция / автоматизация</span><span class="price-val">от 20 000 ₽</span></div>
+      <p class="price-note">Это ориентиры — точная цена после обсуждения (зависит от объёма функций и интеграций). <b>Без риска:</b> бесплатный разбор задачи до оплаты; оплата по этапам, первый заказ — через безопасную сделку/эскроу; бесплатные правки по ТЗ после сдачи.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="contact">
+  <div class="sec-label">05 · Заказать</div>
+  <h2>Опишите задачу — <span class="ok">отвечу по вашему контакту</span></h2>
+  <p class="lead">Какой сервис нужен, для какого бизнеса, ключевые функции и интеграции. Этого хватит для оценки.</p>
+  <form class="contact" action="https://api.web3forms.com/submit" method="POST">
+    <input type="hidden" name="access_key" value="500d8f26-693d-481a-9062-b02aa72a97db">
+    <input type="hidden" name="subject" value="AlfaFond — SaaS / веб-сервис, заявка">
+    <input type="hidden" name="from_name" value="alfafond.com /cases/saas-crm">
+    <input type="text" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+    <div class="f-row">
+      <input type="text" name="contact" placeholder="Как с вами связаться: e-mail или @telegram" required aria-label="Контакт">
+      <input type="text" name="task" placeholder="Какой сервис нужен?" aria-label="Задача">
+    </div>
+    <textarea name="message" rows="2" placeholder="Бизнес, ключевые функции, интеграции (необязательно)" aria-label="Сообщение"></textarea>
+    <button type="submit" class="btn btn-ok">Отправить заявку →</button>
+    <span class="f-note">Отвечу на указанный вами контакт. Данные использую только чтобы ответить.</span>
+  </form>
+</section>
+
+<footer>
+  <div class="wrap cols">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 6 8 26M16 6l8 20" stroke="#f4f5f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M11.4 19.6l3 2.9 5.6-6.6" stroke="#3ecf8e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>AlfaFond <span class="path">/dev</span></span>
+    </div>
+    <span class="mono-s"><a href="/dev/ru/" style="color:var(--ok);text-decoration:none">alfafond.com/dev</a> · инженерия ИИ и автоматизации</span>
+  </div>
+</footer>
+<script src="/assistant.js"></script>
+</body>
+</html>
