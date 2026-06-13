@@ -217,6 +217,13 @@
   .rag-form input:focus{outline:none;border-color:var(--ok)}
   .rag-form .btn{border:none;cursor:pointer;white-space:nowrap}
   .rag-foot{font-size:.74rem;color:var(--dim);margin-top:12px;text-wrap:pretty}
+  /* Карточка-ссылка на связанный кейс (перекрёстная конверсия) */
+  .xcard{display:block;margin-top:22px;border:1px solid var(--line);border-radius:14px;padding:22px 24px;
+    background:var(--card);text-decoration:none;transition:border-color .18s,transform .18s}
+  .xcard:hover{border-color:var(--line-h);transform:translateY(-2px)}
+  .xcard .xk{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);display:block}
+  .xcard .xt{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);display:block;margin:8px 0 6px;letter-spacing:-.01em}
+  .xcard .xd{font-size:.85rem;color:var(--sub);display:block;text-wrap:pretty}
   @media(max-width:560px){.rag-form{flex-direction:column}.rag-msg{max-width:94%}}
 
   footer{border-top:1px solid var(--line);padding:32px 0 48px;margin-top:28px}
@@ -421,8 +428,25 @@
   </div>
 </section>
 
+<section class="wrap" id="combined">
+  <div class="sec-label">05 · Часто берут вместе</div>
+  <h2>Этот бот — <span class="ok">прямо в вашем Telegram</span></h2>
+  <div class="diff">
+    <p>Сильнее всего RAG-база знаний работает как <b>бот в Telegram</b>: клиент пишет в
+    мессенджере привычным языком, а бот отвечает по вашим документам со ссылками на источник —
+    и тут же умеет принять заявку. Меню и приём заявок — от Telegram-бота, умные ответы по
+    базе — от этого RAG-движка. Это и есть «умный бот поддержки», а не автоответчик.</p>
+    <div class="stat">Telegram-бот + RAG-база знаний = ответы по вашим документам прямо в чате</div>
+  </div>
+  <a class="xcard" href="/cases/telegram-bot/">
+    <span class="xk">Связанный кейс →</span>
+    <span class="xt">Telegram-бот под ключ</span>
+    <span class="xd">Меню, пошаговый приём заявок с уведомлением менеджеру, ответы по базе знаний. Проверьте живого бота прямо на странице.</span>
+  </a>
+</section>
+
 <section class="wrap" id="contact">
-  <div class="sec-label">05 · Заказать</div>
+  <div class="sec-label">06 · Заказать</div>
   <h2>Опишите задачу — <span class="ok">отвечу по вашему контакту</span></h2>
   <p class="lead">Что за база знаний, где должен работать бот (сайт / Telegram / поддержка),
   примерный объём документов. Этого хватит, чтобы оценить работу.</p>

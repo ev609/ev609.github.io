@@ -227,6 +227,13 @@
   .rag-form .btn{border:none;cursor:pointer;white-space:nowrap}
   .rag-foot{font-size:.74rem;color:var(--dim);margin-top:12px;text-wrap:pretty}
   @media(max-width:560px){.rag-form{flex-direction:column}.rag-msg{max-width:94%}}
+  /* Карточка-ссылка на связанный кейс (перекрёстная конверсия) */
+  .xcard{display:block;margin-top:22px;border:1px solid var(--line);border-radius:14px;padding:22px 24px;
+    background:var(--card);text-decoration:none;transition:border-color .18s,transform .18s}
+  .xcard:hover{border-color:var(--line-h);transform:translateY(-2px)}
+  .xcard .xk{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);display:block}
+  .xcard .xt{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);display:block;margin:8px 0 6px;letter-spacing:-.01em}
+  .xcard .xd{font-size:.85rem;color:var(--sub);display:block;text-wrap:pretty}
 </style>
 </head>
 <body>
@@ -379,8 +386,25 @@
   </div>
 </section>
 
+<section class="wrap" id="combined">
+  <div class="sec-label">05 · Часто берут вместе</div>
+  <h2>Добавьте боту <span class="ok">умную базу знаний</span></h2>
+  <div class="diff">
+    <p>Простой FAQ в боте отвечает на типовое. Когда вопросов много и они про ваши документы
+    (регламенты, каталог, инструкции) — FAQ заменяется на <b>RAG-движок</b>: бот ищет ответ
+    по всей вашей базе и даёт его со ссылкой на источник, а не по жёстко прописанным темам.
+    Меню и приём заявок — от этого Telegram-бота, умные ответы по документам — от RAG.</p>
+    <div class="stat">Telegram-бот + RAG-база знаний = ответы по вашим документам прямо в чате</div>
+  </div>
+  <a class="xcard" href="/cases/ai-chatbot/">
+    <span class="xk">Связанный кейс →</span>
+    <span class="xt">ИИ-чатбот по базе знаний (RAG)</span>
+    <span class="xd">Отвечает по вашим документам со ссылками на источник и честным «не знаю». Проверьте живого бота прямо на странице.</span>
+  </a>
+</section>
+
 <section class="wrap" id="contact">
-  <div class="sec-label">05 · Заказать</div>
+  <div class="sec-label">06 · Заказать</div>
   <h2>Опишите задачу — <span class="ok">отвечу по вашему контакту</span></h2>
   <p class="lead">Какой бизнес, что должен делать бот (меню, заявки, вопросы, оплаты),
   с чем интегрировать (CRM, таблицы). Этого хватит для оценки.</p>
