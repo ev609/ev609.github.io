@@ -197,6 +197,13 @@
   .f-note{display:block;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:12px}
 
   /* Живое демо-окно чат-бота (работает на demo.js прямо в браузере) */
+  /* Двухколоночный герой: текст слева, живой чат справа (сразу видно где проверить) */
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:44px;align-items:center}
+  @media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:30px}}
+  .hero-demo{position:relative}
+  .hero-demo .demo-tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ok);margin-bottom:10px;display:block}
+  .hero-demo .rag-demo{margin-top:0}
   .rag-demo{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 18px 16px}
   .rag-log{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow-y:auto;padding:6px 4px 10px}
   .rag-msg{max-width:86%;padding:11px 14px;border-radius:13px;font-size:.88rem;line-height:1.5;text-wrap:pretty}
@@ -250,30 +257,53 @@
     </a></div>
     <div class="bar-right">
       <nav aria-label="Разделы">
-        <a href="#what">Что делает</a><a href="#how">Как работает</a><a href="#demo">Демо</a><a href="#build">Внедрение</a><a href="#contact">Заказать</a>
+        <a href="#what">Что делает</a><a href="#how">Как работает</a><a href="#ai">ИИ внутри</a><a href="#analytics">Аналитика</a><a href="#build">Внедрение</a><a href="#contact">Заказать</a>
       </nav>
     </div>
   </div>
 </div>
 
 <header class="hero wrap">
-  <div class="kicker">Кейс · ИИ-чатбот по базе знаний</div>
-  <h1>Чатбот, который отвечает <span class="ok">по вашим документам</span> — со ссылками и без выдумок.</h1>
-  <p class="lead">Подключаете свою базу знаний — справку, регламенты, каталог, FAQ — и бот отвечает
-  клиентам и сотрудникам строго по ней, указывая источник каждого ответа. Нет ответа в базе —
-  честно говорит «не знаю», а не фантазирует. Это снимает с поддержки рутину и не подставляет
-  вас выдуманными фактами.</p>
-  <div class="chips">
-    <span class="chip hl">RAG · grounded</span>
-    <span class="chip">ссылки на источники</span>
-    <span class="chip">честный «не знаю»</span>
-    <span class="chip">Python</span>
-    <span class="chip">сайт · Telegram · поддержка</span>
+ <div class="hero-grid">
+  <div class="hero-copy">
+   <div class="kicker">Кейс · ИИ-чатбот по базе знаний</div>
+   <h1>Чатбот, который отвечает <span class="ok">по вашим документам</span> — со ссылками и без выдумок.</h1>
+   <p class="lead">Подключаете свою базу знаний — справку, регламенты, каталог, FAQ — и бот отвечает
+   клиентам и сотрудникам строго по ней, указывая источник каждого ответа. Нет ответа в базе —
+   честно говорит «не знаю», а не фантазирует.</p>
+   <div class="chips">
+     <span class="chip hl">RAG · grounded</span>
+     <span class="chip">ссылки на источники</span>
+     <span class="chip">честный «не знаю»</span>
+     <span class="chip">сайт · Telegram · поддержка</span>
+   </div>
+   <div class="cta-row">
+     <a class="btn btn-ok" href="https://github.com/ev609/rag-chatbot">Открыть демо-репозиторий →</a>
+     <a class="btn btn-ghost" href="#contact">Обсудить задачу</a>
+   </div>
   </div>
-  <div class="cta-row">
-    <a class="btn btn-ok" href="https://github.com/ev609/rag-chatbot">Открыть демо-репозиторий →</a>
-    <a class="btn btn-ghost" href="#contact">Обсудить задачу</a>
+  <div class="hero-demo">
+    <span class="demo-tag">↓ Проверьте прямо здесь — на демо-базе «Окта»</span>
+    <div class="rag-demo">
+      <div class="rag-log" id="rag-log" aria-live="polite">
+        <div class="rag-msg rag-b">
+          <div class="rag-txt">Здравствуйте! Я отвечаю по базе знаний сервиса «Окта». Спросите что-нибудь — или нажмите подсказку ниже.</div>
+        </div>
+      </div>
+      <div class="rag-chips">
+        <button type="button" class="rag-chip">Сколько стоит командный тариф?</button>
+        <button type="button" class="rag-chip">Какие лимиты у API и что будет при превышении?</button>
+        <button type="button" class="rag-chip">Можно ли пригласить клиента в один проект?</button>
+        <button type="button" class="rag-chip">Какая завтра погода?</button>
+      </div>
+      <form class="rag-form" id="rag-form" autocomplete="off">
+        <input type="text" id="rag-q" placeholder="Ваш вопрос к базе знаний…" aria-label="Вопрос">
+        <button type="submit" class="btn btn-ok">Спросить</button>
+      </form>
+      <p class="rag-foot">Демо: поиск работает офлайн в браузере. В проекте ответ формулирует ИИ-модель по найденным фрагментам (см. «Какой ИИ внутри»).</p>
+    </div>
   </div>
+ </div>
 </header>
 
 <section class="wrap" id="what">
@@ -341,35 +371,11 @@
 </section>
 
 <section class="wrap" id="demo">
-  <div class="sec-label">03 · Попробуйте прямо здесь</div>
-  <h2>Спросите бота <span class="ok">на демо-базе знаний</span></h2>
-  <p class="lead">Это вымышленный SaaS-сервис «Окта». Спросите про тарифы, лимиты API,
-  безопасность, перенос данных — бот ответит по документам с точностью до цифры и укажет
-  источник. Спросите то, чего в базе нет (например, про погоду) — честно скажет «не знаю»,
-  а не выдумает. Работает прямо в браузере.</p>
-
-  <div class="rag-demo">
-    <div class="rag-log" id="rag-log" aria-live="polite">
-      <div class="rag-msg rag-b">
-        <div class="rag-txt">Здравствуйте! Я отвечаю по базе знаний сервиса «Окта». Спросите что-нибудь — или нажмите подсказку ниже.</div>
-      </div>
-    </div>
-    <div class="rag-chips">
-      <button type="button" class="rag-chip">Сколько стоит командный тариф?</button>
-      <button type="button" class="rag-chip">Какие лимиты у API и что будет при превышении?</button>
-      <button type="button" class="rag-chip">Как включить двухфакторную аутентификацию?</button>
-      <button type="button" class="rag-chip">Можно ли пригласить клиента в один проект?</button>
-      <button type="button" class="rag-chip">Какая завтра погода?</button>
-    </div>
-    <form class="rag-form" id="rag-form" autocomplete="off">
-      <input type="text" id="rag-q" placeholder="Ваш вопрос к базе знаний…" aria-label="Вопрос">
-      <button type="submit" class="btn btn-ok">Спросить</button>
-    </form>
-    <p class="rag-foot">Демо работает офлайн в вашем браузере (лексический поиск + цитаты).
-    В реальном проекте — семантический поиск и естественные ответы Claude по вашим документам.</p>
-  </div>
-
-  <p class="lab-note" style="margin-top:34px">То же самое из кода — открытый репозиторий, запуск одной командой, без ключей:</p>
+  <div class="sec-label">03 · Открытый код</div>
+  <h2>Тот же движок, <span class="ok">запуск одной командой</span></h2>
+  <p class="lead">Живой чат в шапке — это лексический слой того же движка, что в открытом
+  репозитории. Код можно прочитать и запустить самому одной командой, без ключей, до любого
+  разговора об оплате.</p>
   <div class="lab-run">
     <span class="muted"># вопрос, ответ которого есть в базе</span><br>
     $ <span class="c">python3 rag_chatbot.py "сколько стоит командный тариф?"</span><br>
@@ -386,9 +392,58 @@
   <a href="https://github.com/ev609/rag-chatbot">github.com/ev609/rag-chatbot →</a></p>
 </section>
 
+<section class="wrap" id="ai">
+  <div class="sec-label">04 · Какой ИИ внутри</div>
+  <h2>RAG — это <span class="ok">поиск + языковая модель</span></h2>
+  <p class="lead">Бот сначала находит релевантные фрагменты вашей базы (retrieval), затем
+  языковая модель (LLM) формулирует по ним ответ и ссылается на источник. Живое демо в шапке
+  показывает слой поиска — он работает прямо в браузере, без модели и без затрат на токены.
+  В реальном проекте ответ генерирует выбранная вами LLM. Модель не привязана намертво —
+  меняется конфигом.</p>
+  <div class="grid2">
+    <div class="cell">
+      <h3>Облачные модели</h3>
+      <p>Claude (Anthropic), GPT-4o (OpenAI), Gemini — максимальное качество ответа. Подключение по API.</p>
+    </div>
+    <div class="cell">
+      <h3>Российские модели</h3>
+      <p>GigaChat (Сбер), YandexGPT (OpenAI-совместимый API) — оплата в РФ, данные в российском контуре.</p>
+    </div>
+    <div class="cell">
+      <h3>Self-hosted / on-prem</h3>
+      <p>Llama, Qwen, DeepSeek, Mistral на вашем сервере (vLLM / Ollama) — данные не покидают вас, без платы за токены.</p>
+    </div>
+    <div class="cell">
+      <h3>Подбор под задачу</h3>
+      <p>Поможем выбрать: качество vs стоимость vs приватность. Можно начать на облаке и перейти на self-host.</p>
+    </div>
+  </div>
+  <div class="guard">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 8.3 8 10 4.6-1.7 8-5 8-10V5l-8-3Z" stroke="#3ecf8e" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="#3ecf8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <p><b>Честно про демо на странице.</b> <span>Чтобы оно было бесплатным и безопасным (никаких
+    ключей и счетов за токены), в браузере крутится только слой поиска с extractive-ответом.
+    Качество «живого» ответа в проде определяет связка «модель + ваши документы» — её и настраиваем.</span></p>
+  </div>
+</section>
+
+<section class="wrap" id="analytics">
+  <div class="sec-label">05 · Аналитика · опция</div>
+  <h2>Видно, <span class="ok">что бот реально решает</span></h2>
+  <p class="lead">Подключается как опция — дашборд по диалогам, чтобы бот не был «чёрным ящиком».
+  Метрики выбраны по делу: меряем пользу, а не число сообщений (это частая ошибка — vanity-метрики).</p>
+  <ul class="flat">
+    <li><b>Доля решённых без человека</b> (containment / resolution) — сколько вопросов бот закрыл сам. Ориентир зрелого RAG-бота — 55–65%.</li>
+    <li><b>Вопросы без ответа</b> — что бот не нашёл в базе. Это прямой, приоритизированный план, чем пополнять базу знаний.</li>
+    <li><b>Конверсия в заявку</b> — сколько диалогов перешло в лид (для продающих сценариев).</li>
+    <li><b>Удовлетворённость (CSAT)</b> — оценка ответов пользователями; цель — 75%+.</li>
+    <li><b>Темы и пики нагрузки</b> — о чём спрашивают чаще и когда.</li>
+  </ul>
+  <p class="pay"><b>Приватность:</b> данные собираются на вашей стороне, третьим лицам не передаются. Объём дашборда — под вашу задачу, от простого лога вопросов до полной панели.</p>
+</section>
+
 <section class="wrap" id="build">
   <div class="diff">
-    <div class="sec-label">04 · Внедрение под ключ</div>
+    <div class="sec-label">06 · Внедрение под ключ</div>
     <h2>Демо — это ядро. <span class="ok">Под ваш проект добавляется</span></h2>
     <ul class="flat">
       <li><b>Семантический поиск</b> — находит ответ, даже когда вопрос сформулирован не теми
@@ -429,7 +484,7 @@
 </section>
 
 <section class="wrap" id="combined">
-  <div class="sec-label">05 · Часто берут вместе</div>
+  <div class="sec-label">07 · Часто берут вместе</div>
   <h2>Этот бот — <span class="ok">прямо в вашем Telegram</span></h2>
   <div class="diff">
     <p>Сильнее всего RAG-база знаний работает как <b>бот в Telegram</b>: клиент пишет в
@@ -446,7 +501,7 @@
 </section>
 
 <section class="wrap" id="contact">
-  <div class="sec-label">06 · Заказать</div>
+  <div class="sec-label">08 · Заказать</div>
   <h2>Опишите задачу — <span class="ok">отвечу по вашему контакту</span></h2>
   <p class="lead">Что за база знаний, где должен работать бот (сайт / Telegram / поддержка),
   примерный объём документов. Этого хватит, чтобы оценить работу.</p>

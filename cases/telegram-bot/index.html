@@ -207,6 +207,12 @@
   }
 </style><style>
   /* Виджет живого Telegram-бота (tg-demo.js) — переиспользует .rag-msg/.rag-u/.rag-b */
+  /* Двухколоночный герой: текст слева, живой бот справа */
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:44px;align-items:center}
+  @media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:30px}}
+  .hero-demo .demo-tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ok);margin-bottom:10px;display:block}
+  .hero-demo .rag-demo{margin-top:0}
   .rag-demo{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 18px 16px}
   .rag-log{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding:6px 4px 10px}
   .rag-msg{max-width:86%;padding:11px 14px;border-radius:13px;font-size:.88rem;line-height:1.5;text-wrap:pretty;white-space:pre-line}
@@ -250,29 +256,43 @@
     </a></div>
     <div class="bar-right">
       <nav aria-label="Разделы">
-        <a href="#what">Что делает</a><a href="#demo">Демо</a><a href="#how">Как устроено</a><a href="#build">Внедрение</a><a href="#contact">Заказать</a>
+        <a href="#what">Что делает</a><a href="#how">Как устроено</a><a href="#ai">ИИ внутри</a><a href="#analytics">Аналитика</a><a href="#build">Внедрение</a><a href="#contact">Заказать</a>
       </nav>
     </div>
   </div>
 </div>
 
 <header class="hero wrap">
-  <div class="kicker">Кейс · Telegram-бот под ключ</div>
-  <h1>Telegram-бот, который <span class="ok">принимает заявки и отвечает клиентам.</span></h1>
-  <p class="lead">Меню, пошаговый приём заявок с уведомлением менеджеру, ответы на вопросы
-  по вашей базе знаний — круглосуточно и без вашего участия. Бот снимает с вас рутину
-  первого контакта: квалифицирует клиента, собирает контакты и задачу, отвечает на типовое.</p>
-  <div class="chips">
-    <span class="chip hl">меню + кнопки</span>
-    <span class="chip">приём заявок</span>
-    <span class="chip">ответы по базе знаний</span>
-    <span class="chip">уведомление менеджеру</span>
-    <span class="chip">CRM · оплаты</span>
+ <div class="hero-grid">
+  <div class="hero-copy">
+   <div class="kicker">Кейс · Telegram-бот под ключ</div>
+   <h1>Telegram-бот, который <span class="ok">принимает заявки и отвечает клиентам.</span></h1>
+   <p class="lead">Меню, пошаговый приём заявок с уведомлением менеджеру, ответы на вопросы
+   по вашей базе знаний — круглосуточно и без вашего участия. Бот снимает с вас рутину
+   первого контакта: квалифицирует клиента, собирает контакты и задачу.</p>
+   <div class="chips">
+     <span class="chip hl">меню + кнопки</span>
+     <span class="chip">приём заявок</span>
+     <span class="chip">ответы по базе знаний</span>
+     <span class="chip">CRM · оплаты</span>
+   </div>
+   <div class="cta-row">
+     <a class="btn btn-ok" href="https://github.com/ev609/telegram-bot">Открытый код →</a>
+     <a class="btn btn-ghost" href="#contact">Обсудить задачу</a>
+   </div>
   </div>
-  <div class="cta-row">
-    <a class="btn btn-ok" href="#demo">Попробовать бота →</a>
-    <a class="btn btn-ghost" href="https://github.com/ev609/telegram-bot">Открытый код</a>
+  <div class="hero-demo">
+    <span class="demo-tag">↓ Нажимайте кнопки, как в Telegram</span>
+    <div class="rag-demo">
+      <div class="rag-log" id="tg-log" aria-live="polite"></div>
+      <form class="rag-form" id="tg-form" autocomplete="off">
+        <input type="text" id="tg-q" placeholder="Напишите боту или нажмите кнопку…" aria-label="Сообщение боту">
+        <button type="submit" class="btn btn-ok">Отправить</button>
+      </form>
+      <p class="rag-foot">Тот же код диалога, что в боевом боте, прямо в браузере. Пройдите «Оставить заявку» до конца.</p>
+    </div>
   </div>
+ </div>
 </header>
 
 <section class="wrap" id="what">
@@ -299,21 +319,13 @@
 </section>
 
 <section class="wrap" id="demo">
-  <div class="sec-label">02 · Попробуйте прямо здесь</div>
-  <h2>Живой бот <span class="ok">демо-студии</span></h2>
-  <p class="lead">Нажимайте кнопки, как в Telegram. Пройдите «Оставить заявку» до конца —
-  увидите, как бот собирает данные и передаёт их менеджеру. Спросите про сроки или оплату.
-  Работает прямо в браузере.</p>
-
-  <div class="rag-demo">
-    <div class="rag-log" id="tg-log" aria-live="polite"></div>
-    <form class="rag-form" id="tg-form" autocomplete="off">
-      <input type="text" id="tg-q" placeholder="Напишите боту или нажмите кнопку…" aria-label="Сообщение боту">
-      <button type="submit" class="btn btn-ok">Отправить</button>
-    </form>
-    <p class="rag-foot">Это тот же код диалога, что и в боевом боте (github.com/ev609/telegram-bot),
-    запущенный прямо в браузере. В реальном проекте бот живёт в Telegram и шлёт заявки вам.</p>
-  </div>
+  <div class="sec-label">02 · Открытый код</div>
+  <h2>Живой бот в шапке — <span class="ok">это открытый код</span></h2>
+  <p class="lead">Бот в шапке страницы запущен прямо в браузере на том же ядре диалога, что и
+  боевой. В открытом репозитории есть офлайн-симулятор: запускается без токена и без
+  зависимостей — можно прочитать архитектуру и прогнать сценарий до любого разговора об оплате.</p>
+  <p class="lab-note">Чистая архитектура: логика диалога отделена от Telegram (офлайн-симулятор + тонкий aiogram-адаптер).
+  <a href="https://github.com/ev609/telegram-bot">github.com/ev609/telegram-bot →</a></p>
 </section>
 
 <section class="wrap" id="how">
@@ -349,9 +361,50 @@
   <a href="https://github.com/ev609/telegram-bot">github.com/ev609/telegram-bot →</a></p>
 </section>
 
+<section class="wrap" id="ai">
+  <div class="sec-label">04 · Какой ИИ внутри</div>
+  <h2>Меню — без ИИ. <span class="ok">Понимание вопросов — с ИИ</span></h2>
+  <p class="lead">Сценарии (меню, кнопки, пошаговый приём заявок) работают на чёткой логике
+  без модели — это надёжно и предсказуемо, ничего «не придумает». ИИ подключается там, где
+  он нужен: понимание свободных вопросов и ответы по базе знаний — через RAG и языковую
+  модель. Демо в шапке отвечает простым поиском (FAQ); в проекте подключается LLM.</p>
+  <div class="grid2">
+    <div class="cell">
+      <h3>Облачные модели</h3>
+      <p>Claude (Anthropic), GPT-4o (OpenAI) — для умных ответов по базе знаний. По API.</p>
+    </div>
+    <div class="cell">
+      <h3>Российские модели</h3>
+      <p>GigaChat (Сбер), YandexGPT — оплата в РФ, данные в российском контуре. По API.</p>
+    </div>
+    <div class="cell">
+      <h3>Self-hosted / on-prem</h3>
+      <p>Llama, Qwen, DeepSeek на вашем сервере (vLLM / Ollama) — данные не покидают вас.</p>
+    </div>
+    <div class="cell">
+      <h3>Без жёсткой привязки</h3>
+      <p>Модель меняется конфигом. Знания бота — на нашем отдельном RAG-движке (см. связанный кейс).</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="analytics">
+  <div class="sec-label">05 · Аналитика · опция</div>
+  <h2>Видно, <span class="ok">сколько заявок и что спрашивают</span></h2>
+  <p class="lead">Подключается как опция — дашборд по диалогам бота. Метрики по делу, без
+  vanity-чисел вроде «сколько сообщений отправлено».</p>
+  <ul class="flat">
+    <li><b>Заявки и конверсия</b> — сколько диалогов дошло до оформленной заявки и где люди отваливаются в воронке.</li>
+    <li><b>Вопросы без ответа</b> — что бот не смог ответить: прямой план, чем пополнять базу знаний и сценарии.</li>
+    <li><b>Доля решённых без человека</b> — сколько обращений бот закрыл сам, не дёргая менеджера.</li>
+    <li><b>Темы и пики нагрузки</b> — о чём и когда спрашивают чаще.</li>
+  </ul>
+  <p class="pay"><b>Приватность:</b> данные собираются на вашей стороне, третьим лицам не передаются. Объём — от простого лога заявок до полной панели.</p>
+</section>
+
 <section class="wrap" id="build">
   <div class="diff">
-    <div class="sec-label">04 · Внедрение под ключ</div>
+    <div class="sec-label">06 · Внедрение под ключ</div>
     <h2>Демо — это каркас. <span class="ok">Под ваш бизнес добавляется</span></h2>
     <ul class="flat">
       <li><b>Интеграция с CRM</b> — заявки сразу в amoCRM, Bitrix24 или Google Sheets, без ручного переноса.</li>
@@ -387,7 +440,7 @@
 </section>
 
 <section class="wrap" id="combined">
-  <div class="sec-label">05 · Часто берут вместе</div>
+  <div class="sec-label">07 · Часто берут вместе</div>
   <h2>Добавьте боту <span class="ok">умную базу знаний</span></h2>
   <div class="diff">
     <p>Простой FAQ в боте отвечает на типовое. Когда вопросов много и они про ваши документы
@@ -404,7 +457,7 @@
 </section>
 
 <section class="wrap" id="contact">
-  <div class="sec-label">06 · Заказать</div>
+  <div class="sec-label">08 · Заказать</div>
   <h2>Опишите задачу — <span class="ok">отвечу по вашему контакту</span></h2>
   <p class="lead">Какой бизнес, что должен делать бот (меню, заявки, вопросы, оплаты),
   с чем интегрировать (CRM, таблицы). Этого хватит для оценки.</p>
