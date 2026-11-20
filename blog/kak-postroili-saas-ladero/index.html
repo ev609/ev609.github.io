@@ -47,6 +47,7 @@
   .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
     padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
   .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar nav a.on{color:var(--ok);background:var(--ok-dim)}
   .bar-right{display:flex;align-items:center;gap:8px}
   .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
     border:1px solid var(--line);border-radius:8px;padding:2px}
@@ -307,7 +308,7 @@
     </a></div>
     <div class="bar-right">
       <nav aria-label="Разделы">
-        <a href="/blog/">Блог</a><a href="/dev/ru/">Услуги</a><a href="/cases/saas-crm/?utm_source=blog&amp;utm_content=kak-postroili-saas-ladero">Кейсы</a><a href="/check/">Проверка сети</a>
+        <a href="/dev/ru/">Услуги</a><a href="/cases/saas-crm/?utm_source=blog&amp;utm_content=kak-postroili-saas-ladero">Кейсы</a><a href="/check/">Проверка сети</a><a href="/blog/" class="on">Блог</a>
       </nav>
     </div>
   </div>
