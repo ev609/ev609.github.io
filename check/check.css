@@ -60,6 +60,14 @@ h1{font-family:var(--disp);font-weight:600;font-size:clamp(2rem,4.4vw,3.1rem);li
 .btn-ghost.active{background:var(--ok-dim);border-color:rgba(62,207,142,.4);color:var(--ok)}
 .btn-icon{padding:10px 11px}
 .btn:disabled{opacity:.5;cursor:default;transform:none}
+
+.shared-banner{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-top:22px;padding:14px 18px;border-radius:12px;
+  background:var(--ok-dim);border:1px solid rgba(62,207,142,.38)}
+.shared-banner[hidden]{display:none}
+.shared-banner-txt{font-size:.86rem;color:var(--txt)}
+.shared-banner-txt b{font-family:var(--disp);font-weight:600;color:var(--ok);margin-right:6px}
+html[data-theme="light"] .shared-banner{border-color:rgba(21,128,61,.32)}
 .btn.loading svg.spin-icon{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .hint{font-size:.8rem;color:var(--dim);margin-top:10px}

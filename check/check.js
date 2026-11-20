@@ -1271,11 +1271,18 @@
     const btnCopy = $('btnCopyReport');
     const btnDl = $('btnDownloadReport');
     const btnShare = $('btnSharePng');
+    const btnLink = $('btnShareLink');
+    const banner = $('sharedBanner');
+    if (banner) banner.hidden = true;
+    if (location.hash && location.hash.startsWith('#r=')) {
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {}
+    }
     btn.disabled = true;
     btn.classList.add('loading');
     btnCopy.disabled = true;
     if (btnDl) btnDl.disabled = true;
     if (btnShare) btnShare.disabled = true;
+    if (btnLink) btnLink.disabled = true;
 
     setProgress(6);
     $('scoreNum').textContent = '··';
@@ -1362,6 +1369,7 @@
     btnCopy.disabled = false;
     if (btnDl) btnDl.disabled = false;
     if (btnShare) btnShare.disabled = false;
+    if (btnLink) btnLink.disabled = false;
     state.running = false;
   }
 
@@ -1674,6 +1682,182 @@
     }
   }
 
+  // --- Ссылка-снимок результата в URL-хэше (#r=...) строго без реальных IP ---
+  function b64uEncode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 1) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function b64uDecode(b64u) {
+    const b64 = b64u.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b64u.length + 3) % 4);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function buildShareUrl(res) {
+    const cg = res.services.find((s) => s.id === 'chatgpt');
+    const cl = res.services.find((s) => s.id === 'claude');
+    const primaryRep = (cg?.ip && res.reputations[cg.ip]) || Object.values(res.reputations)[0] || null;
+    const snap = {
+      v: 1,
+      ts: res.timestamp,
+      s: res.score,
+      t: res.tone,
+      cg: cg ? [cg.ok ? 1 : 0, cg.loc || '', cg.colo || '', cg.allowed === true ? 1 : (cg.allowed === false ? 0 : -1), cg.ms || 0] : null,
+      cl: cl ? [cl.ok ? 1 : 0, cl.loc || '', cl.colo || '', cl.allowed === true ? 1 : (cl.allowed === false ? 0 : -1), cl.ms || 0] : null,
+      cf: res.ipProto.cfTrace ? [res.ipProto.cfTrace.loc || '', res.ipProto.cfTrace.colo || ''] : null,
+      st: res.splitTunnel ? 1 : 0,
+      so: res.services.filter((x) => x.ok && x.allowed !== false).length,
+      sa: res.services.length,
+      pr: primaryRep ? [
+        (primaryRep.org || primaryRep.isp || '').slice(0, 48),
+        (primaryRep.asn || '').slice(0, 16),
+        primaryRep.countryCode || '',
+        (primaryRep.city || '').slice(0, 32),
+        primaryRep.isVpn ? 1 : 0,
+        primaryRep.isDatacenter ? 1 : 0,
+        primaryRep.isProxy ? 1 : 0,
+        primaryRep.isTor ? 1 : 0,
+        primaryRep.riskScore
+      ] : null,
+      wr: [res.webrtc.publicIps.length, res.webrtc.mdns ? 1 : 0],
+      v6: res.ipProto.ipv6 ? 1 : 0,
+      dn: res.dns.ok ? [res.dns.countryCode || '', (res.dns.geo || res.dns.provider || '').slice(0, 48), res.dns.isPublicAnycast ? 1 : 0] : null,
+      f: res.findings.slice(0, 8).map((x) => [x.severity, x.penalty, x.title.slice(0, 110), x.detail.slice(0, 180), x.fix.slice(0, 160)])
+    };
+    const encoded = b64uEncode(JSON.stringify(snap));
+    return `${location.origin}${location.pathname}#r=${encoded}`;
+  }
+
+  function decodeShareHash() {
+    if (!location.hash || !location.hash.startsWith('#r=')) return null;
+    try {
+      const raw = location.hash.slice(3).trim();
+      if (!raw || raw.length > 8000) return null;
+      const snap = JSON.parse(b64uDecode(raw));
+      if (!snap || snap.v !== 1 || typeof snap.s !== 'number') return null;
+      return snap;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function loadSharedSnapshot(snap) {
+    const masked = T('скрыт в ссылке', 'hidden in link');
+    const makeSvc = (base, arr) => ({
+      ...base,
+      ok: Boolean(arr && arr[0]),
+      ip: arr && arr[0] ? masked : null,
+      loc: arr && arr[1] ? String(arr[1]) : null,
+      colo: arr && arr[2] ? String(arr[2]) : null,
+      allowed: arr ? (arr[3] === 1 ? true : (arr[3] === 0 ? false : null)) : null,
+      ms: arr ? Number(arr[4] || 0) : 0,
+      error: arr && !arr[0] ? T('недоступен', 'unreachable') : null
+    });
+
+    const services = AI_SERVICES.map((base) => {
+      if (base.id === 'chatgpt') return makeSvc(base, snap.cg);
+      if (base.id === 'claude') return makeSvc(base, snap.cl);
+      return { ...base, ok: false, ip: null, loc: null, colo: null, allowed: null, ms: 0, error: T('не сохраняется в короткой ссылке', 'omitted in share link') };
+    });
+
+    const reputations = {};
+    if (snap.pr) {
+      reputations[masked] = {
+        ip: masked, version: '—', sources: ['shared'],
+        org: String(snap.pr[0] || '—'), asn: String(snap.pr[1] || '—'),
+        isp: String(snap.pr[0] || '—'), countryCode: String(snap.pr[2] || ''),
+        city: String(snap.pr[3] || ''),
+        isVpn: Boolean(snap.pr[4]), isDatacenter: Boolean(snap.pr[5]),
+        isProxy: Boolean(snap.pr[6]), isTor: Boolean(snap.pr[7]),
+        isMobile: false, riskScore: typeof snap.pr[8] === 'number' ? snap.pr[8] : null,
+        asnHeuristicHosting: false, asnHeuristicVpn: false, disagreement: false
+      };
+    }
+
+    const ipProto = {
+      ipv4: masked,
+      ipv6: snap.v6 ? masked : null,
+      cfTrace: snap.cf ? { ip: masked, loc: String(snap.cf[0] || ''), colo: String(snap.cf[1] || '') } : null
+    };
+    const webrtc = {
+      supported: true,
+      publicIps: snap.wr && snap.wr[0] > 0 ? Array(Math.min(3, snap.wr[0])).fill(masked) : [],
+      localIps: [],
+      mdns: Boolean(snap.wr && snap.wr[1])
+    };
+    const dns = snap.dn ? {
+      ok: true, ip: masked, countryCode: String(snap.dn[0] || ''),
+      geo: String(snap.dn[1] || ''), provider: String(snap.dn[1] || ''),
+      isPublicAnycast: Boolean(snap.dn[2])
+    } : { ok: false, ip: null, geo: null, countryCode: null, provider: null, isPublicAnycast: false };
+
+    const browser = {
+      ua: T('не передаётся в ссылке', 'not included in shared link'),
+      platform: '—', uaDataPlatform: null, uaMismatch: false, webdriver: false,
+      tz: '—', tzCountryHint: null, tzOffsetMin: 0, languages: [],
+      clockDriftSec: null, screen: '—', cores: null, memoryGb: null,
+      webglRenderer: '—', cookiesEnabled: true
+    };
+
+    const findings = Array.isArray(snap.f) ? snap.f.map((x) => ({
+      severity: ['ok', 'warn', 'bad'].includes(x[0]) ? x[0] : 'warn',
+      penalty: Number(x[1] || 0),
+      title: String(x[2] || ''),
+      detail: String(x[3] || ''),
+      fix: String(x[4] || '')
+    })) : [];
+
+    const score = Math.max(0, Math.min(100, Math.round(Number(snap.s) || 0)));
+    const tone = ['ok', 'warn', 'bad'].includes(snap.t) ? snap.t : (score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'bad');
+    const verdict = tone === 'ok' ? T('Отличное подключение', 'Great connection')
+      : tone === 'warn' ? T('Есть замечания', 'Some warnings') : T('Высокий риск блокировки', 'High risk of blocks');
+
+    const byId = Object.fromEntries(services.map((s) => [s.id, s]));
+    const aiCountry = byId.chatgpt?.loc || byId.claude?.loc || snap.pr?.[2] || null;
+    const simpleCards = buildSimpleCards({
+      byId, ipProto, primaryReps: Object.values(reputations), reputations, webrtc, dns, browser,
+      openaiIps: new Set(byId.chatgpt?.ok ? [masked] : []),
+      anthropicIps: new Set(byId.claude?.ok ? [masked] : []),
+      aiCountry, splitTunnel: Boolean(snap.st)
+    });
+
+    const res = {
+      timestamp: Number(snap.ts) || Date.now(),
+      prevScore: null, score, verdict, tone, aiCountry,
+      splitTunnel: Boolean(snap.st), findings, simpleCards,
+      services, extraProbes: [], ipProto, reputations, webrtc, dns, browser
+    };
+
+    state.result = res;
+    setProgress(100);
+    setStep('services', `${snap.so ?? '—'}/${snap.sa ?? AI_SERVICES.length}`, 'ok');
+    setStep('rep', snap.pr ? '1/1' : '—', 'ok');
+    setStep('webrtc', webrtc.publicIps.length ? `${webrtc.publicIps.length} IP` : T('чисто', 'clean'), webrtc.publicIps.length ? 'warn' : 'ok');
+    setStep('ipv6', ipProto.ipv6 ? T('есть', 'yes') : T('нет', 'none'), 'ok');
+    setStep('dns', dns.ok ? (dns.isPublicAnycast ? 'anycast' : (dns.countryCode || 'ok')) : '—', dns.ok ? 'ok' : 'warn');
+    setStep('browser', T('скрыт', 'private'), 'ok');
+
+    renderAll(res);
+
+    const banner = $('sharedBanner');
+    const btxt = $('sharedBannerText');
+    if (banner && btxt) {
+      const dt = new Date(res.timestamp).toLocaleString(LOCALE, { dateStyle: 'medium', timeStyle: 'short' });
+      btxt.innerHTML = `<b>${T('Сохранённый результат', 'Shared snapshot')}</b> ${T(`от ${dt} — IP-адреса и данные браузера отправителя не передаются.`, `from ${dt} — sender IP addresses and browser fingerprint are excluded.`)}`;
+      banner.hidden = false;
+    }
+
+    ['btnCopyReport', 'btnDownloadReport', 'btnSharePng', 'btnShareLink'].forEach((id) => {
+      const el = $(id);
+      if (el) el.disabled = false;
+    });
+  }
+
   function initTheme() {
     const btn = $('btnTheme');
     if (!btn) return;
@@ -1708,6 +1892,42 @@
         if (!state.result) return;
         shareResultPng(state.result, btnShare);
       });
+    }
+
+    const btnLink = $('btnShareLink');
+    if (btnLink) {
+      const LINK_SVG = btnLink.innerHTML;
+      const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      btnLink.addEventListener('click', async () => {
+        if (!state.result) return;
+        const url = buildShareUrl(state.result);
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch (_) {
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+        }
+        btnLink.classList.add('active');
+        btnLink.innerHTML = CHECK_SVG;
+        const origTitle = btnLink.getAttribute('title') || '';
+        btnLink.setAttribute('title', T('Ссылка скопирована!', 'Link copied!'));
+        setTimeout(() => {
+          btnLink.classList.remove('active');
+          btnLink.innerHTML = LINK_SVG;
+          btnLink.setAttribute('title', origTitle);
+        }, 2000);
+      });
+    }
+
+    const btnRunOwn = $('btnRunOwn');
+    if (btnRunOwn) {
+      btnRunOwn.addEventListener('click', runCheck);
     }
 
     $('btnCopyReport').addEventListener('click', () => {
@@ -1801,7 +2021,12 @@
       else copyText('https://alfafond.com/check-skill.md', btn, T('Скопирована ссылка', 'Link copied'));
     });
 
-    runCheck();
+    const shared = decodeShareHash();
+    if (shared) {
+      loadSharedSnapshot(shared);
+    } else {
+      runCheck();
+    }
   }
 
   if (document.readyState === 'loading') {
