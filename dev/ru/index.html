@@ -543,7 +543,7 @@
     вейтлист — напишу, когда будет что попробовать вживую. Без оплаты, без обязательств, без спама.</span></p>
   </div>
 
-  <!-- Вейтлист → отдельный subject, чтобы считать спрос отдельно от подрядных лидов (заполнить WEB3FORMS_KEY) -->
+  <!-- Вейтлист → отдельный subject, чтобы считать спрос отдельно от подрядных лидов -->
   <form class="contact" action="https://api.web3forms.com/submit" method="POST">
     <input type="hidden" name="access_key" value="500d8f26-693d-481a-9062-b02aa72a97db">
     <input type="hidden" name="subject" value="AlfaFond — bot-builder waitlist (ru)">
@@ -619,7 +619,7 @@
     </div>
     <p class="pay"><b>Оплата:</b> USDC / USDT (любая сеть), escrow для первых проектов, или банковский перевод.<br>
     Fixed-scope — по milestone · retainer — помесячно. Без хранения ваших средств.</p>
-    <!-- Form → email relay (fill WEB3FORMS_KEY). Degrades without JS: plain POST + redirect. -->
+    <!-- Форма → почта через Web3Forms relay. Деградирует без JS: обычный POST + редирект. -->
     <form class="contact" action="https://api.web3forms.com/submit" method="POST">
       <input type="hidden" name="access_key" value="500d8f26-693d-481a-9062-b02aa72a97db">
       <input type="hidden" name="subject" value="AlfaFond /dev (RU) — заявка">
@@ -647,24 +647,6 @@
     <span class="mono-s">alfafond.com/dev · сайт и дизайн сделаны нами — это и есть наша работа</span>
   </div>
 </footer>
-<script>
-/* Формы ещё не подключены к relay (WEB3FORMS_KEY placeholder) — честный fallback на GitHub.
-   Самоотключается: как только в access_key реальный ключ, обработчик не вешается. */
-document.querySelectorAll('form').forEach(function(f){
-  var k = f.querySelector('input[name="access_key"]');
-  if(k && k.value === 'WEB3FORMS_KEY'){
-    f.addEventListener('submit', function(e){
-      e.preventDefault();
-      if(f.querySelector('.fallback-note')) return;
-      var n = document.createElement('p');
-      n.className = 'fallback-note';
-      n.style.cssText = 'margin-top:10px;font-family:monospace;font-size:.78rem;color:#e0a23c';
-      n.innerHTML = 'Форма ещё не подключена — честно. Напишите через GitHub: <a href="https://github.com/ev609/strategy-lab/issues" style="color:#3ecf8e">github.com/ev609/strategy-lab</a>';
-      f.appendChild(n);
-    });
-  }
-});
-</script>
 <script src="/assistant.js"></script>
   <script src="/lang-suggest.js"></script>
 </body>

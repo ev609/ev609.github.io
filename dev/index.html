@@ -541,7 +541,7 @@
     reach out when there's something real to try. No payment, no obligation, no spam.</span></p>
   </div>
 
-  <!-- Waitlist → отдельный subject, чтобы считать спрос отдельно от подрядных лидов (fill WEB3FORMS_KEY) -->
+  <!-- Waitlist → отдельный subject, чтобы считать спрос отдельно от подрядных лидов -->
   <form class="contact" action="https://api.web3forms.com/submit" method="POST">
     <input type="hidden" name="access_key" value="500d8f26-693d-481a-9062-b02aa72a97db">
     <input type="hidden" name="subject" value="AlfaFond — bot-builder waitlist">
@@ -617,7 +617,7 @@
     </div>
     <p class="pay"><b>Payment:</b> USDC / USDT (any chain), escrow for first engagements, or bank wire.<br>
     Fixed-scope billed by milestone · retainers monthly. No custody of your funds.</p>
-    <!-- Form → email relay (fill WEB3FORMS_KEY). Degrades without JS: plain POST + redirect. -->
+    <!-- Form → Web3Forms email relay. Degrades without JS: plain POST + redirect. -->
     <form class="contact" action="https://api.web3forms.com/submit" method="POST">
       <input type="hidden" name="access_key" value="500d8f26-693d-481a-9062-b02aa72a97db">
       <input type="hidden" name="subject" value="AlfaFond /dev — engagement inquiry">
@@ -645,24 +645,6 @@
     <span class="mono-s">alfafond.com/dev · this site designed &amp; built in-house — the work we sell</span>
   </div>
 </footer>
-<script>
-/* Формы ещё не подключены к relay (WEB3FORMS_KEY placeholder) — честный fallback на GitHub.
-   Самоотключается: как только в access_key реальный ключ, обработчик не вешается. */
-document.querySelectorAll('form').forEach(function(f){
-  var k = f.querySelector('input[name="access_key"]');
-  if(k && k.value === 'WEB3FORMS_KEY'){
-    f.addEventListener('submit', function(e){
-      e.preventDefault();
-      if(f.querySelector('.fallback-note')) return;
-      var n = document.createElement('p');
-      n.className = 'fallback-note';
-      n.style.cssText = 'margin-top:10px;font-family:monospace;font-size:.78rem;color:#e0a23c';
-      n.innerHTML = 'The form relay isn\'t wired up yet — honest answer. Reach me on GitHub instead: <a href="https://github.com/ev609/strategy-lab/issues" style="color:#3ecf8e">github.com/ev609/strategy-lab</a>';
-      f.appendChild(n);
-    });
-  }
-});
-</script>
   <script src="/lang-suggest.js"></script>
 </body>
 </html>
