@@ -999,7 +999,14 @@
         findings: res.findings.length
       };
       const arr = loadHistory();
-      arr.unshift(item);
+      const top = arr[0];
+      if (top && top.score === item.score && top.loc === item.loc && top.provider === item.provider && top.findings === item.findings) {
+        top.ts = item.ts;
+        top.hits = (top.hits || 1) + 1;
+      } else {
+        item.hits = 1;
+        arr.unshift(item);
+      }
       localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(0, 8)));
     } catch (_) {}
   }
@@ -1024,7 +1031,7 @@
           <b>${esc(countryName(it.loc))}</b>
           <span>${esc(it.provider)} · ${T('находок', 'findings')}: ${it.findings}</span>
         </div>
-        <span class="hist-time">${day} ${t}</span>
+        <span class="hist-time">${it.hits > 1 ? `<span class="hist-cnt">×${it.hits}</span>` : ''}${day} ${t}</span>
       </li>`;
     }).join('');
   }
@@ -1123,10 +1130,10 @@
       ? `<span class="dot ${cl.allowed ? 'ok' : 'bad'}"></span>${esc(countryName(cl.loc))} · <code>${esc(maskIp(cl.ip))}</code>`
       : `<span class="dot bad"></span>${esc(cl?.error || T('недоступен', 'unreachable'))}`;
     $('sumCfDirect').innerHTML = res.ipProto.cfTrace
-      ? `${res.splitTunnel ? '<span class="badge ok" style="margin-right:6px">split-tunnel</span>' : ''}${esc(countryName(res.ipProto.cfTrace.loc))} · <code>${esc(maskIp(res.ipProto.cfTrace.ip))}</code>`
+      ? `${res.splitTunnel ? '<span class="badge ok">split-tunnel</span>' : ''}${esc(countryName(res.ipProto.cfTrace.loc))} · <code>${esc(maskIp(res.ipProto.cfTrace.ip))}</code>`
       : '—';
     $('sumDns').innerHTML = res.dns.ok
-      ? `${res.dns.isPublicAnycast ? '<span class="badge ok" style="margin-right:6px">anycast</span>' : ''}${esc(res.dns.geo || res.dns.provider || countryName(res.dns.countryCode))}`
+      ? `${res.dns.isPublicAnycast ? '<span class="badge ok">anycast</span>' : ''}${esc(res.dns.geo || res.dns.provider || countryName(res.dns.countryCode))}`
       : `<span class="dim">${T('не определён', 'unknown')}</span>`;
 
     const flist = $('findingsList');

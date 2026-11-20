@@ -60,7 +60,7 @@
 <script>(function(){try{if(localStorage.getItem("af_check_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
 <link rel="stylesheet" href="/depth.css?v=2">
 <link rel="stylesheet" href="/tokens.css">
-<link rel="stylesheet" href="/check/check.css?v=5">
+<link rel="stylesheet" href="/check/check.css?v=6">
 </head>
 <body>
 <div class="glow" aria-hidden="true"></div>
@@ -112,10 +112,6 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>Скачать .md</span>
             </button>
-            <button id="btnHideIp" type="button" class="btn btn-ghost" aria-pressed="false">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              <span>Скрыть IP</span>
-            </button>
           </div>
           <p class="hint">«Отчёт для нейросети» копирует готовый Markdown — вставьте в ChatGPT, Claude или Cursor и спросите, что поправить.</p>
         </div>
@@ -135,7 +131,10 @@
       <aside class="score-card" aria-live="polite">
         <div class="score-head">
           <span class="score-label">Балл подключения</span>
-          <span class="mono-xs dim">100 − штрафы</span>
+          <button id="btnHideIp" type="button" class="btn btn-ghost btn-eye" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Скрыть IP</span>
+          </button>
         </div>
         <div id="progressBar" class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
         <div class="score-main">
@@ -405,7 +404,7 @@
   </div>
 </footer>
 
-<script src="/check/check.js?v=4"></script>
+<script src="/check/check.js?v=5"></script>
 <script src="/assistant.js"></script>
 </body>
 </html>
