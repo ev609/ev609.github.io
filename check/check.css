@@ -239,10 +239,7 @@ details p{font-size:.86rem;color:var(--sub);margin-top:10px;line-height:1.6}
 .xcard .xt{font-family:var(--disp);font-weight:600;font-size:1.08rem;color:var(--txt);display:block;margin:8px 0 6px}
 .xcard .xd{font-size:.86rem;color:var(--sub);display:block}
 
-footer{margin-top:56px;border-top:1px solid var(--line);padding:24px 0 36px;font-family:var(--mono);font-size:.72rem;color:var(--dim)}
-footer .cols{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-footer a{color:var(--sub);text-decoration:none}
-footer a:hover{color:var(--ok)}
+/* Футер стилизован централизованно в /depth.css (.af-foot) */
 
 /* ============================================================================
  * Светлая тема — html[data-theme="light"] (выверенный WCAG AA контраст)

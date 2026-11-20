@@ -58,9 +58,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>(function(){try{if(localStorage.getItem("af_check_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
-<link rel="stylesheet" href="/depth.css">
+<link rel="stylesheet" href="/depth.css?v=2">
 <link rel="stylesheet" href="/tokens.css">
-<link rel="stylesheet" href="/check/check.css?v=4">
+<link rel="stylesheet" href="/check/check.css?v=5">
 </head>
 <body>
 <div class="glow" aria-hidden="true"></div>
@@ -384,16 +384,15 @@
   </a>
 </main>
 
-<footer>
-  <div class="wrap cols">
-    <div class="logo" style="font-size:.95rem">
-      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
-        <rect x="0" y="0" width="32" height="32" rx="8" fill="#3ecf8e"/>
-        <text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="700" font-size="15" fill="#0a0b0e">AF</text>
-      </svg>
-      <span>ALFAFOND <span class="path">/check</span></span>
+<footer class="af-foot">
+  <div class="wrap">
+    <div class="af-foot-row">
+      <div class="af-foot-brand">
+        <a class="af-foot-logo" href="/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><rect x="0" y="0" width="32" height="32" rx="8" fill="#3ecf8e"/><text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="700" font-size="15" fill="#0a0b0e">AF</text></svg><span>ALFAFOND <span class="path">/check</span></span></a>
+        <span class="af-foot-copy">© 2026 AlfaFond · zero IP logging</span>
+      </div>
+      <nav class="af-foot-nav" aria-label="Footer navigation"><a href="/dev/">Engineering /dev</a><a href="/ru/en/">Research</a><a href="/check/en/">Network check</a><a href="/blog/">Blog</a><a href="https://github.com/ev609" target="_blank" rel="noopener">GitHub</a></nav>
     </div>
-    <div>Built by <a href="/dev/">AlfaFond /dev</a> · <a href="/check/">Русская версия</a> · <a href="/">Home</a></div>
   </div>
 </footer>
 

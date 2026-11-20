@@ -35,3 +35,73 @@ h1 .ok {
 /* Выделение ключевых фраз в lead — белым+жирным (вес+светлота), НЕ акцент-цветом
  * (зелёный беречь для геро/CTA). Доступно: эмфазис не только цветом. */
 .lead b { color: var(--txt); }
+
+/* Единый сквозной футер для всех внутренних страниц alfafond.com.
+ * Нижний отступ 76px оставляет запас под плавающий чат-виджет assistant.js и баннер lang-suggest.js. */
+footer.af-foot {
+  margin-top: 56px;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 76px;
+  font-family: var(--mono);
+  font-size: .74rem;
+  color: var(--dim);
+}
+.af-foot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px 28px;
+  flex-wrap: wrap;
+}
+.af-foot-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.af-foot-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--txt);
+  text-decoration: none;
+  font-family: var(--disp);
+  font-weight: 700;
+  font-size: .95rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.af-foot-logo:hover { opacity: .9; }
+.af-foot-logo .path {
+  font-family: var(--mono);
+  font-size: .76rem;
+  font-weight: 500;
+  color: var(--ok);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.af-foot-copy {
+  color: var(--dim);
+  font-size: .72rem;
+}
+.af-foot-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px 18px;
+  flex-wrap: wrap;
+}
+.af-foot-nav a {
+  color: var(--sub);
+  text-decoration: none;
+  transition: color .15s;
+}
+.af-foot-nav a:hover { color: var(--ok); }
+footer.af-foot .disc {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-family: var(--body);
+  font-size: .74rem;
+  line-height: 1.55;
+  color: var(--dim);
+}
