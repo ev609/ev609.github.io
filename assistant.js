@@ -32,66 +32,139 @@ const ASSISTANT_INDEX = {"N": 16, "avg_len": 28.3125, "doc_freq": {"реальн
   function answer(q){var h=search(q);if(!h.length||h[0].s<MIN_RELEVANCE||coverage(q)<MIN_COVERAGE)return {ok:false,text:NO_ANSWER,src:""};return {ok:true,text:h[0].c.text,src:h[0].c.section};}
 
   var CSS = "\
+@keyframes afaPulse{0%{transform:scale(1);opacity:.45}36%{transform:scale(1.44);opacity:0}100%{transform:scale(1.44);opacity:0}}\
+@keyframes afaIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}\
 .afa-launch{position:fixed;right:24px;bottom:24px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;\
-background:#3ecf8e;color:#07120c;display:flex;align-items:center;justify-content:center;z-index:99998;\
-box-shadow:0 8px 28px rgba(62,207,142,.35);transition:transform .15s}\
-.afa-launch:hover{transform:translateY(-2px)}\
-.afa-launch svg{width:26px;height:26px}\
-.afa-nudge{position:fixed;right:90px;bottom:34px;max-width:230px;background:#14161c;color:#f4f5f7;\
-border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px 14px;font:400 13px/1.45 'Golos Text',sans-serif;\
-z-index:99997;box-shadow:0 8px 28px rgba(0,0,0,.4);cursor:pointer}\
-.afa-nudge b{color:#3ecf8e;font-weight:500}\
-.afa-nudge .afa-x{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:#14161c;\
-border:1px solid rgba(255,255,255,.18);color:#a0a6b0;font-size:12px;line-height:18px;text-align:center;cursor:pointer}\
+background:linear-gradient(135deg,#4ae39e 0%,#25b876 100%);color:#07120c;display:flex;align-items:center;justify-content:center;z-index:99998;\
+box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 10px 28px rgba(37,184,118,.34),0 2px 6px rgba(0,0,0,.35);\
+transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .18s ease,opacity .18s ease}\
+.afa-launch::before{content:'';position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(74,227,158,.65);\
+pointer-events:none;animation:afaPulse 4.6s cubic-bezier(.22,1,.36,1) infinite}\
+.afa-launch:hover{transform:translateY(-2px) scale(1.03);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 14px 34px rgba(37,184,118,.42),0 4px 10px rgba(0,0,0,.4)}\
+.afa-launch:hover::before,.afa-launch:focus-visible::before,.afa-launch.afa-hidden::before{animation:none;opacity:0}\
+.afa-launch:active{transform:scale(.95)}\
+.afa-launch:focus-visible{outline:2px solid #4ae39e;outline-offset:3px}\
+.afa-launch.afa-hidden{opacity:0;transform:scale(.82);pointer-events:none}\
+.afa-launch svg{width:24px;height:24px;display:block}\
+.afa-nudge{position:fixed;right:92px;bottom:24px;max-width:254px;background:rgba(18,20,26,.92);color:#f4f5f7;\
+backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);\
+border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:10px 32px 10px 14px;\
+font:400 13px/1.4 'Golos Text',sans-serif;z-index:99997;\
+box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 32px rgba(0,0,0,.45);cursor:pointer;\
+opacity:0;transform:translateY(8px) scale(.97);transition:opacity .26s ease,transform .28s cubic-bezier(.16,1,.3,1),border-color .18s ease}\
+.afa-nudge.show{opacity:1;transform:translateY(0) scale(1)}\
+.afa-nudge:hover{border-color:rgba(62,207,142,.38)}\
+.afa-nudge::after{content:'';position:absolute;right:-5px;top:50%;width:9px;height:9px;margin-top:-4.5px;\
+background:#12141a;border-top:1px solid rgba(255,255,255,.12);border-right:1px solid rgba(255,255,255,.12);\
+transform:rotate(45deg);transition:border-color .18s ease}\
+.afa-nudge:hover::after{border-color:rgba(62,207,142,.38)}\
+.afa-nt{display:block;font-size:12px;color:#a0a6b0;margin-bottom:2px}\
+.afa-nb{display:inline-flex;align-items:center;gap:4px;font-size:13.5px;font-weight:500;color:#3ecf8e}\
+.afa-arr{display:inline-block;transition:transform .18s ease}\
+.afa-nudge:hover .afa-arr{transform:translateX(3px)}\
+.afa-nudge .afa-x{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:6px;background:transparent;\
+border:none;color:#717784;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;\
+transition:background .15s ease,color .15s ease}\
+.afa-nudge .afa-x:hover{background:rgba(255,255,255,.08);color:#f4f5f7}\
+.afa-nudge .afa-x svg{width:12px;height:12px;pointer-events:none}\
 .afa-panel{position:fixed;right:24px;bottom:92px;width:380px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 120px);\
-background:#0d0f13;border:1px solid rgba(255,255,255,.1);border-radius:16px;z-index:99999;display:none;flex-direction:column;\
-overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);font-family:'Golos Text',sans-serif}\
-.afa-panel.open{display:flex}\
-.afa-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:#0a0b0e}\
-.afa-head .dot{width:9px;height:9px;border-radius:50%;background:#3ecf8e;box-shadow:0 0 0 3px rgba(62,207,142,.18)}\
-.afa-head .t{font:600 14px 'Geologica',sans-serif;color:#f4f5f7;flex:1}\
-.afa-head .t span{display:block;font:400 11px 'IBM Plex Mono',monospace;color:#717784}\
-.afa-head .afa-close{background:none;border:none;color:#a0a6b0;font-size:20px;cursor:pointer;line-height:1}\
+background:rgba(13,15,19,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);\
+border:1px solid rgba(255,255,255,.11);border-radius:16px;z-index:99999;display:flex;flex-direction:column;\
+overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 24px 64px rgba(0,0,0,.55);font-family:'Golos Text',sans-serif;\
+opacity:0;visibility:hidden;pointer-events:none;transform:translateY(12px) scale(.96);transform-origin:bottom right;\
+transition:opacity .2s ease,transform .22s cubic-bezier(.16,1,.3,1),visibility .2s}\
+.afa-panel.open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scale(1)}\
+.afa-head{display:flex;align-items:center;gap:10px;padding:13px 14px 13px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(10,11,14,.85)}\
+.afa-head .dot{width:8px;height:8px;border-radius:50%;background:#3ecf8e;box-shadow:0 0 0 3px rgba(62,207,142,.18);flex:none}\
+.afa-head .t{font:600 14px 'Geologica',sans-serif;color:#f4f5f7;flex:1;min-width:0}\
+.afa-head .t span{display:block;font:400 11px 'IBM Plex Mono',monospace;color:#717784;margin-top:1px}\
+.afa-head .afa-close{background:transparent;border:none;color:#a0a6b0;width:28px;height:28px;border-radius:7px;\
+display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .15s ease,color .15s ease}\
+.afa-head .afa-close:hover{background:rgba(255,255,255,.08);color:#f4f5f7}\
+.afa-head .afa-close svg{width:14px;height:14px}\
 .afa-log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px}\
-.afa-msg{max-width:88%;padding:10px 13px;border-radius:13px;font-size:13.5px;line-height:1.5;white-space:pre-line}\
-.afa-u{align-self:flex-end;background:#3ecf8e;color:#07120c;border-bottom-right-radius:4px;font-weight:500}\
+.afa-msg{max-width:88%;padding:10px 13px;border-radius:13px;font-size:13.5px;line-height:1.5;white-space:pre-line;animation:afaIn .18s ease-out both}\
+.afa-u{align-self:flex-end;background:linear-gradient(135deg,#4ae39e,#25b876);color:#07120c;border-bottom-right-radius:4px;font-weight:500}\
 .afa-b{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#f4f5f7;border-bottom-left-radius:4px}\
 .afa-b.afa-no{border-color:rgba(224,162,60,.4);background:rgba(224,162,60,.08)}\
 .afa-src{margin-top:7px;font:400 11px 'IBM Plex Mono',monospace;color:#3ecf8e}\
 .afa-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px}\
 .afa-chip{font:400 12px 'IBM Plex Mono',monospace;color:#a0a6b0;background:rgba(255,255,255,.03);\
-border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:6px 11px;cursor:pointer}\
-.afa-chip:hover{color:#f4f5f7;border-color:rgba(255,255,255,.2)}\
+border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:6px 11px;cursor:pointer;transition:color .15s,border-color .15s,background .15s}\
+.afa-chip:hover{color:#f4f5f7;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.06)}\
 .afa-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}\
 .afa-act{font:400 12.5px 'Golos Text',sans-serif;color:#3ecf8e;background:rgba(62,207,142,.08);\
-border:1px solid rgba(62,207,142,.3);border-radius:9px;padding:7px 12px;cursor:pointer}\
+border:1px solid rgba(62,207,142,.3);border-radius:9px;padding:7px 12px;cursor:pointer;transition:background .15s,border-color .15s}\
 .afa-act:hover{background:rgba(62,207,142,.16)}\
 .afa-act.afa-act-dim{color:#a0a6b0;background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.12)}\
+.afa-act.afa-act-dim:hover{background:rgba(255,255,255,.07);color:#f4f5f7}\
 .afa-form{display:flex;gap:8px;padding:12px 14px;border-top:1px solid rgba(255,255,255,.08)}\
 .afa-form input{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:9px;\
-padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit}\
+padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit;transition:border-color .15s}\
 .afa-form input:focus{outline:none;border-color:#3ecf8e}\
-.afa-form button{background:#3ecf8e;color:#07120c;border:none;border-radius:9px;padding:0 16px;font-weight:600;cursor:pointer;font-family:inherit}\
+.afa-form button{background:linear-gradient(135deg,#4ae39e,#25b876);color:#07120c;border:none;border-radius:9px;padding:0 15px;\
+font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;transition:filter .15s,transform .15s}\
+.afa-form button:hover{filter:brightness(1.06)}\
+.afa-form button:active{transform:scale(.96)}\
 .afa-foot{font:400 10px 'IBM Plex Mono',monospace;color:#5a606b;text-align:center;padding:0 14px 10px}\
-@media(max-width:560px){.afa-panel{right:8px;bottom:84px;height:70vh}.afa-nudge{display:none}}";
+html[data-theme='light'] .afa-launch{background:linear-gradient(135deg,#22c55e 0%,#15803d 100%);color:#ffffff;\
+box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 10px 26px rgba(21,128,61,.28),0 2px 6px rgba(15,23,42,.12)}\
+html[data-theme='light'] .afa-launch::before{border-color:rgba(21,128,61,.5)}\
+html[data-theme='light'] .afa-launch:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 14px 32px rgba(21,128,61,.34),0 4px 10px rgba(15,23,42,.14)}\
+html[data-theme='light'] .afa-launch:focus-visible{outline-color:#15803d}\
+html[data-theme='light'] .afa-nudge{background:rgba(255,255,255,.95);color:#111827;border-color:rgba(15,23,42,.12);\
+box-shadow:0 10px 30px -8px rgba(15,23,42,.18),0 2px 6px rgba(15,23,42,.06)}\
+html[data-theme='light'] .afa-nudge::after{background:#ffffff;border-color:rgba(15,23,42,.12)}\
+html[data-theme='light'] .afa-nudge:hover,html[data-theme='light'] .afa-nudge:hover::after{border-color:rgba(21,128,61,.4)}\
+html[data-theme='light'] .afa-nt{color:#4b5563}\
+html[data-theme='light'] .afa-nb{color:#15803d}\
+html[data-theme='light'] .afa-nudge .afa-x{color:#64748b}\
+html[data-theme='light'] .afa-nudge .afa-x:hover{background:rgba(15,23,42,.06);color:#111827}\
+html[data-theme='light'] .afa-panel{background:rgba(255,255,255,.97);border-color:rgba(15,23,42,.12);\
+box-shadow:0 24px 60px -12px rgba(15,23,42,.22),0 4px 14px rgba(15,23,42,.06)}\
+html[data-theme='light'] .afa-head{background:#f8fafc;border-bottom-color:rgba(15,23,42,.08)}\
+html[data-theme='light'] .afa-head .dot{background:#15803d;box-shadow:0 0 0 3px rgba(21,128,61,.16)}\
+html[data-theme='light'] .afa-head .t{color:#111827}\
+html[data-theme='light'] .afa-head .t span{color:#64748b}\
+html[data-theme='light'] .afa-head .afa-close{color:#64748b}\
+html[data-theme='light'] .afa-head .afa-close:hover{background:rgba(15,23,42,.06);color:#111827}\
+html[data-theme='light'] .afa-u{background:linear-gradient(135deg,#22c55e,#15803d);color:#ffffff}\
+html[data-theme='light'] .afa-b{background:#f1f5f9;border-color:rgba(15,23,42,.08);color:#111827}\
+html[data-theme='light'] .afa-b.afa-no{background:rgba(180,83,9,.08);border-color:rgba(180,83,9,.35)}\
+html[data-theme='light'] .afa-src{color:#15803d}\
+html[data-theme='light'] .afa-chip{background:#f8fafc;border-color:rgba(15,23,42,.12);color:#4b5563}\
+html[data-theme='light'] .afa-chip:hover{color:#111827;border-color:rgba(15,23,42,.24);background:#eef1f5}\
+html[data-theme='light'] .afa-act{color:#15803d;background:rgba(21,128,61,.08);border-color:rgba(21,128,61,.3)}\
+html[data-theme='light'] .afa-act:hover{background:rgba(21,128,61,.15)}\
+html[data-theme='light'] .afa-act.afa-act-dim{color:#4b5563;background:#f8fafc;border-color:rgba(15,23,42,.12)}\
+html[data-theme='light'] .afa-act.afa-act-dim:hover{background:#eef1f5;color:#111827}\
+html[data-theme='light'] .afa-form{border-top-color:rgba(15,23,42,.08);background:#ffffff}\
+html[data-theme='light'] .afa-form input{background:#f8fafc;border-color:rgba(15,23,42,.12);color:#111827}\
+html[data-theme='light'] .afa-form input:focus{border-color:#15803d}\
+html[data-theme='light'] .afa-form button{background:linear-gradient(135deg,#22c55e,#15803d);color:#ffffff}\
+html[data-theme='light'] .afa-foot{color:#64748b}\
+@media(max-width:560px){.afa-panel{right:8px;bottom:84px;height:70vh}.afa-nudge{display:none}}\
+@media(prefers-reduced-motion:reduce){\
+.afa-launch::before,.afa-msg{animation:none}\
+.afa-launch,.afa-nudge,.afa-nudge::after,.afa-arr,.afa-panel,.afa-chip,.afa-act,.afa-form button{transition:none}}";
 
   function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 
   function init(){
     var style=el("style");style.textContent=CSS;document.head.appendChild(style);
 
-    var launch=el("button","afa-launch");launch.setAttribute("aria-label","Открыть чат-ассистент");
-    launch.innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4V5Z" stroke="#07120c" stroke-width="1.8" stroke-linejoin="round"/><circle cx="9" cy="10.5" r="1.1" fill="#07120c"/><circle cx="12.5" cy="10.5" r="1.1" fill="#07120c"/><circle cx="16" cy="10.5" r="1.1" fill="#07120c"/></svg>';
+    var launch=el("button","afa-launch");launch.type="button";launch.setAttribute("aria-label","Открыть чат-ассистент");
+    launch.innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4.5 3.5V6.5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="8.75" cy="11" r="1.15" fill="currentColor"/><circle cx="12" cy="11" r="1.15" fill="currentColor"/><circle cx="15.25" cy="11" r="1.15" fill="currentColor"/></svg>';
     document.body.appendChild(launch);
 
     var nudge=el("div","afa-nudge");
-    nudge.innerHTML='<span class="afa-x" aria-label="Скрыть">×</span>Вопросы по сервису? <b>Спросите ИИ-ассистента</b> — это и есть наш бот 👋';
+    nudge.innerHTML='<button type="button" class="afa-x" aria-label="Скрыть"><svg viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button><span class="afa-nt">Вопросы по сервису?</span><span class="afa-nb">Спросите ИИ-ассистента <span class="afa-arr">→</span></span>';
 
-    var panel=el("div","afa-panel");
-    panel.innerHTML='<div class="afa-head"><span class="dot"></span><span class="t">ИИ-ассистент AlfaFond<span>отвечает по нашему сервису · демо продукта</span></span><button class="afa-close" aria-label="Закрыть">×</button></div>'+
+    var panel=el("div","afa-panel");panel.setAttribute("aria-hidden","true");
+    panel.innerHTML='<div class="afa-head"><span class="dot"></span><span class="t">ИИ-ассистент AlfaFond<span>отвечает по нашему сервису · демо продукта</span></span><button type="button" class="afa-close" aria-label="Закрыть"><svg viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>'+
       '<div class="afa-log" id="afa-log" aria-live="polite"></div>'+
       '<div class="afa-chips" id="afa-chips"></div>'+
-      '<form class="afa-form" id="afa-form" autocomplete="off"><input id="afa-q" placeholder="Спросите про сервис…" aria-label="Вопрос"><button type="submit">→</button></form>'+
+      '<form class="afa-form" id="afa-form" autocomplete="off"><input id="afa-q" placeholder="Спросите про сервис…" aria-label="Вопрос"><button type="submit" aria-label="Отправить">→</button></form>'+
       '<div class="afa-foot">RAG-движок в браузере · ответы по базе о сервисе</div>';
     document.body.appendChild(panel);
 
@@ -167,17 +240,35 @@ padding:10px 12px;color:#f4f5f7;font-size:13.5px;font-family:inherit}\
     }
     function renderChips(){chips.innerHTML="";CHIPS.forEach(function(c){var b=el("button","afa-chip",c);b.type="button";b.addEventListener("click",function(){ask(c);});chips.appendChild(b);});}
 
-    function open(){panel.classList.add("open");launch.style.display="none";nudge.remove();
-      if(!greeted){greeted=true;botMsg(GREETING);renderChips();}input.focus();}
-    function close(){panel.classList.remove("open");launch.style.display="flex";}
+    function hideNudge(){
+      if(!nudge.parentNode)return;
+      nudge.classList.remove("show");
+      setTimeout(function(){if(nudge.parentNode)nudge.remove();},240);
+    }
+    function open(){
+      panel.classList.add("open");panel.setAttribute("aria-hidden","false");
+      launch.classList.add("afa-hidden");hideNudge();
+      if(!greeted){greeted=true;botMsg(GREETING);renderChips();}
+      setTimeout(function(){input.focus();},60);
+    }
+    function close(){
+      panel.classList.remove("open");panel.setAttribute("aria-hidden","true");
+      launch.classList.remove("afa-hidden");
+    }
 
     launch.addEventListener("click",open);
     panel.querySelector(".afa-close").addEventListener("click",close);
+    document.addEventListener("keydown",function(e){if(e.key==="Escape"&&panel.classList.contains("open"))close();});
     form.addEventListener("submit",function(e){e.preventDefault();ask(input.value);input.value="";});
-    nudge.addEventListener("click",function(e){if(e.target.classList.contains("afa-x")){nudge.remove();return;}open();});
+    nudge.addEventListener("click",function(e){if(e.target.closest&&e.target.closest(".afa-x")){hideNudge();return;}open();});
 
     // Проактивный пузырь — по поведению (≥12с + скролл/короткая страница, ИЛИ exit-intent), один раз, НЕ на load
-    function showNudge(){if(!greeted&&!nudged){nudged=true;document.body.appendChild(nudge);}}
+    function showNudge(){
+      if(!greeted&&!nudged){
+        nudged=true;document.body.appendChild(nudge);
+        requestAnimationFrame(function(){requestAnimationFrame(function(){nudge.classList.add("show");});});
+      }
+    }
     setTimeout(function(){if(window.scrollY>200||document.documentElement.scrollHeight<=window.innerHeight*1.5)showNudge();},12000);
     document.addEventListener("mouseout",function(e){if(e.clientY<=0)showNudge();});
   }
