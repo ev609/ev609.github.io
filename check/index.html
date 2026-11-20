@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка сети для ChatGPT, Claude и ИИ-сервисов · AlfaFond</title>
+<meta name="description" content="Бесплатная проверка IP, VPN, WebRTC, IPv6, DNS и отпечатка браузера глазами ChatGPT, Claude и ещё 16 сервисов ИИ. Работает прямо в браузере без сохранения вашего IP.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://alfafond.com/check/">
+<meta property="og:title" content="Проверка сети для ChatGPT, Claude и ИИ-сервисов · AlfaFond">
+<meta property="og:description" content="Как вас видят 18 сервисов ИИ, репутация IP, утечки WebRTC/IPv6/DNS и готовый отчёт для нейросети или терминального агента.">
+<meta property="og:image" content="https://alfafond.com/assets/og-ru.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/check/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233ecf8e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial,sans-serif' font-weight='700' font-size='15' fill='%230a0b0e'%3EAF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101217; --bg2:#141821;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#8a909b;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --warn:#e0a23c; --warn-dim:rgba(224,162,60,.14);
+    --bad:#e0675b; --bad-dim:rgba(224,103,91,.15);
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:76px}
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(760px 340px at 50% -8%, rgba(62,207,142,.065), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.035), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
+    background:rgba(16,18,23,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px;gap:12px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.15rem;letter-spacing:.04em;text-transform:uppercase}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok);text-transform:none;letter-spacing:0;font-weight:500}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  @media(max-width:740px){.bar nav{display:none}}
+
+  .hero{padding:44px 0 24px}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:24px;align-items:stretch}
+  @media(max-width:900px){.hero-grid{grid-template-columns:1fr}}
+  .hero-left{display:flex;flex-direction:column;gap:20px}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ok);margin-bottom:12px}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(2rem,4.4vw,3.1rem);line-height:1.08;letter-spacing:-.03em;text-wrap:balance}
+  .lead{color:var(--sub);max-width:56ch;margin-top:14px;font-size:.98rem;text-wrap:pretty}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;text-decoration:none;
+    font-family:var(--mono);font-size:.78rem;letter-spacing:.02em;padding:11px 18px;border-radius:9px;
+    transition:transform .15s,box-shadow .15s,background .15s,border-color .15s}
+  .btn svg{width:16px;height:16px;flex:none}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(62,207,142,.26)}
+  .btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+  .btn-ghost:hover:not(:disabled){border-color:var(--line-h);background:var(--card-h)}
+  .btn-ghost.active{background:var(--ok-dim);border-color:rgba(62,207,142,.4);color:var(--ok)}
+  .btn:disabled{opacity:.5;cursor:default;transform:none}
+  .btn.loading svg.spin-icon{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hint{font-size:.8rem;color:var(--dim);margin-top:10px}
+
+  /* Карточка балла */
+  .score-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;
+    display:flex;flex-direction:column;gap:16px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 28px -16px rgba(0,0,0,.55)}
+  .score-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .score-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+  .score-main{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .score-num{font-family:var(--disp);font-weight:700;font-size:clamp(3.6rem,7vw,5rem);line-height:1;letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:var(--txt)}
+  .score-num.ok{color:var(--ok)}
+  .score-num.warn{color:var(--warn)}
+  .score-num.bad{color:var(--bad)}
+  .score-of{font-family:var(--mono);font-size:1rem;color:var(--dim)}
+  .score-verdict{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--sub)}
+  .score-verdict.ok{color:var(--ok)}
+  .score-verdict.warn{color:var(--warn)}
+  .score-verdict.bad{color:var(--bad)}
+
+  .sum-rows{display:grid;gap:8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0}
+  .sum-row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.84rem;flex-wrap:wrap}
+  .sum-row .k{color:var(--dim);font-family:var(--mono);font-size:.72rem}
+  .sum-row .v{color:var(--txt);text-align:right;font-size:.82rem}
+  .sum-row code{font-family:var(--mono);font-size:.76rem;color:var(--sub);background:rgba(255,255,255,.04);padding:2px 6px;border-radius:5px}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
+  .dot.ok{background:var(--ok)}
+  .dot.warn{background:var(--warn)}
+  .dot.bad{background:var(--bad)}
+
+  .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto}
+  @media(max-width:480px){.steps-grid{grid-template-columns:repeat(2,1fr)}}
+  .step-pill{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:9px;padding:8px 10px;
+    display:flex;flex-direction:column;gap:2px}
+  .step-pill span{font-family:var(--mono);font-size:.64rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+  .step-pill b{font-family:var(--mono);font-size:.76rem;font-weight:500;color:var(--sub)}
+  .step-pill.active{border-color:rgba(62,207,142,.35)}
+  .step-pill.active b{color:var(--txt)}
+  .step-pill.ok b{color:var(--ok)}
+  .step-pill.warn b{color:var(--warn)}
+  .step-pill.bad b{color:var(--bad)}
+
+  /* Локальная история */
+  .hist-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:auto}
+  .hist-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+  .hist-top h2{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:500}
+  .hist-ctrl{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+  .link-btn{background:none;border:0;color:var(--dim);font-family:var(--mono);font-size:.68rem;cursor:pointer;text-decoration:underline}
+  .link-btn:hover{color:var(--txt)}
+  .hist-list{list-style:none;max-height:170px;overflow-y:auto;display:grid;gap:6px}
+  .hist-list li{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;
+    padding:7px 0;border-top:1px solid var(--line)}
+  .hist-list li:first-child{border-top:0;padding-top:0}
+  .hist-list li.hist-empty{display:block;font-size:.8rem;color:var(--dim);padding:4px 0}
+  .hist-score{height:30px;border-radius:8px;display:grid;place-items:center;font-family:var(--mono);font-weight:500;font-size:.8rem}
+  .hist-score.ok{background:var(--ok-dim);color:var(--ok)}
+  .hist-score.warn{background:var(--warn-dim);color:var(--warn)}
+  .hist-score.bad{background:var(--bad-dim);color:var(--bad)}
+  .hist-meta{min-width:0;display:flex;flex-direction:column}
+  .hist-meta b{font-size:.82rem;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hist-meta span{font-size:.74rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hist-time{font-family:var(--mono);font-size:.68rem;color:var(--dim);white-space:nowrap}
+
+  /* Вкладки Простыми / Сложными */
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:34px}
+  @media(max-width:640px){.tabs{grid-template-columns:1fr}}
+  .tab-btn{text-align:left;cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:16px 20px;transition:border-color .15s,background .15s;color:var(--txt)}
+  .tab-btn:hover{border-color:var(--line-h);background:var(--card-h)}
+  .tab-btn.on{border-color:rgba(62,207,142,.45);background:radial-gradient(420px 140px at 90% 0%, rgba(62,207,142,.1), transparent 70%), var(--card)}
+  .tab-btn b{display:block;font-family:var(--disp);font-size:1rem;font-weight:600;margin-bottom:3px}
+  .tab-btn.on b{color:var(--ok)}
+  .tab-btn span{display:block;font-size:.82rem;color:var(--sub)}
+
+  section.block{margin-top:44px}
+  .sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ok);
+    display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(62,207,142,.35),transparent)}
+  h2.sec-h{font-family:var(--disp);font-weight:600;font-size:clamp(1.3rem,2.6vw,1.75rem);line-height:1.15;letter-spacing:-.02em}
+  .sec-sub{color:var(--sub);font-size:.88rem;margin-top:8px;max-width:68ch}
+
+  /* Находки */
+  .findings{display:grid;gap:10px;margin-top:18px}
+  .finding{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:12px;padding:15px 18px}
+  .finding.ok{border-left-color:var(--ok)}
+  .finding.warn{border-left-color:var(--warn)}
+  .finding.bad{border-left-color:var(--bad)}
+  .f-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .f-head b{font-family:var(--disp);font-weight:600;font-size:.95rem;color:var(--txt)}
+  .f-pen{font-family:var(--mono);font-size:.76rem;padding:2px 8px;border-radius:6px;white-space:nowrap}
+  .f-pen.ok{background:var(--ok-dim);color:var(--ok)}
+  .f-pen.warn{background:var(--warn-dim);color:var(--warn)}
+  .f-pen.bad{background:var(--bad-dim);color:var(--bad)}
+  .finding p{font-size:.86rem;color:var(--sub);margin-top:6px}
+  .finding p.f-fix{color:var(--txt);font-size:.84rem;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  .finding p.f-fix b{color:var(--ok);font-weight:500}
+
+  /* Простые карточки */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+  .cell{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 20px}
+  .sc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+  .cell h3{font-family:var(--disp);font-weight:600;font-size:.96rem;line-height:1.25}
+  .cell p{font-size:.85rem;color:var(--sub)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.66rem;padding:2px 8px;border-radius:99px;white-space:nowrap;font-weight:500}
+  .badge.ok{background:var(--ok-dim);color:var(--ok)}
+  .badge.warn{background:var(--warn-dim);color:var(--warn)}
+  .badge.bad{background:var(--bad-dim);color:var(--bad)}
+  .badges{display:flex;gap:5px;flex-wrap:wrap}
+
+  /* Таблицы (техническая вкладка) */
+  .tbl-wrap{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow-x:auto;background:var(--card)}
+  table{width:100%;border-collapse:collapse;font-size:.84rem}
+  th{text-align:left;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--dim);padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top;color:var(--txt)}
+  tr:first-child td{border-top:0}
+  td.num,th.num{text-align:right}
+  .mono-xs{font-family:var(--mono);font-size:.74rem}
+  .dim{color:var(--dim)}
+  .ok-t{color:var(--ok)}
+  .bad-t{color:var(--bad)}
+
+  .kv{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:.83rem;flex-wrap:wrap}
+  .kv:first-child{border-top:0;padding-top:0}
+  .kv span{color:var(--dim);font-family:var(--mono);font-size:.72rem}
+  .kv b{font-weight:500;color:var(--txt);text-align:right}
+  .kv code{font-family:var(--mono);font-size:.75rem;color:var(--sub);word-break:break-all}
+  .wrap-code{max-width:100%;display:block;margin-top:4px;text-align:left}
+
+  /* Блок агента и терминала */
+  .agent-box{margin-top:18px;border:1px solid rgba(62,207,142,.3);border-radius:16px;padding:24px;
+    background:radial-gradient(520px 200px at 90% 0%, rgba(62,207,142,.08), transparent 65%), var(--card)}
+  .os-tabs{display:inline-flex;gap:4px;border:1px solid var(--line);border-radius:8px;padding:3px;background:rgba(0,0,0,.2)}
+  .os-tabs button{background:none;border:0;color:var(--sub);font-family:var(--mono);font-size:.72rem;padding:6px 12px;border-radius:6px;cursor:pointer}
+  .os-tabs button.on{background:var(--ok-dim);color:var(--ok)}
+  .cmd-line{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    margin-top:14px;padding:13px 16px;border-radius:10px;background:rgba(0,0,0,.35);border:1px solid var(--line)}
+  .cmd-line code{font-family:var(--mono);font-size:.82rem;color:var(--txt);word-break:break-all}
+  .agent-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+  /* FAQ */
+  .faq{display:grid;gap:10px;margin-top:18px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+  summary{cursor:pointer;font-family:var(--disp);font-weight:600;font-size:.94rem;color:var(--txt);list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";font-family:var(--mono);color:var(--ok);font-size:1.1rem}
+  details[open] summary::after{content:"−"}
+  details p{font-size:.86rem;color:var(--sub);margin-top:10px;line-height:1.6}
+
+  footer{margin-top:72px;border-top:1px solid var(--line);padding:24px 0 36px;font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+  footer .cols{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  footer a{color:var(--sub);text-decoration:none}
+  footer a:hover{color:var(--ok)}
+</style>
+<link rel="stylesheet" href="/depth.css">
+<link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo">
+      <a href="/">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="0" y="0" width="32" height="32" rx="8" fill="#3ecf8e"/>
+          <text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="700" font-size="15" fill="#0a0b0e">AF</text>
+        </svg>
+        <span>ALFAFOND</span>
+        <span class="path">/check</span>
+      </a>
+    </div>
+    <nav aria-label="Навигация">
+      <a href="/dev/ru/">Услуги /dev</a>
+      <a href="/cases/ai-chatbot/">ИИ-чатбот</a>
+      <a href="/cases/telegram-bot/">TG-бот</a>
+      <a href="/blog/">Блог</a>
+      <a href="#agent">Для агента</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <header class="hero">
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div>
+          <div class="kicker">Диагностика сети · 100% в браузере</div>
+          <h1>Проверка IP и VPN для <span class="ok">ChatGPT и Claude</span></h1>
+          <p class="lead">Показывает, <b>как вас видят 18 сервисов ИИ</b>, репутацию выходного адреса, утечки WebRTC, IPv6 и DNS, а также отпечаток браузера. Работает на чистой статике — ваш IP не отправляется на наш сервер.</p>
+          <div class="actions">
+            <button id="btnRun" type="button" class="btn btn-ok">
+              <svg class="spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+              <span>Проверить</span>
+            </button>
+            <button id="btnCopyReport" type="button" class="btn btn-ghost" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Отчёт для нейросети</span>
+            </button>
+            <button id="btnHideIp" type="button" class="btn btn-ghost" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>Скрыть IP</span>
+            </button>
+          </div>
+          <p class="hint">Кнопка «Отчёт для нейросети» копирует структурированный текст — вставьте его в ChatGPT, Claude или Cursor и спросите, что поправить.</p>
+        </div>
+
+        <div class="hist-box">
+          <div class="hist-top">
+            <h2>Последние проверки (локально)</h2>
+            <div class="hist-ctrl">
+              <span id="historyCount">пусто</span>
+              <button id="btnClearHistory" type="button" class="link-btn">очистить</button>
+            </div>
+          </div>
+          <ul id="historyList" class="hist-list"></ul>
+        </div>
+      </div>
+
+      <aside class="score-card" aria-live="polite">
+        <div class="score-head">
+          <span class="score-label">Балл подключения</span>
+          <span class="mono-xs dim">100 − штрафы</span>
+        </div>
+        <div class="score-main">
+          <span id="scoreNum" class="score-num">··</span>
+          <span class="score-of">/100</span>
+        </div>
+        <div id="scoreVerdict" class="score-verdict">Проверяем подключение…</div>
+
+        <div class="sum-rows">
+          <div class="sum-row"><span class="k">ChatGPT видит</span><span id="sumChatgpt" class="v dim">проверяем…</span></div>
+          <div class="sum-row"><span class="k">Claude видит</span><span id="sumClaude" class="v dim">проверяем…</span></div>
+          <div class="sum-row"><span class="k">Cloudflare 1.1.1.1</span><span id="sumCfDirect" class="v dim">проверяем…</span></div>
+          <div class="sum-row"><span class="k">DNS-резолвер</span><span id="sumDns" class="v dim">проверяем…</span></div>
+        </div>
+
+        <div class="steps-grid">
+          <div id="step-services" class="step-pill"><span>Сервисы</span><b>0/18</b></div>
+          <div id="step-rep" class="step-pill"><span>Репутация</span><b>ждёт</b></div>
+          <div id="step-webrtc" class="step-pill"><span>WebRTC</span><b>ждёт</b></div>
+          <div id="step-ipv6" class="step-pill"><span>IPv6</span><b>ждёт</b></div>
+          <div id="step-dns" class="step-pill"><span>DNS</span><b>ждёт</b></div>
+          <div id="step-browser" class="step-pill"><span>Браузер</span><b>ждёт</b></div>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <div id="tabsBar" class="tabs" role="tablist" aria-label="Режим отображения">
+    <button type="button" class="tab-btn on" role="tab" aria-selected="true" data-tab="simple">
+      <b>Простыми словами</b>
+      <span>Что хорошо, что плохо и что исправить — без лишнего жаргона</span>
+    </button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="tech">
+      <b>Сложными словами</b>
+      <span>Все 18 сервисов, репутация IP, утечки WebRTC/IPv6/DNS, браузер и методика</span>
+    </button>
+  </div>
+
+  <!-- Вкладка 1: Простыми словами -->
+  <div id="panelSimple" role="tabpanel">
+    <section class="block">
+      <div class="sec-label">01 · Что нашли</div>
+      <h2 class="sec-h">Находки и рекомендации</h2>
+      <p class="sec-sub">Число справа — сколько баллов снимает находка со 100. Подробные таблицы адресов и баз доступны во вкладке <button id="goTechTab" type="button" class="link-btn" style="font-size:inherit;color:var(--ok)">«Сложными словами»</button>.</p>
+      <div id="findingsList" class="findings">
+        <div class="finding"><div class="f-head"><b>Идёт проверка…</b></div><p>Обычно занимает 5–12 секунд.</p></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02 · По пунктам</div>
+      <h2 class="sec-h">Шесть главных проверок</h2>
+      <div id="simpleGrid" class="grid2">
+        <div class="cell"><h3>Пустят ли ChatGPT и Claude</h3><p>Проверяем страну выхода…</p></div>
+        <div class="cell"><h3>Не подозрительный ли адрес</h3><p>Опрашиваем базы VPN и дата-центров…</p></div>
+        <div class="cell"><h3>Один ли адрес у каждой нейросети</h3><p>Сравниваем домены OpenAI и Anthropic…</p></div>
+        <div class="cell"><h3>Не просвечивает ли настоящий адрес</h3><p>Проверяем WebRTC и IPv6…</p></div>
+        <div class="cell"><h3>Видит ли провайдер, куда вы заходите</h3><p>Определяем DNS-резолвер…</p></div>
+        <div class="cell"><h3>Не странный ли браузер</h3><p>Смотрим локальные параметры браузера…</p></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Вкладка 2: Сложными словами -->
+  <div id="panelTech" role="tabpanel" hidden>
+    <section class="block">
+      <div class="sec-label">01 · Адреса</div>
+      <h2 class="sec-h">Как вас видят 18 сервисов ИИ</h2>
+      <p class="sec-sub">Браузер запрашивает служебный <code>/cdn-cgi/trace</code> напрямую на домене каждого сервиса — тем же маршрутом, что и ваш обычный трафик.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Сервис</th>
+              <th>Выходной IP</th>
+              <th>Страна</th>
+              <th>Узел CF</th>
+              <th>Доступ</th>
+              <th class="num">Ответ</th>
+            </tr>
+          </thead>
+          <tbody id="servicesBody"><tr><td colspan="6" class="dim">Загрузка…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02 · Репутация</div>
+      <h2 class="sec-h">Что базы знают об этих адресах</h2>
+      <p class="sec-sub">Проверяем уникальные выходные адреса по независимым источникам (<code>ipquery.io</code>, <code>ipwho.is</code>, <code>ipapi.is</code>) плюс кросс-проверка ASN. При расхождении помечаем «спорно».</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Адрес</th>
+              <th>Локация</th>
+              <th>Провайдер / ASN</th>
+              <th>Флаги</th>
+              <th class="num">Риск</th>
+              <th>Источники</th>
+            </tr>
+          </thead>
+          <tbody id="repBody"><tr><td colspan="6" class="dim">Ожидаем адреса от сервисов…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">03 · Утечки</div>
+      <h2 class="sec-h">WebRTC, IPv6 и DNS</h2>
+      <div class="grid3">
+        <div class="cell">
+          <h3 style="margin-bottom:12px">WebRTC (STUN)</h3>
+          <div id="leakWebrtc" class="dim">Проверяем…</div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:12px">IPv4 и IPv6</h3>
+          <div id="leakIpv6" class="dim">Проверяем…</div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:12px">DNS-резолвер</h3>
+          <div id="leakDns" class="dim">Проверяем…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">04 · Устройство</div>
+      <h2 class="sec-h">Браузер и отпечаток</h2>
+      <p class="sec-sub">Считается локально в вашем браузере и никуда не отправляется.</p>
+      <div class="cell" style="margin-top:16px">
+        <div id="browserGrid" class="dim">Проверяем…</div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">05 · Методика и приватность</div>
+      <h2 class="sec-h">Как считаем балл и что куда уходит</h2>
+      <div class="grid2">
+        <div class="cell">
+          <h3 style="margin-bottom:10px">Веса штрафов (100 − находки)</h3>
+          <div class="kv"><span>Страна не в списке ChatGPT / Claude (за каждый)</span><b class="bad-t">−50</b></div>
+          <div class="kv"><span>Выходной узел Tor</span><b class="bad-t">−40</b></div>
+          <div class="kv"><span>Открытый прокси</span><b class="bad-t">−30</b></div>
+          <div class="kv"><span>Высокий риск-скор (≥ 50/100)</span><b class="bad-t">−25</b></div>
+          <div class="kv"><span>WebRTC в другую страну / IPv6 мимо VPN</span><b class="bad-t">−15</b></div>
+          <div class="kv"><span>Адрес в базах VPN / дата-центр</span><b>−15</b></div>
+          <div class="kv"><span>DNS в РФ при зарубежном выходе / WebRTC IPv6 / webdriver</span><b>−10</b></div>
+          <div class="kv"><span>Хостинг (источники расходятся)</span><b>−8</b></div>
+          <div class="kv"><span>Разные IP у одного сервиса / DNS в другой стране / таймзона / часы &gt; 2 мин</span><b>−5</b></div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:10px">Приватность: что куда уходит</h3>
+          <div class="kv"><span>Сервер AlfaFond</span><b class="ok-t">Ничего (статика GitHub Pages)</b></div>
+          <div class="kv"><span>18 доменов ИИ</span><b>Прямой GET <code>/cdn-cgi/trace</code></b></div>
+          <div class="kv"><span>ipquery.io · ipwho.is · ipapi.is</span><b>Проверка найденных IP (ASN/риск)</b></div>
+          <div class="kv"><span>api4/api6.ipify.org · icanhazip</span><b>Определение IPv4 и IPv6 выхода</b></div>
+          <div class="kv"><span>edns.ip-api.com</span><b>Определение вашего DNS-резолвера</b></div>
+          <div class="kv"><span>STUN Cloudflare и Google</span><b>Проверка WebRTC по UDP</b></div>
+          <div class="kv"><span>Отпечаток и история</span><b class="ok-t">Только локально в браузере</b></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Блок терминала и агентов -->
+  <section id="agent" class="block">
+    <div class="sec-label">03 · Терминал и ИИ-агенты</div>
+    <h2 class="sec-h">Проверка для вашего агента</h2>
+    <p class="sec-sub">Claude Code, Codex, Cursor, Antigravity и другие агенты могут запускать проверку сами — в headless-браузере (с WebRTC, IPv6 и DNS) или в быстром CLI-режиме без браузера.</p>
+
+    <div class="agent-box">
+      <div class="os-tabs" role="tablist">
+        <button type="button" class="on" data-os="unix">macOS и Linux</button>
+        <button type="button" data-os="win">Windows (PowerShell)</button>
+      </div>
+      <div class="cmd-line">
+        <code id="agentCmd">curl -fsSL https://alfafond.com/check.sh | sh</code>
+        <button id="btnCopyCmd" type="button" class="btn btn-ghost" style="padding:7px 13px">Скопировать</button>
+      </div>
+      <div class="agent-actions">
+        <button id="btnCopySkill" type="button" class="btn btn-ok">Скопировать скилл для агента</button>
+        <a href="/check-skill.md" class="btn btn-ghost" target="_blank" rel="noopener">Открыть check-skill.md</a>
+      </div>
+      <p class="hint">Скрипт ничего не устанавливает. Поддерживает флаг <code>--json</code> для программ и <code>--no-browser</code> для серверов без Chrome/Brave/Edge.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block">
+    <div class="sec-label">04 · Коротко о главном</div>
+    <h2 class="sec-h">Частые вопросы</h2>
+    <div class="faq">
+      <details>
+        <summary>Как страница узнаёт, какой IP видит ChatGPT и Claude?</summary>
+        <p>ChatGPT, Claude и большинство ИИ-сервисов работают через Cloudflare. На их доменах открыт служебный эндпоинт <code>/cdn-cgi/trace</code> с разрешённым CORS: он возвращает IP, страну (<code>loc</code>) и ближайший узел Cloudflare (<code>colo</code>) ровно так, как ваш трафик доходит до самого сервиса — даже при сложной раздельной маршрутизации (split-tunneling).</p>
+      </details>
+      <details>
+        <summary>Почему у ChatGPT и Claude могут быть разные IP?</summary>
+        <p>Многие VPN и прокси-клиенты распределяют разные домены по разным серверам или балансируют соединения. Если <code>chatgpt.com</code> и <code>api.openai.com</code> выходят с разных IP или из разных стран, антифрод может воспринять это как вход из нескольких мест одновременно. Лучше направлять все домены одного сервиса через один узел.</p>
+      </details>
+      <details>
+        <summary>Что такое утечка WebRTC и DNS?</summary>
+        <p>WebRTC используется для голоса и видео в браузере и узнаёт внешний IP через STUN по протоколу UDP. Если ваш прокси проксирует только TCP, WebRTC может выдать реальный адрес провайдера. Утечка DNS происходит, когда запросы имён сайтов уходят на DNS домашнего провайдера мимо VPN — провайдер видит домены, а антифрод замечает расхождение страны DNS и IP.</p>
+      </details>
+      <details>
+        <summary>Чем IP дата-центра хуже домашнего?</summary>
+        <p>С адресов хостингов и публичных VPN идёт основная доля ботов и парсеров, поэтому системы защиты проверяют их строже. Для собственного чистого VPS это обычно не критично, если нет утечек WebRTC/DNS и адрес не попадал в списки злоупотреблений.</p>
+      </details>
+      <details>
+        <summary>Сохраняет ли AlfaFond мой IP?</summary>
+        <p>Нет. Страница полностью статическая (GitHub Pages), у неё нет бэкенда и базы данных. Все запросы выполняются напрямую из вашего браузера, а блок «Последние проверки» сохраняется только локально в <code>localStorage</code> вашего устройства.</p>
+      </details>
+      <details>
+        <summary>Как запустить проверку из терминала или дать агенту?</summary>
+        <p>На macOS/Linux выполните <code>curl -fsSL https://alfafond.com/check.sh | sh</code> (или добавьте <code>-- --json</code>), на Windows — <code>irm https://alfafond.com/check.ps1 | iex</code>. Скрипт откроет эту страницу в headless-браузере (Chrome, Brave, Edge, Chromium или Яндекс Браузер), дождётся отчёта и выведет результат. Если браузера нет — выполнит быструю консольную проверку через <code>curl</code>.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap cols">
+    <div class="logo" style="font-size:.95rem">
+      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="0" y="0" width="32" height="32" rx="8" fill="#3ecf8e"/>
+        <text x="16" y="22" text-anchor="middle" font-family="Geologica,Arial,sans-serif" font-weight="700" font-size="15" fill="#0a0b0e">AF</text>
+      </svg>
+      <span>ALFAFOND <span class="path">/check</span></span>
+    </div>
+    <div>Нужен похожий инструмент, ИИ-бот или автоматизация? → <a href="/dev/ru/">alfafond.com/dev/ru</a></div>
+  </div>
+</footer>
+
+<script src="/check/check.js"></script>
+<script src="/assistant.js"></script>
+</body>
+</html>
