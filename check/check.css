@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:15.
 .bar-right{display:flex;align-items:center;gap:8px}
 .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
   border:1px solid var(--line);border-radius:8px;padding:2px}
-.lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+.lang a{padding:5px 8px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s;white-space:nowrap}
 .lang a.on{color:var(--ok);background:var(--ok-dim)}
 .lang a:not(.on):hover{color:var(--txt)}
 .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
@@ -39,6 +39,14 @@ body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:15.
 .theme-btn svg{width:15px;height:15px}
 .mob-link{display:none;border:1px solid var(--line)}
 @media(max-width:740px){.bar nav{display:none}.mob-link{display:inline-flex}}
+@media(max-width:520px){
+  .bar .wrap{padding:0 14px;gap:8px}
+  .logo .path,.mob-link{display:none}
+  .lang{font-size:.66rem}
+  .lang a{padding:4px 6px}
+}
+html[lang^="zh"] body{font-family:'Golos Text','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif}
+html[lang^="zh"] h1,html[lang^="zh"] h2,html[lang^="zh"] h3,html[lang^="zh"] .tab-btn b{font-family:'Geologica','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif}
 
 .hero{padding:44px 0 24px}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:24px;align-items:stretch}

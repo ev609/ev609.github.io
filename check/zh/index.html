@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatGPT、Claude 与 AI 服务网络、IP 纯净度及 VPN 泄露检测 · AlfaFond</title>
+<meta name="description" content="免费纯前端检测 ChatGPT、Claude、Gemini、Cursor 等 18 项 AI 服务看到的出口 IP、国家/地区、机房信誉、分流路由、WebRTC、IPv6、DNS 泄露及浏览器指纹。零服务端日志。">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:url" content="https://alfafond.com/check/zh/">
+<meta property="og:title" content="ChatGPT、Claude 与 AI 服务网络与 IP 纯净度检测 · AlfaFond">
+<meta property="og:description" content="查看 18 项 AI 服务（及 Gemini、Cursor、GitHub）实际看到的出口 IP、地区、IP 纯净度与 WebRTC/IPv6/DNS 泄露，支持一键生成 AI 诊断报告与终端脚本。">
+<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/check/zh/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/check/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/check/en/">
+<link rel="alternate" hreflang="zh-Hans" href="https://alfafond.com/check/zh/">
+<link rel="alternate" hreflang="es" href="https://alfafond.com/check/es/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/check/en/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "AlfaFond 网络检测 — ChatGPT 与 Claude 出口 IP、纯净度及 VPN 泄露诊断",
+      "url": "https://alfafond.com/check/zh/",
+      "applicationCategory": "NetworkingApplication",
+      "operatingSystem": "Web, macOS, Linux, Windows",
+      "inLanguage": "zh-Hans",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "100% 浏览器本地运行的 18 项 AI 服务出口 IP、分流路由、IP 纯净度、WebRTC/IPv6/DNS 泄露与浏览器环境一致性检测工具。"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "这个页面如何知道 ChatGPT 和 Claude 看到的真实出口 IP？",
+          "acceptedAnswer": { "@type": "Answer", "text": "浏览器会直接沿您当前的实际路由请求 chatgpt.com、claude.ai 及另外 16 个接入 Cloudflare 的 AI 域名的 /cdn-cgi/trace 接口，即便开启分流也能精确测出每个服务看到的出口 IP 和地区。" }
+        },
+        {
+          "@type": "Question",
+          "name": "AlfaFond 会记录或保存我的 IP 地址吗？",
+          "acceptedAnswer": { "@type": "Answer", "text": "不会。本站是部署在 GitHub Pages 上的纯静态页面，没有后端和数据库。所有检测都在您的浏览器本地完成，历史记录仅保存在您本机的 localStorage 中。" }
+        },
+        {
+          "@type": "Question",
+          "name": "可以在终端或 AI 编程 Agent 中运行此检测吗？",
+          "acceptedAnswer": { "@type": "Answer", "text": "可以。在 macOS/Linux 运行 curl -fsSL https://alfafond.com/check.sh | sh，在 Windows 运行 irm https://alfafond.com/check.ps1 | iex，或将 alfafond.com/check-skill.md 交给您的 Agent。" }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%234ae39e%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2325b876%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%22.75%22%20y%3D%22.75%22%20width%3D%2230.5%22%20height%3D%2230.5%22%20rx%3D%227.25%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.22%29%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10%208.5H12L16.5%2023.5H13.7L12.75%2020.1H9.25L8.3%2023.5H5.5L10%208.5ZM11%2012.1L9.8%2017.6H12.2L11%2012.1Z%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20d%3D%22M18.2%208.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>(function(){try{if(localStorage.getItem("af_check_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<link rel="stylesheet" href="/depth.css?v=2">
+<link rel="stylesheet" href="/tokens.css">
+<link rel="stylesheet" href="/check/check.css?v=9">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo">
+      <a href="/">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g1)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg>
+        <span>ALFAFOND</span>
+        <span class="path">/check</span>
+      </a>
+    </div>
+    <div class="bar-right">
+      <nav aria-label="导航">
+        <a href="/dev/">工程开发</a><a href="/ru/en/">研究</a><a href="/check/zh/" class="on" aria-current="page">网络检测</a><a href="/blog/">博客</a>
+      </nav>
+      <a class="mob-link" href="/dev/">/dev</a>
+      <button id="btnTheme" type="button" class="theme-btn" aria-label="切换到浅色主题" title="切换到浅色主题"></button>
+      <div class="lang" role="group" aria-label="语言">
+        <a href="/check/" hreflang="ru">RU</a><a href="/check/en/" hreflang="en">EN</a><a href="/check/zh/" hreflang="zh-Hans" class="on" aria-current="true">中文</a><a href="/check/es/" hreflang="es">ES</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="sharedBanner" class="shared-banner" hidden>
+    <div id="sharedBannerText" class="shared-banner-txt"></div>
+    <button id="btnRunOwn" type="button" class="btn btn-ok">检测我的网络</button>
+  </div>
+  <header class="hero">
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div>
+          <div class="kicker">网络诊断 · 100% 浏览器本地运行</div>
+          <h1><span class="ok">ChatGPT 与 Claude</span> 出口 IP 与 VPN 检测</h1>
+          <p class="lead">直接查看 <b>18 项 AI 服务看到的出口 IP</b>（以及 Gemini、Cursor、GitHub 连通性）、IP 纯净度与机房标记、分流状态、WebRTC / IPv6 / DNS 泄露和浏览器一致性。纯静态页面，您的 IP 不会发送给我们的服务器。</p>
+          <div class="actions">
+            <button id="btnRun" type="button" class="btn btn-ok">
+              <svg class="spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+              <span>重新检测</span>
+            </button>
+            <button id="btnSharePng" type="button" class="btn btn-ghost" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>分享图片</span>
+            </button>
+            <button id="btnCopyReport" type="button" class="btn btn-ghost" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>复制 AI 报告</span>
+            </button>
+            <button id="btnShareLink" type="button" class="btn btn-ghost btn-icon" disabled title="复制分享链接（自动隐藏 IP）" aria-label="复制分享链接（自动隐藏 IP）">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </button>
+            <button id="btnDownloadReport" type="button" class="btn btn-ghost btn-icon" disabled title="下载 Markdown 报告 (.md)" aria-label="下载 Markdown 报告 (.md)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+          </div>
+          <p class="hint">“复制 AI 报告”会生成整洁的 Markdown — 直接粘贴给 ChatGPT、Claude 或 Cursor，即可获取针对性修复建议。</p>
+        </div>
+
+        <div class="hist-box">
+          <div class="hist-top">
+            <h2>最近检测记录（仅本地）</h2>
+            <div class="hist-ctrl">
+              <span id="historyCount">暂无记录</span>
+              <button id="btnClearHistory" type="button" class="link-btn">清空</button>
+            </div>
+          </div>
+          <ul id="historyList" class="hist-list"></ul>
+        </div>
+      </div>
+
+      <aside class="score-card" aria-live="polite">
+        <div class="score-head">
+          <span class="score-label">连接评分</span>
+          <button id="btnHideIp" type="button" class="btn btn-ghost btn-eye" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>隐藏 IP</span>
+          </button>
+        </div>
+        <div id="progressBar" class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+        <div class="score-main">
+          <span id="scoreNum" class="score-num">··</span>
+          <span class="score-of">/100</span>
+        </div>
+        <div class="score-verdict-row">
+          <div id="scoreVerdict" class="score-verdict">正在检测网络…</div>
+          <span id="scoreDelta" class="badge" hidden></span>
+        </div>
+
+        <div class="sum-rows">
+          <div class="sum-row"><span class="k">ChatGPT 看到</span><span id="sumChatgpt" class="v dim">检测中…</span></div>
+          <div class="sum-row"><span class="k">Claude 看到</span><span id="sumClaude" class="v dim">检测中…</span></div>
+          <div class="sum-row"><span class="k">直连路由 (1.1.1.1)</span><span id="sumCfDirect" class="v dim">检测中…</span></div>
+          <div class="sum-row"><span class="k">DNS 解析器</span><span id="sumDns" class="v dim">检测中…</span></div>
+        </div>
+
+        <div class="steps-grid">
+          <div id="step-services" class="step-pill"><span>服务连通</span><b>0/18</b></div>
+          <div id="step-rep" class="step-pill"><span>IP 纯净度</span><b>等待中</b></div>
+          <div id="step-webrtc" class="step-pill"><span>WebRTC</span><b>等待中</b></div>
+          <div id="step-ipv6" class="step-pill"><span>IPv6</span><b>等待中</b></div>
+          <div id="step-dns" class="step-pill"><span>DNS</span><b>等待中</b></div>
+          <div id="step-browser" class="step-pill"><span>浏览器</span><b>等待中</b></div>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <div id="tabsBar" class="tabs" role="tablist" aria-label="视图模式">
+    <button type="button" class="tab-btn on" role="tab" aria-selected="true" data-tab="simple">
+      <b>通俗结论</b>
+      <span>哪些正常、哪些有风控风险、如何修复 — 直观易懂</span>
+    </button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="tech">
+      <b>技术明细</b>
+      <span>18 项 AI 服务出口 IP、信誉库交叉验证、WebRTC/IPv6/DNS 与评分权重</span>
+    </button>
+  </div>
+
+  <!-- Tab 1: 通俗结论 -->
+  <div id="panelSimple" role="tabpanel">
+    <section class="block">
+      <div class="sec-label">01 · 诊断结果</div>
+      <h2 class="sec-h">发现的问题与修复建议</h2>
+      <p class="sec-sub">右侧数字表示从满分 100 中扣除的分值。完整地址表和原始信号请见 <button id="goTechTab" type="button" class="link-btn" style="font-size:inherit;color:var(--ok)">技术明细</button>。</p>
+      <div id="findingsList" class="findings">
+        <div class="finding"><div class="f-head"><b>正在执行诊断…</b></div><p>通常需要 5–12 秒。</p></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02 · 核查维度</div>
+      <h2 class="sec-h">六大核心检测项</h2>
+      <div id="simpleGrid" class="grid2">
+        <div class="cell"><h3>ChatGPT 和 Claude 是否放行？</h3><p>正在检测出口地区…</p></div>
+        <div class="cell"><h3>出口 IP 是否纯净？</h3><p>正在查询 VPN 与机房信誉库…</p></div>
+        <div class="cell"><h3>同一 AI 平台是否单一出口？</h3><p>正在对比 OpenAI 与 Anthropic 各域名…</p></div>
+        <div class="cell"><h3>是否存在 WebRTC / IPv6 泄露？</h3><p>正在检测 STUN 与 IPv6 路由…</p></div>
+        <div class="cell"><h3>运营商能否看到 DNS 查询？</h3><p>正在识别递归 DNS 解析器…</p></div>
+        <div class="cell"><h3>浏览器环境是否自然？</h3><p>正在检查本地浏览器特征…</p></div>
+      </div>
+      <div id="glossaryBox" class="glossary-box" hidden>
+        <div class="glossary-head">
+          <b id="glossaryTitle"></b>
+          <button id="glossaryClose" type="button" class="link-btn">关闭</button>
+        </div>
+        <p id="glossaryText"></p>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02b · 开发者常用</div>
+      <h2 class="sec-h">Gemini、Cursor 与 GitHub 连通性</h2>
+      <p class="sec-sub">这些服务未开放 Cloudflare trace 接口，因此直接从浏览器测量可达性与延迟（不读取出口 IP）。</p>
+      <div id="extraProbesGrid" class="probes-grid">
+        <div class="probe-pill"><span class="dim">检测中…</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Tab 2: 技术明细 -->
+  <div id="panelTech" role="tabpanel" hidden>
+    <section class="block">
+      <div class="sec-label">01 · 出口 IP</div>
+      <h2 class="sec-h">18 项 AI 服务看到的出口状态</h2>
+      <p class="sec-sub">浏览器直接向每个服务域名发起 <code>/cdn-cgi/trace</code> 请求，完全沿用您的实际代理与分流规则。</p>
+      <div class="tbl-toolbar">
+        <div class="filter-pills" role="group" aria-label="筛选服务">
+          <button type="button" class="on" data-svc-filter="all">全部 (18)</button>
+          <button type="button" data-svc-filter="core">OpenAI 与 Claude (7)</button>
+          <button type="button" data-svc-filter="issues">仅异常项</button>
+        </div>
+        <span id="svcSummaryBadge" class="badge">检测中…</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>服务</th>
+              <th>出口 IP</th>
+              <th>地区</th>
+              <th>CF 节点</th>
+              <th>策略</th>
+              <th class="num">延迟</th>
+            </tr>
+          </thead>
+          <tbody id="servicesBody"><tr><td colspan="6" class="dim">加载中…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02 · IP 信誉</div>
+      <h2 class="sec-h">威胁情报库对出口 IP 的评估</h2>
+      <p class="sec-sub">每个唯一出口 IP 都会在 <code>ipquery.io</code>、<code>ipwho.is</code> 与 <code>ipapi.is</code> 交叉核验并结合 ASN 特征分类；存在分歧时会标为“分歧”。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>IP 地址</th>
+              <th>归属地</th>
+              <th>运营商 / ASN</th>
+              <th>标签</th>
+              <th class="num">风险值</th>
+              <th>数据源</th>
+            </tr>
+          </thead>
+          <tbody id="repBody"><tr><td colspan="6" class="dim">等待出口 IP…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">03 · 泄露检测</div>
+      <h2 class="sec-h">WebRTC、IPv6 与 DNS</h2>
+      <div class="grid3">
+        <div class="cell">
+          <h3 style="margin-bottom:12px">WebRTC (STUN)</h3>
+          <div id="leakWebrtc" class="dim">检测中…</div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:12px">IPv4 与 IPv6</h3>
+          <div id="leakIpv6" class="dim">检测中…</div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:12px">DNS 解析器</h3>
+          <div id="leakDns" class="dim">检测中…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">04 · 设备环境</div>
+      <h2 class="sec-h">浏览器与指纹一致性</h2>
+      <p class="sec-sub">仅在您的浏览器本地计算，不会上传到任何服务器。</p>
+      <div class="cell" style="margin-top:16px">
+        <div id="browserGrid" class="dim">检测中…</div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">05 · 评分与隐私</div>
+      <h2 class="sec-h">扣分模型与数据流向</h2>
+      <div class="grid2">
+        <div class="cell">
+          <h3 style="margin-bottom:10px">扣分权重（100 − 发现项）</h3>
+          <div class="kv"><span>ChatGPT / Claude 不受支持的地区（每项）</span><b class="bad-t">−50</b></div>
+          <div class="kv"><span>Tor 出口节点</span><b class="bad-t">−40</b></div>
+          <div class="kv"><span>开放代理（Open Proxy）</span><b class="bad-t">−30</b></div>
+          <div class="kv"><span>高风险评分（≥ 50/100）</span><b class="bad-t">−25</b></div>
+          <div class="kv"><span>WebRTC 跨区泄露 / IPv6 绕过代理</span><b class="bad-t">−15</b></div>
+          <div class="kv"><span>已知 VPN / 机房 IP</span><b>−15</b></div>
+          <div class="kv"><span>本地 DNS 泄露 / WebRTC IPv6 / webdriver</span><b>−10</b></div>
+          <div class="kv"><span>机房 ASN（多源存在分歧）</span><b>−8</b></div>
+          <div class="kv"><span>同平台多出口 / 非 Anycast DNS / 时区 / 时钟偏差 &gt; 2m</span><b>−5</b></div>
+          <div class="kv"><span>合理分流与公共 Anycast DNS（Google / Cloudflare）</span><b class="ok-t">−0（正常）</b></div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:10px">隐私说明：请求去向</h3>
+          <div class="kv"><span>AlfaFond 服务器</span><b class="ok-t">无任何上报（纯静态托管）</b></div>
+          <div class="kv"><span>18 个 AI 域名</span><b>直连 GET <code>/cdn-cgi/trace</code></b></div>
+          <div class="kv"><span>Gemini / Cursor / GitHub / HF</span><b>连通性探测（no-cors）</b></div>
+          <div class="kv"><span>ipquery.io · ipwho.is · ipapi.is</span><b>出口 IP 的 ASN 与信誉查询</b></div>
+          <div class="kv"><span>api4/api6.ipify.org · icanhazip</span><b>IPv4 与 IPv6 出口探测</b></div>
+          <div class="kv"><span>edns.ip-api.com</span><b>递归 DNS 解析器识别</b></div>
+          <div class="kv"><span>Cloudflare &amp; Google STUN</span><b>WebRTC UDP 泄露探测</b></div>
+          <div class="kv"><span>指纹与历史记录</span><b class="ok-t">仅保存在本地浏览器</b></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 终端与 Agent -->
+  <section id="agent" class="block">
+    <div class="sec-label">03 · 终端与 AI Agent</div>
+    <h2 class="sec-h">命令行一键运行或接入 AI 编程助手</h2>
+    <p class="sec-sub">Claude Code、Codex、Cursor、Antigravity 等 Agent 可直接运行此诊断 — 支持无头浏览器完整模式（含 WebRTC/IPv6/DNS）或快速纯命令行模式。</p>
+
+    <div class="agent-box">
+      <div class="os-tabs" role="tablist">
+        <button type="button" class="on" data-os="unix">macOS &amp; Linux</button>
+        <button type="button" data-os="win">Windows (PowerShell)</button>
+      </div>
+      <div class="cmd-line">
+        <code id="agentCmd">curl -fsSL https://alfafond.com/check.sh | sh</code>
+        <button id="btnCopyCmd" type="button" class="btn btn-ghost" style="padding:7px 13px">复制</button>
+      </div>
+      <div class="agent-actions">
+        <button id="btnCopySkill" type="button" class="btn btn-ok">复制 Agent Skill</button>
+        <a href="/check-skill.md" class="btn btn-ghost" target="_blank" rel="noopener">查看 check-skill.md</a>
+      </div>
+      <p class="hint">无需安装任何依赖。支持 <code>--json</code> 结构化输出与 <code>--no-browser</code> 无头服务器模式。</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block">
+    <div class="sec-label">04 · 常见问题</div>
+    <h2 class="sec-h">FAQ</h2>
+    <div class="faq">
+      <details>
+        <summary>这个页面如何知道 ChatGPT 和 Claude 实际看到的 IP？</summary>
+        <p>ChatGPT、Claude 以及大多数主流 AI 平台都接入了 Cloudflare，其域名下开放了支持 CORS 的 <code>/cdn-cgi/trace</code> 接口。您的浏览器会沿当前真实网络路由直接请求该接口，因此即便配置了复杂的分流规则，也能准确显示每个平台看到的出口 IP 和地区。</p>
+      </details>
+      <details>
+        <summary>直连路由显示的地区和 ChatGPT 不一样，这算泄露吗？</summary>
+        <p>不算，这是正常的 <b>分流（Split-tunneling）</b>：国内/本地流量直连，AI 域名走海外节点。只要同一平台（如 OpenAI 或 Anthropic）的所有子域名共享同一个受支持地区节点，且没有 WebRTC/DNS 泄露，分流是完全健康的。</p>
+      </details>
+      <details>
+        <summary>为什么 OpenAI 或 Claude 的不同子域名有时显示不同 IP？</summary>
+        <p>某些代理规则会对不同域名做负载均衡或走了不同策略组。如果 <code>chatgpt.com</code> 与 <code>api.openai.com</code> 从不同 IP 甚至不同国家出口，反风控可能会判定为异地同时登录。建议将同一平台的所有域名固定到单个稳定节点。</p>
+      </details>
+      <details>
+        <summary>AlfaFond 会记录或保存我的 IP 吗？</summary>
+        <p>不会。本站是部署在 GitHub Pages 上的纯静态 HTML/JS 页面，没有后端服务器和数据库。历史对比记录仅存储在您本机浏览器的 <code>localStorage</code> 中。</p>
+      </details>
+    </div>
+  </section>
+
+  <a class="xcard" href="/dev/?utm_source=check_zh&amp;utm_medium=banner">
+    <span class="xk">AlfaFond /dev · 软件与 AI 工程开发</span>
+    <span class="xt">需要生产级 AI 知识库机器人、Telegram Bot、API 或交易基础设施？ →</span>
+    <span class="xd">先体验在线 Demo 与开源代码再合作 — 支持固定报价或按周期协作，支持 USDT/银行结算。</span>
+  </a>
+</main>
+
+<footer class="af-foot">
+  <div class="wrap">
+    <div class="af-foot-row">
+      <div class="af-foot-brand">
+        <a class="af-foot-logo" href="/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g2)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg><span>ALFAFOND <span class="path">/check</span></span></a>
+        <span class="af-foot-copy">© 2026 AlfaFond · 零 IP 日志</span>
+      </div>
+      <nav class="af-foot-nav" aria-label="页脚导航"><a href="/dev/">工程开发 /dev</a><a href="/ru/en/">研究</a><a href="/check/zh/">网络检测</a><a href="/blog/">博客</a><a href="https://github.com/ev609" target="_blank" rel="noopener">GitHub</a></nav>
+    </div>
+  </div>
+</footer>
+
+<script src="/check/i18n/zh.js?v=1"></script>
+<script src="/check/check.js?v=9"></script>
+<script src="/lang-suggest.js?v=2"></script>
+<script defer src="/analytics.js?v=2"></script>
+</body>
+</html>

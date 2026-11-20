@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico de red, IP y VPN para ChatGPT, Claude y servicios de IA · AlfaFond</title>
+<meta name="description" content="Comprobación gratuita en tu navegador de IP, VPN, split-tunneling, reputación, fugas WebRTC, IPv6 y DNS, y huella digital tal como te ven ChatGPT, Claude, Gemini, Cursor y 18 servicios de IA. Sin registro de IP.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:url" content="https://alfafond.com/check/es/">
+<meta property="og:title" content="Diagnóstico de red, IP y VPN para ChatGPT, Claude y servicios de IA · AlfaFond">
+<meta property="og:description" content="Comprueba cómo 18 servicios de IA (+ Gemini, Cursor, GitHub) ven tu IP, país de salida, reputación y fugas WebRTC/IPv6/DNS — con informe para IA y script CLI.">
+<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/check/es/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/check/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/check/en/">
+<link rel="alternate" hreflang="zh-Hans" href="https://alfafond.com/check/zh/">
+<link rel="alternate" hreflang="es" href="https://alfafond.com/check/es/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/check/en/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "AlfaFond Network Check — Diagnóstico de IP y VPN para ChatGPT y Claude",
+      "url": "https://alfafond.com/check/es/",
+      "applicationCategory": "NetworkingApplication",
+      "operatingSystem": "Web, macOS, Linux, Windows",
+      "inLanguage": "es",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "Diagnóstico 100% en navegador de IP, VPN, split-tunneling, fugas WebRTC/IPv6/DNS y consistencia del navegador en 18 servicios de IA."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Cómo sabe esta página qué IP ven ChatGPT y Claude?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Tu navegador consulta directamente /cdn-cgi/trace en chatgpt.com, claude.ai y otros 16 dominios de IA detrás de Cloudflare siguiendo tu ruta real, incluso con split-tunneling." }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Guarda AlfaFond mi dirección IP?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. El sitio es 100% estático en GitHub Pages, sin backend ni base de datos. Todas las pruebas corren en tu navegador y el historial reciente solo vive en tu localStorage." }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puedo ejecutar esta prueba desde la terminal o con un agente de IA?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sí. Ejecuta curl -fsSL https://alfafond.com/check.sh | sh en macOS/Linux o irm https://alfafond.com/check.ps1 | iex en Windows, o entrega alfafond.com/check-skill.md a tu agente." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%234ae39e%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2325b876%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%22.75%22%20y%3D%22.75%22%20width%3D%2230.5%22%20height%3D%2230.5%22%20rx%3D%227.25%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.22%29%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10%208.5H12L16.5%2023.5H13.7L12.75%2020.1H9.25L8.3%2023.5H5.5L10%208.5ZM11%2012.1L9.8%2017.6H12.2L11%2012.1Z%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20d%3D%22M18.2%208.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>(function(){try{if(localStorage.getItem("af_check_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<link rel="stylesheet" href="/depth.css?v=2">
+<link rel="stylesheet" href="/tokens.css">
+<link rel="stylesheet" href="/check/check.css?v=9">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo">
+      <a href="/">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g1)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg>
+        <span>ALFAFOND</span>
+        <span class="path">/check</span>
+      </a>
+    </div>
+    <div class="bar-right">
+      <nav aria-label="Navegación">
+        <a href="/dev/">Ingeniería</a><a href="/ru/en/">Investigación</a><a href="/check/es/" class="on" aria-current="page">Test de red</a><a href="/blog/">Blog</a>
+      </nav>
+      <a class="mob-link" href="/dev/">/dev</a>
+      <button id="btnTheme" type="button" class="theme-btn" aria-label="Cambiar a tema claro" title="Cambiar a tema claro"></button>
+      <div class="lang" role="group" aria-label="Idioma">
+        <a href="/check/" hreflang="ru">RU</a><a href="/check/en/" hreflang="en">EN</a><a href="/check/zh/" hreflang="zh-Hans">中文</a><a href="/check/es/" hreflang="es" class="on" aria-current="true">ES</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="sharedBanner" class="shared-banner" hidden>
+    <div id="sharedBannerText" class="shared-banner-txt"></div>
+    <button id="btnRunOwn" type="button" class="btn btn-ok">Probar mi red</button>
+  </div>
+  <header class="hero">
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div>
+          <div class="kicker">Diagnóstico de red · 100% en tu navegador</div>
+          <h1>Test de IP y VPN para <span class="ok">ChatGPT y Claude</span></h1>
+          <p class="lead">Comprueba <b>cómo te ven 18 servicios de IA</b> (+ Gemini, Cursor, GitHub), la reputación de tu IP de salida, split-tunneling, fugas WebRTC, IPv6 y DNS, y la consistencia del navegador. Página estática: tu IP nunca se envía a nuestro servidor.</p>
+          <div class="actions">
+            <button id="btnRun" type="button" class="btn btn-ok">
+              <svg class="spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+              <span>Repetir prueba</span>
+            </button>
+            <button id="btnSharePng" type="button" class="btn btn-ghost" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Compartir PNG</span>
+            </button>
+            <button id="btnCopyReport" type="button" class="btn btn-ghost" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Informe para IA</span>
+            </button>
+            <button id="btnShareLink" type="button" class="btn btn-ghost btn-icon" disabled title="Copiar enlace compartible (sin IPs)" aria-label="Copiar enlace compartible (sin IPs)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </button>
+            <button id="btnDownloadReport" type="button" class="btn btn-ghost btn-icon" disabled title="Descargar informe Markdown (.md)" aria-label="Descargar informe Markdown (.md)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+          </div>
+          <p class="hint">«Informe para IA» copia un Markdown limpio — pégalo en ChatGPT, Claude o Cursor y pregunta qué ajustar.</p>
+        </div>
+
+        <div class="hist-box">
+          <div class="hist-top">
+            <h2>Pruebas recientes (solo local)</h2>
+            <div class="hist-ctrl">
+              <span id="historyCount">vacío</span>
+              <button id="btnClearHistory" type="button" class="link-btn">limpiar</button>
+            </div>
+          </div>
+          <ul id="historyList" class="hist-list"></ul>
+        </div>
+      </div>
+
+      <aside class="score-card" aria-live="polite">
+        <div class="score-head">
+          <span class="score-label">Puntuación de conexión</span>
+          <button id="btnHideIp" type="button" class="btn btn-ghost btn-eye" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Ocultar IP</span>
+          </button>
+        </div>
+        <div id="progressBar" class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+        <div class="score-main">
+          <span id="scoreNum" class="score-num">··</span>
+          <span class="score-of">/100</span>
+        </div>
+        <div class="score-verdict-row">
+          <div id="scoreVerdict" class="score-verdict">Comprobando conexión…</div>
+          <span id="scoreDelta" class="badge" hidden></span>
+        </div>
+
+        <div class="sum-rows">
+          <div class="sum-row"><span class="k">ChatGPT ve</span><span id="sumChatgpt" class="v dim">comprobando…</span></div>
+          <div class="sum-row"><span class="k">Claude ve</span><span id="sumClaude" class="v dim">comprobando…</span></div>
+          <div class="sum-row"><span class="k">Ruta directa (1.1.1.1)</span><span id="sumCfDirect" class="v dim">comprobando…</span></div>
+          <div class="sum-row"><span class="k">Resolver DNS</span><span id="sumDns" class="v dim">comprobando…</span></div>
+        </div>
+
+        <div class="steps-grid">
+          <div id="step-services" class="step-pill"><span>Servicios</span><b>0/18</b></div>
+          <div id="step-rep" class="step-pill"><span>Reputación</span><b>esperando</b></div>
+          <div id="step-webrtc" class="step-pill"><span>WebRTC</span><b>esperando</b></div>
+          <div id="step-ipv6" class="step-pill"><span>IPv6</span><b>esperando</b></div>
+          <div id="step-dns" class="step-pill"><span>DNS</span><b>esperando</b></div>
+          <div id="step-browser" class="step-pill"><span>Navegador</span><b>esperando</b></div>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <div id="tabsBar" class="tabs" role="tablist" aria-label="Modo de vista">
+    <button type="button" class="tab-btn on" role="tab" aria-selected="true" data-tab="simple">
+      <b>Resumen claro</b>
+      <span>Qué está bien, qué supone riesgo y cómo solucionarlo — sin jerga</span>
+    </button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="tech">
+      <b>Detalles técnicos</b>
+      <span>18 servicios de IA, reputación de IP, WebRTC/IPv6/DNS, huella y pesos</span>
+    </button>
+  </div>
+
+  <!-- Tab 1: Resumen claro -->
+  <div id="panelSimple" role="tabpanel">
+    <section class="block">
+      <div class="sec-label">01 · Hallazgos</div>
+      <h2 class="sec-h">Problemas y recomendaciones</h2>
+      <p class="sec-sub">El número a la derecha indica los puntos restados sobre 100. Las tablas completas y señales técnicas están en <button id="goTechTab" type="button" class="link-btn" style="font-size:inherit;color:var(--ok)">Detalles técnicos</button>.</p>
+      <div id="findingsList" class="findings">
+        <div class="finding"><div class="f-head"><b>Ejecutando diagnóstico…</b></div><p>Suele tardar entre 5 y 12 segundos.</p></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02 · Desglose</div>
+      <h2 class="sec-h">Seis comprobaciones clave</h2>
+      <div id="simpleGrid" class="grid2">
+        <div class="cell"><h3>¿Te permitirán entrar ChatGPT y Claude?</h3><p>Comprobando país de salida…</p></div>
+        <div class="cell"><h3>¿Está limpia la IP de salida?</h3><p>Consultando bases de VPN y centros de datos…</p></div>
+        <div class="cell"><h3>¿Una sola IP por plataforma de IA?</h3><p>Comparando dominios de OpenAI y Anthropic…</p></div>
+        <div class="cell"><h3>¿Hay fugas de WebRTC o IPv6?</h3><p>Probando STUN y enrutamiento IPv6…</p></div>
+        <div class="cell"><h3>¿Puede tu ISP ver las consultas DNS?</h3><p>Detectando resolver DNS recursivo…</p></div>
+        <div class="cell"><h3>¿Se ve normal tu navegador?</h3><p>Analizando señales locales del navegador…</p></div>
+      </div>
+      <div id="glossaryBox" class="glossary-box" hidden>
+        <div class="glossary-head">
+          <b id="glossaryTitle"></b>
+          <button id="glossaryClose" type="button" class="link-btn">cerrar</button>
+        </div>
+        <p id="glossaryText"></p>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02b · Desarrolladores</div>
+      <h2 class="sec-h">Acceso a Gemini, Cursor y GitHub</h2>
+      <p class="sec-sub">Estos servicios no exponen Cloudflare trace, así que medimos disponibilidad directa y latencia desde tu navegador (sin leer la IP).</p>
+      <div id="extraProbesGrid" class="probes-grid">
+        <div class="probe-pill"><span class="dim">Comprobando…</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Tab 2: Detalles técnicos -->
+  <div id="panelTech" role="tabpanel" hidden>
+    <section class="block">
+      <div class="sec-label">01 · IPs de salida</div>
+      <h2 class="sec-h">Cómo te ven 18 servicios de IA</h2>
+      <p class="sec-sub">Tu navegador consulta <code>/cdn-cgi/trace</code> directamente en cada dominio siguiendo la misma ruta que tu tráfico real.</p>
+      <div class="tbl-toolbar">
+        <div class="filter-pills" role="group" aria-label="Filtrar servicios">
+          <button type="button" class="on" data-svc-filter="all">Todos (18)</button>
+          <button type="button" data-svc-filter="core">OpenAI y Claude (7)</button>
+          <button type="button" data-svc-filter="issues">Solo problemas</button>
+        </div>
+        <span id="svcSummaryBadge" class="badge">comprobando…</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th>IP de salida</th>
+              <th>País</th>
+              <th>Nodo CF</th>
+              <th>Acceso</th>
+              <th class="num">Latencia</th>
+            </tr>
+          </thead>
+          <tbody id="servicesBody"><tr><td colspan="6" class="dim">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">02 · Reputación</div>
+      <h2 class="sec-h">Qué saben las bases sobre estas IPs</h2>
+      <p class="sec-sub">Cada IP única se verifica en <code>ipquery.io</code>, <code>ipwho.is</code> e <code>ipapi.is</code> junto con la clasificación ASN. Las discrepancias se marcan como «en duda».</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Dirección</th>
+              <th>Ubicación</th>
+              <th>Proveedor / ASN</th>
+              <th>Etiquetas</th>
+              <th class="num">Riesgo</th>
+              <th>Fuentes</th>
+            </tr>
+          </thead>
+          <tbody id="repBody"><tr><td colspan="6" class="dim">Esperando IPs de salida…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">03 · Fugas</div>
+      <h2 class="sec-h">WebRTC, IPv6 y DNS</h2>
+      <div class="grid3">
+        <div class="cell">
+          <h3 style="margin-bottom:12px">WebRTC (STUN)</h3>
+          <div id="leakWebrtc" class="dim">Comprobando…</div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:12px">IPv4 e IPv6</h3>
+          <div id="leakIpv6" class="dim">Comprobando…</div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:12px">Resolver DNS</h3>
+          <div id="leakDns" class="dim">Comprobando…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">04 · Dispositivo</div>
+      <h2 class="sec-h">Navegador y huella digital</h2>
+      <p class="sec-sub">Se calcula localmente en tu navegador y nunca se transmite a ningún servidor.</p>
+      <div class="cell" style="margin-top:16px">
+        <div id="browserGrid" class="dim">Comprobando…</div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="sec-label">05 · Metodología y privacidad</div>
+      <h2 class="sec-h">Modelo de puntuación y flujo de datos</h2>
+      <div class="grid2">
+        <div class="cell">
+          <h3 style="margin-bottom:10px">Penalizaciones (100 − hallazgos)</h3>
+          <div class="kv"><span>País no compatible para ChatGPT / Claude (cada uno)</span><b class="bad-t">−50</b></div>
+          <div class="kv"><span>Nodo de salida Tor</span><b class="bad-t">−40</b></div>
+          <div class="kv"><span>Proxy abierto</span><b class="bad-t">−30</b></div>
+          <div class="kv"><span>Puntuación de riesgo alta (≥ 50/100)</span><b class="bad-t">−25</b></div>
+          <div class="kv"><span>Fuga WebRTC a otro país / IPv6 fuera del VPN</span><b class="bad-t">−15</b></div>
+          <div class="kv"><span>IP conocida de VPN / centro de datos</span><b>−15</b></div>
+          <div class="kv"><span>DNS local con salida externa / WebRTC IPv6 / webdriver</span><b>−10</b></div>
+          <div class="kv"><span>ASN de hosting (fuentes discrepan)</span><b>−8</b></div>
+          <div class="kv"><span>Varias IPs por servicio / DNS no-anycast / TZ / reloj &gt; 2m</span><b>−5</b></div>
+          <div class="kv"><span>Split-tunneling y DNS anycast público (Google / Cloudflare)</span><b class="ok-t">−0 (normal)</b></div>
+        </div>
+        <div class="cell">
+          <h3 style="margin-bottom:10px">Privacidad: adónde van las consultas</h3>
+          <div class="kv"><span>Servidor de AlfaFond</span><b class="ok-t">Nada (estático en GitHub Pages)</b></div>
+          <div class="kv"><span>18 dominios de IA</span><b>GET directo a <code>/cdn-cgi/trace</code></b></div>
+          <div class="kv"><span>Gemini / Cursor / GitHub / HF</span><b>Ping de disponibilidad (no-cors)</b></div>
+          <div class="kv"><span>ipquery.io · ipwho.is · ipapi.is</span><b>Consulta de ASN y reputación</b></div>
+          <div class="kv"><span>api4/api6.ipify.org · icanhazip</span><b>Detección de salida IPv4 e IPv6</b></div>
+          <div class="kv"><span>edns.ip-api.com</span><b>Detección de resolver DNS recursivo</b></div>
+          <div class="kv"><span>STUN de Cloudflare y Google</span><b>Prueba de fuga UDP WebRTC</b></div>
+          <div class="kv"><span>Huella digital e historial</span><b class="ok-t">Solo local en el navegador</b></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Terminal y agentes -->
+  <section id="agent" class="block">
+    <div class="sec-label">03 · Terminal y agentes de IA</div>
+    <h2 class="sec-h">Ejecuta desde CLI o entrégalo a tu agente</h2>
+    <p class="sec-sub">Claude Code, Codex, Cursor, Antigravity y otros agentes pueden ejecutar este diagnóstico por sí mismos: en navegador headless (con WebRTC, IPv6 y DNS) o en modo CLI rápido sin navegador.</p>
+
+    <div class="agent-box">
+      <div class="os-tabs" role="tablist">
+        <button type="button" class="on" data-os="unix">macOS &amp; Linux</button>
+        <button type="button" data-os="win">Windows (PowerShell)</button>
+      </div>
+      <div class="cmd-line">
+        <code id="agentCmd">curl -fsSL https://alfafond.com/check.sh | sh</code>
+        <button id="btnCopyCmd" type="button" class="btn btn-ghost" style="padding:7px 13px">Copiar</button>
+      </div>
+      <div class="agent-actions">
+        <button id="btnCopySkill" type="button" class="btn btn-ok">Copiar skill para agente</button>
+        <a href="/check-skill.md" class="btn btn-ghost" target="_blank" rel="noopener">Abrir check-skill.md</a>
+      </div>
+      <p class="hint">No instala nada. Admite <code>--json</code> para automatización y <code>--no-browser</code> para servidores Linux sin interfaz gráfica.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block">
+    <div class="sec-label">04 · FAQ</div>
+    <h2 class="sec-h">Preguntas frecuentes</h2>
+    <div class="faq">
+      <details>
+        <summary>¿Cómo sabe esta página qué IP ven ChatGPT y Claude?</summary>
+        <p>ChatGPT, Claude y la mayoría de plataformas de IA operan detrás de Cloudflare, que ofrece el endpoint <code>/cdn-cgi/trace</code> con CORS habilitado en cada dominio. Tu navegador lo consulta directamente por tu ruta real, mostrando el país y la IP exactos incluso con split-tunneling.</p>
+      </details>
+      <details>
+        <summary>La ruta directa muestra otro país distinto al de ChatGPT — ¿es una fuga?</summary>
+        <p>No, es <b>split-tunneling</b> estándar: el tráfico local sale directo y los dominios de IA pasan por el VPN. Mientras todos los subdominios de OpenAI/Anthropic compartan un país compatible y WebRTC/DNS estén limpios, el split-tunneling es totalmente correcto.</p>
+      </details>
+      <details>
+        <summary>¿Por qué distintos dominios de OpenAI o Claude muestran a veces IPs diferentes?</summary>
+        <p>Algunas configuraciones de VPN reparten dominios entre varios nodos. Si <code>chatgpt.com</code> y <code>api.openai.com</code> salen por IPs o países distintos, el sistema antifraude puede interpretarlo como sesiones simultáneas desde ubicaciones separadas. Enruta todos los dominios de cada proveedor por un único servidor.</p>
+      </details>
+      <details>
+        <summary>¿AlfaFond registra o almacena mi IP?</summary>
+        <p>No. Esta página es HTML/JS estático puro alojado en GitHub Pages, sin backend ni base de datos. El historial reciente se guarda exclusivamente en el <code>localStorage</code> de tu navegador.</p>
+      </details>
+    </div>
+  </section>
+
+  <a class="xcard" href="/dev/?utm_source=check_es&amp;utm_medium=banner">
+    <span class="xk">AlfaFond /dev · ingeniería de software e IA</span>
+    <span class="xt">¿Necesitas chatbots RAG, bots de Telegram, APIs o infraestructura de trading? →</span>
+    <span class="xd">Prueba demos en vivo y revisa el código abierto antes de contratar — precio cerrado o colaboración mensual.</span>
+  </a>
+</main>
+
+<footer class="af-foot">
+  <div class="wrap">
+    <div class="af-foot-row">
+      <div class="af-foot-brand">
+        <a class="af-foot-logo" href="/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g2)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg><span>ALFAFOND <span class="path">/check</span></span></a>
+        <span class="af-foot-copy">© 2026 AlfaFond · sin registro de IP</span>
+      </div>
+      <nav class="af-foot-nav" aria-label="Navegación del pie"><a href="/dev/">Ingeniería /dev</a><a href="/ru/en/">Investigación</a><a href="/check/es/">Test de red</a><a href="/blog/">Blog</a><a href="https://github.com/ev609" target="_blank" rel="noopener">GitHub</a></nav>
+    </div>
+  </div>
+</footer>
+
+<script src="/check/i18n/es.js?v=1"></script>
+<script src="/check/check.js?v=9"></script>
+<script src="/lang-suggest.js?v=2"></script>
+<script defer src="/analytics.js?v=2"></script>
+</body>
+</html>

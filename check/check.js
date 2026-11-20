@@ -1,12 +1,23 @@
-/* AlfaFond /check — клиентская диагностика сети для ChatGPT, Claude и ИИ-сервисов (RU + EN).
+/* AlfaFond /check — клиентская диагностика сети для ChatGPT, Claude и ИИ-сервисов (RU / EN / ZH / ES).
  * Все проверки выполняются прямо в браузере; IP пользователя на сервер AlfaFond не отправляется.
  */
 (function () {
   'use strict';
 
-  const IS_EN = (document.documentElement.lang || 'ru').toLowerCase().startsWith('en');
-  const LOCALE = IS_EN ? 'en-US' : 'ru-RU';
-  const T = (ru, en) => (IS_EN ? en : ru);
+  const RAW_LANG = (document.documentElement.lang || 'ru').toLowerCase();
+  const LANG = RAW_LANG.startsWith('zh') ? 'zh'
+    : RAW_LANG.startsWith('es') ? 'es'
+    : RAW_LANG.startsWith('en') ? 'en' : 'ru';
+  const LOCALE = { ru: 'ru-RU', en: 'en-US', zh: 'zh-CN', es: 'es-ES' }[LANG] || 'en-US';
+  const REGION_LANG = LANG === 'zh' ? 'zh-Hans' : LANG;
+  const DICT = (window.AF_CHECK_I18N && window.AF_CHECK_I18N[LANG]) || null;
+  const CHECK_URL = LANG === 'ru' ? 'alfafond.com/check' : `alfafond.com/check/${LANG}`;
+  const T = (ru, en) => {
+    if (LANG === 'ru') return ru;
+    if (DICT && Object.prototype.hasOwnProperty.call(DICT, en)) return DICT[en];
+    return en;
+  };
+  const TF = (ru, en, vars) => T(ru, en).replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : ''));
 
   const AI_SERVICES = [
     { id: 'chatgpt',        name: 'ChatGPT',           domain: 'chatgpt.com',           group: 'openai',    policy: 'openai' },
@@ -149,7 +160,7 @@
   };
 
   const regionNames = (() => {
-    try { return new Intl.DisplayNames([IS_EN ? 'en' : 'ru'], { type: 'region' }); }
+    try { return new Intl.DisplayNames([REGION_LANG], { type: 'region' }); }
     catch (_) { return null; }
   })();
 
@@ -555,28 +566,28 @@
 
     if (chatgpt && chatgpt.ok && chatgpt.allowed === false) {
       addFinding('bad', 50,
-        T(`ChatGPT видит неподдерживаемую страну: ${countryName(chatgpt.loc)}`, `ChatGPT sees an unsupported country: ${countryName(chatgpt.loc)}`),
+        TF('ChatGPT видит неподдерживаемую страну: {country}', 'ChatGPT sees an unsupported country: {country}', { country: countryName(chatgpt.loc) }),
         T('OpenAI не обслуживает эту страну — вход и API будут заблокированы даже с оплаченной подпиской.', 'OpenAI does not serve this country — login and API calls will be blocked even on a paid plan.'),
         T('Переключите VPN/прокси на поддерживаемую страну (Нидерланды, Германия, США, Финляндия).', 'Switch your VPN/proxy to a supported country (e.g., US, Netherlands, Germany, Finland).')
       );
     } else if (chatgpt && !chatgpt.ok) {
       addFinding('bad', 35,
         T('ChatGPT недоступен из текущей сети', 'ChatGPT is unreachable from this network'),
-        T(`Запрос к chatgpt.com завершился ошибкой (${chatgpt.error || 'нет ответа'}).`, `Request to chatgpt.com failed (${chatgpt.error || 'no response'}).`),
+        TF('Запрос к chatgpt.com завершился ошибкой ({err}).', 'Request to chatgpt.com failed ({err}).', { err: chatgpt.error || T('нет ответа', 'no response') }),
         T('Проверьте, что домен chatgpt.com идёт через рабочий VPN/прокси.', 'Ensure chatgpt.com is routed through a working VPN/proxy.')
       );
     }
 
     if (claude && claude.ok && claude.allowed === false) {
       addFinding('bad', 50,
-        T(`Claude видит неподдерживаемую страну: ${countryName(claude.loc)}`, `Claude sees an unsupported country: ${countryName(claude.loc)}`),
+        TF('Claude видит неподдерживаемую страну: {country}', 'Claude sees an unsupported country: {country}', { country: countryName(claude.loc) }),
         T('Anthropic ограничивает доступ из этой страны и может заблокировать аккаунт при входе.', 'Anthropic restricts access from this country and may flag or suspend accounts.'),
         T('Направьте домены claude.ai, api.anthropic.com и platform.claude.com через поддерживаемую страну.', 'Route claude.ai, api.anthropic.com, and platform.claude.com through a supported country.')
       );
     } else if (claude && !claude.ok) {
       addFinding('bad', 35,
         T('Claude недоступен из текущей сети', 'Claude is unreachable from this network'),
-        T(`Запрос к claude.ai завершился ошибкой (${claude.error || 'нет ответа'}).`, `Request to claude.ai failed (${claude.error || 'no response'}).`),
+        TF('Запрос к claude.ai завершился ошибкой ({err}).', 'Request to claude.ai failed ({err}).', { err: claude.error || T('нет ответа', 'no response') }),
         T('Проверьте маршрутизацию claude.ai и api.anthropic.com в вашем VPN.', 'Check your VPN routing rules for claude.ai and api.anthropic.com.')
       );
     }
@@ -585,8 +596,8 @@
     const openaiLocs = new Set(services.filter((s) => s.group === 'openai' && s.ok && s.loc).map((s) => s.loc));
     if (openaiIps.size > 1) {
       addFinding('warn', 5,
-        T(`Домены OpenAI видят разные IP (${openaiIps.size} адреса)`, `OpenAI domains see different IPs (${openaiIps.size} addresses)`),
-        T(`Сайты OpenAI выходят через разные узлы (${Array.from(openaiLocs).join(', ')}). Для антифрода это похоже на вход из разных мест сразу.`, `OpenAI endpoints exit via multiple nodes (${Array.from(openaiLocs).join(', ')}), which looks like simultaneous logins from different places.`),
+        TF('Домены OpenAI видят разные IP ({count} адреса)', 'OpenAI domains see different IPs ({count} addresses)', { count: openaiIps.size }),
+        TF('Сайты OpenAI выходят через разные узлы ({locs}). Для антифрода это похоже на вход из разных мест сразу.', 'OpenAI endpoints exit via multiple nodes ({locs}), which looks like simultaneous logins from different places.', { locs: Array.from(openaiLocs).join(', ') }),
         T('Пустите chatgpt.com, api.openai.com, auth.openai.com и sora.chatgpt.com через один сервер.', 'Route chatgpt.com, api.openai.com, auth.openai.com, and sora.chatgpt.com through one exit server.')
       );
     }
@@ -595,8 +606,8 @@
     const anthropicLocs = new Set(services.filter((s) => s.group === 'anthropic' && s.ok && s.loc).map((s) => s.loc));
     if (anthropicIps.size > 1) {
       addFinding('warn', 5,
-        T(`Домены Anthropic видят разные IP (${anthropicIps.size} адреса)`, `Anthropic domains see different IPs (${anthropicIps.size} addresses)`),
-        T(`Сайты Claude выходят с разных адресов (${Array.from(anthropicLocs).join(', ')}).`, `Claude endpoints exit via multiple nodes (${Array.from(anthropicLocs).join(', ')}).`),
+        TF('Домены Anthropic видят разные IP ({count} адреса)', 'Anthropic domains see different IPs ({count} addresses)', { count: anthropicIps.size }),
+        TF('Сайты Claude выходят с разных адресов ({locs}).', 'Claude endpoints exit via multiple nodes ({locs}).', { locs: Array.from(anthropicLocs).join(', ') }),
         T('Пустите claude.ai, api.anthropic.com и platform.claude.com через один сервер VPN.', 'Route claude.ai, api.anthropic.com, and platform.claude.com through a single exit server.')
       );
     }
@@ -626,7 +637,7 @@
     }
     if (highRisk) {
       addFinding('bad', 25,
-        T(`Повышенный риск-скор адреса (${highRisk.riskScore}/100)`, `Elevated IP risk score (${highRisk.riskScore}/100)`),
+        TF('Повышенный риск-скор адреса ({score}/100)', 'Elevated IP risk score ({score}/100)', { score: highRisk.riskScore }),
         T('С этого адреса фиксировались злоупотребления или массовый бот-трафик.', 'Recent abuse or automated traffic has been linked to this exit IP.'),
         T('Переключитесь на другой сервер или менее загруженную локацию.', 'Switch to another server or less crowded exit location.')
       );
@@ -642,14 +653,14 @@
       const dcOrg = primaryReps.find((r) => r.isDatacenter)?.org || T('дата-центр', 'datacenter');
       addFinding('warn', 15,
         T('Выходной IP принадлежит хостингу / дата-центру', 'Exit IP belongs to a hosting / datacenter ASN'),
-        T(`Организация: ${dcOrg}. К адресам хостингов антифрод относится строже, чем к домашним ISP.`, `Provider: ${dcOrg}. Anti-fraud scrutinizes hosting ranges more than residential ISPs.`),
+        TF('Организация: {org}. К адресам хостингов антифрод относится строже, чем к домашним ISP.', 'Provider: {org}. Anti-fraud scrutinizes hosting ranges more than residential ISPs.', { org: dcOrg }),
         T('Для стабильной работы держите чистый выделенный VPS (не шаренный VPN) и не допускайте утечек WebRTC/DNS.', 'Keep a clean dedicated VPS (not a shared VPN) and ensure no WebRTC/DNS leaks.')
       );
     } else if (anyDisagreeDc) {
       const hOrg = primaryReps.find((r) => r.asnHeuristicHosting)?.org || '—';
       addFinding('warn', 8,
         T('Источники расходятся: ASN похож на дата-центр', 'Sources disagree: ASN looks like hosting'),
-        T(`База рисков не отметила хостинг, но ASN (${hOrg}) относится к хостинг-провайдерам.`, `The risk API did not flag datacenter, but ASN (${hOrg}) matches hosting providers.`),
+        TF('База рисков не отметила хостинг, но ASN ({org}) относится к хостинг-провайдерам.', 'The risk API did not flag datacenter, but ASN ({org}) matches hosting providers.', { org: hOrg }),
         T('Обычно это нормально для своего VPS, но стоит следить за отсутствием утечек.', 'Usually fine for a personal VPS as long as there are no leaks.')
       );
     }
@@ -671,7 +682,7 @@
       if (leakDiffCountry) {
         const rep = reputations[leakDiffCountry];
         addFinding('bad', 15,
-          T(`Утечка WebRTC в другую страну (${countryName(rep.countryCode)})`, `WebRTC leaks an IP from another country (${countryName(rep.countryCode)})`),
+          TF('Утечка WebRTC в другую страну ({country})', 'WebRTC leaks an IP from another country ({country})', { country: countryName(rep.countryCode) }),
           T('Браузер через STUN (UDP) раскрывает адрес из другой страны мимо VPN.', 'STUN over UDP exposes a public IP from a different country bypassing your VPN.'),
           T('Включите проксирование UDP в VPN-клиенте или ограничьте WebRTC в настройках браузера.', 'Enable UDP tunneling in your VPN client or restrict WebRTC IP handling in browser settings.')
         );
@@ -696,7 +707,7 @@
     if (ipProto.ipv4 && ipProto.ipv6 && v4Rep?.countryCode && v6Rep?.countryCode &&
         v4Rep.countryCode.toUpperCase() !== v6Rep.countryCode.toUpperCase()) {
       addFinding('bad', 15,
-        T(`IPv6 идёт мимо VPN (${countryName(v6Rep.countryCode)} вместо ${countryName(v4Rep.countryCode)})`, `IPv6 bypasses VPN (${countryName(v6Rep.countryCode)} vs IPv4 ${countryName(v4Rep.countryCode)})`),
+        TF('IPv6 идёт мимо VPN ({v6} вместо {v4})', 'IPv6 bypasses VPN ({v6} vs IPv4 {v4})', { v6: countryName(v6Rep.countryCode), v4: countryName(v4Rep.countryCode) }),
         T('IPv4 и IPv6 выходят из разных стран — сервисы с поддержкой IPv6 могут видеть ваш реальный адрес.', 'IPv4 and IPv6 exit in different countries — dual-stack sites may see your real location.'),
         T('Включите IPv6-туннель в VPN либо отключите IPv6 в системе/клиенте.', 'Enable IPv6 tunneling in your VPN or disable IPv6 on your system.')
       );
@@ -707,14 +718,14 @@
       const aiC = aiCountry.toUpperCase();
       if (dnsC === 'RU' && aiC !== 'RU') {
         addFinding('warn', 10,
-          T(`DNS-запросы идут через Россию (${dns.provider || dns.geo || 'RU'}) при зарубежном VPN`, `DNS queries resolve in Russia (${dns.provider || dns.geo || 'RU'}) while exiting abroad`),
+          TF('DNS-запросы идут через Россию ({resolver}) при зарубежном VPN', 'DNS queries resolve in Russia ({resolver}) while exiting abroad', { resolver: dns.provider || dns.geo || 'RU' }),
           T('Домашний провайдер видит запрашиваемые домены, а несовпадение страны DNS и IP заметно антифроду.', 'Your local ISP can see queried domains, and DNS/IP country mismatch is visible to anti-fraud.'),
           T('Включите DNS-over-HTTPS (DoH) в браузере или проксирование DNS (FakeIP / remote DNS) в VPN-клиенте.', 'Enable DNS-over-HTTPS (DoH) in browser or remote DNS / FakeIP in your VPN client.')
         );
       } else if (dnsC !== aiC && !dns.isPublicAnycast) {
         addFinding('warn', 5,
-          T(`DNS-резолвер стороннего провайдера в другой стране (${countryName(dnsC)} vs ${countryName(aiC)})`, `Non-anycast DNS resolver in another country (${countryName(dnsC)} vs ${countryName(aiC)})`),
-          T(`Резолвер: ${dns.geo || dns.provider || dnsC}.`, `Resolver: ${dns.geo || dns.provider || dnsC}.`),
+          TF('DNS-резолвер стороннего провайдера в другой стране ({dnsCountry} vs {aiCountry})', 'Non-anycast DNS resolver in another country ({dnsCountry} vs {aiCountry})', { dnsCountry: countryName(dnsC), aiCountry: countryName(aiC) }),
+          TF('Резолвер: {resolver}.', 'Resolver: {resolver}.', { resolver: dns.geo || dns.provider || dnsC }),
           T('Настройте DNS внутри VPN-туннеля или включите Cloudflare/Google DoH.', 'Route DNS inside your VPN tunnel or enable Cloudflare/Google DoH.')
         );
       }
@@ -729,7 +740,7 @@
     }
     if (browser.tzCountryHint && aiCountry && browser.tzCountryHint !== aiCountry.toUpperCase()) {
       addFinding('warn', 5,
-        T(`Часовой пояс браузера (${browser.tz}) не совпадает со страной IP (${countryName(aiCountry)})`, `Browser timezone (${browser.tz}) does not match exit country (${countryName(aiCountry)})`),
+        TF('Часовой пояс браузера ({tz}) не совпадает со страной IP ({country})', 'Browser timezone ({tz}) does not match exit country ({country})', { tz: browser.tz, country: countryName(aiCountry) }),
         T('Несоответствие таймзоны и IP — слабый вторичный признак VPN.', 'Timezone/IP mismatch is a mild secondary VPN signal.'),
         T('Обычно не мешает работе, менять системное время не обязательно — достаточно отсутствия утечек.', 'Usually harmless on its own; no need to change system time if there are no leaks.')
       );
@@ -737,14 +748,14 @@
     if (browser.uaMismatch) {
       addFinding('warn', 5,
         T('Браузер называет разную ОС в User-Agent и Client Hints', 'User-Agent and Client Hints report conflicting OS'),
-        T(`User-Agent и userAgentData (${browser.uaDataPlatform}) противоречат друг другу.`, `User-Agent conflicts with userAgentData (${browser.uaDataPlatform}).`),
+        TF('User-Agent и userAgentData ({platform}) противоречат друг другу.', 'User-Agent conflicts with userAgentData ({platform}).', { platform: browser.uaDataPlatform }),
         T('Отключите расширения, подменяющие только строку User-Agent без Client Hints.', 'Disable extensions that spoof User-Agent without updating Client Hints.')
       );
     }
     if (browser.clockDriftSec !== null && Math.abs(browser.clockDriftSec) > 120) {
       const mins = Math.round(Math.abs(browser.clockDriftSec) / 60);
       addFinding('warn', 5,
-        T(`Системные часы сбиты на ${mins} мин`, `System clock is off by ${mins} min`),
+        TF('Системные часы сбиты на {mins} мин', 'System clock is off by {mins} min', { mins }),
         T('Сильное расхождение времени ломает токены авторизации, 2FA и вызывает подозрения антифрода.', 'Large clock skew breaks auth tokens, 2FA, and raises anti-fraud flags.'),
         T('Включите автоматическую синхронизацию времени по NTP в настройках ОС.', 'Enable automatic NTP time synchronization in your OS settings.')
       );
@@ -772,23 +783,36 @@
 
     let c1 = { status: 'ok', title: T('Пустят ли ChatGPT и Claude', 'Will ChatGPT and Claude let you in?'), terms: ['vpn', 'split'], text: '' };
     if (cg?.allowed === true && cl?.allowed === true) {
-      c1.text = T(
-        `Оба сервиса видят поддерживаемую страну: ChatGPT — ${countryName(cg.loc)}, Claude — ${countryName(cl.loc)}.` +
-        (splitTunnel ? ` Прямой маршрут (1.1.1.1) идёт через ${countryName(ipProto.cfTrace.loc)} — у вас работает split-tunneling, это нормально.` : ' По геоблокировке проблем нет.'),
-        `Both services see a supported country: ChatGPT — ${countryName(cg.loc)}, Claude — ${countryName(cl.loc)}.` +
-        (splitTunnel ? ` Direct route (1.1.1.1) exits in ${countryName(ipProto.cfTrace.loc)} — split-tunneling is active and working normally.` : ' No geo-blocking issues.')
-      );
+      c1.text = TF(
+        'Оба сервиса видят поддерживаемую страну: ChatGPT — {cg}, Claude — {cl}.',
+        'Both services see a supported country: ChatGPT — {cg}, Claude — {cl}.',
+        { cg: countryName(cg.loc), cl: countryName(cl.loc) }
+      ) + ' ' + (splitTunnel
+        ? TF(
+            'Прямой маршрут (1.1.1.1) идёт через {direct} — у вас работает split-tunneling, это нормально.',
+            'Direct route (1.1.1.1) exits in {direct} — split-tunneling is active and working normally.',
+            { direct: countryName(ipProto.cfTrace.loc) }
+          )
+        : T('По геоблокировке проблем нет.', 'No geo-blocking issues.'));
     } else if (cg?.allowed === false || cl?.allowed === false) {
       c1.status = 'bad';
-      c1.text = T(
-        `Есть геоблокировка: ChatGPT видит ${cg?.ok ? countryName(cg.loc) : 'недоступен'}, Claude видит ${cl?.ok ? countryName(cl.loc) : 'недоступен'}. Нужен VPN в поддерживаемой стране.`,
-        `Geo-block detected: ChatGPT sees ${cg?.ok ? countryName(cg.loc) : 'unreachable'}, Claude sees ${cl?.ok ? countryName(cl.loc) : 'unreachable'}. Switch VPN to a supported region.`
+      c1.text = TF(
+        'Есть геоблокировка: ChatGPT видит {cg}, Claude видит {cl}. Нужен VPN в поддерживаемой стране.',
+        'Geo-block detected: ChatGPT sees {cg}, Claude sees {cl}. Switch VPN to a supported region.',
+        {
+          cg: cg?.ok ? countryName(cg.loc) : T('недоступен', 'unreachable'),
+          cl: cl?.ok ? countryName(cl.loc) : T('недоступен', 'unreachable')
+        }
       );
     } else {
       c1.status = 'warn';
-      c1.text = T(
-        `Часть сервисов не ответила: ChatGPT (${cg?.ok ? countryName(cg.loc) : cg?.error || 'ошибка'}), Claude (${cl?.ok ? countryName(cl.loc) : cl?.error || 'ошибка'}).`,
-        `Some services did not respond: ChatGPT (${cg?.ok ? countryName(cg.loc) : cg?.error || 'error'}), Claude (${cl?.ok ? countryName(cl.loc) : cl?.error || 'error'}).`
+      c1.text = TF(
+        'Часть сервисов не ответила: ChatGPT ({cg}), Claude ({cl}).',
+        'Some services did not respond: ChatGPT ({cg}), Claude ({cl}).',
+        {
+          cg: cg?.ok ? countryName(cg.loc) : (cg?.error || T('ошибка', 'error')),
+          cl: cl?.ok ? countryName(cl.loc) : (cl?.error || T('ошибка', 'error'))
+        }
       );
     }
 
@@ -799,29 +823,33 @@
       c2.text = T('Базы репутации не ответили за отведённое время. Попробуйте повторить проверку.', 'Reputation APIs timed out. Try re-running the check.');
     } else if (rep0.isTor || rep0.isProxy || (rep0.riskScore || 0) >= 50) {
       c2.status = 'bad';
-      c2.text = T(
-        `Адрес (${rep0.org || rep0.asn || 'неизвестный провайдер'}) помечен как рискованный (Tor/прокси/злоупотребления). Лучше сменить сервер.`,
-        `Address (${rep0.org || rep0.asn || 'unknown provider'}) is flagged as high-risk (Tor/proxy/abuse). Switch exit server.`
+      c2.text = TF(
+        'Адрес ({provider}) помечен как рискованный (Tor/прокси/злоупотребления). Лучше сменить сервер.',
+        'Address ({provider}) is flagged as high-risk (Tor/proxy/abuse). Switch exit server.',
+        { provider: rep0.org || rep0.asn || T('неизвестный провайдер', 'unknown provider') }
       );
     } else if (rep0.isVpn || rep0.isDatacenter || rep0.asnHeuristicHosting) {
       c2.status = 'warn';
-      c2.text = T(
-        `Выход идёт через хостинг/VPN (${rep0.org || rep0.isp || rep0.asn || 'дата-центр'}). Для своего чистого VPS это обычно работает стабильно, но антифрод присматривается внимательнее.`,
-        `Traffic exits via hosting/VPN (${rep0.org || rep0.isp || rep0.asn || 'datacenter'}). A clean personal VPS usually works fine, though anti-fraud watches hosting ranges closer.`
+      c2.text = TF(
+        'Выход идёт через хостинг/VPN ({provider}). Для своего чистого VPS это обычно работает стабильно, но антифрод присматривается внимательнее.',
+        'Traffic exits via hosting/VPN ({provider}). A clean personal VPS usually works fine, though anti-fraud watches hosting ranges closer.',
+        { provider: rep0.org || rep0.isp || rep0.asn || T('дата-центр', 'datacenter') }
       );
     } else {
-      c2.text = T(
-        `Адрес выглядит чистым (${rep0.org || rep0.isp || 'обычный провайдер'}), в базах VPN, Tor и прокси не замечен.`,
-        `Address looks clean (${rep0.org || rep0.isp || 'regular ISP'}), not listed in VPN, Tor, or open-proxy databases.`
+      c2.text = TF(
+        'Адрес выглядит чистым ({provider}), в базах VPN, Tor и прокси не замечен.',
+        'Address looks clean ({provider}), not listed in VPN, Tor, or open-proxy databases.',
+        { provider: rep0.org || rep0.isp || T('обычный провайдер', 'regular ISP') }
       );
     }
 
     let c3 = { status: 'ok', title: T('Один ли адрес у каждой нейросети', 'Single exit IP per AI service?'), terms: ['split'], text: '' };
     if (openaiIps.size > 1 || anthropicIps.size > 1) {
       c3.status = 'warn';
-      c3.text = T(
-        `Домены внутри одного сервиса видят разные IP (OpenAI: ${openaiIps.size}, Anthropic: ${anthropicIps.size}). Лучше пустить все домены одного сервиса через один сервер.`,
-        `Subdomains of the same platform see multiple IPs (OpenAI: ${openaiIps.size}, Anthropic: ${anthropicIps.size}). Route each service through one server.`
+      c3.text = TF(
+        'Домены внутри одного сервиса видят разные IP (OpenAI: {oai}, Anthropic: {ant}). Лучше пустить все домены одного сервиса через один сервер.',
+        'Subdomains of the same platform see multiple IPs (OpenAI: {oai}, Anthropic: {ant}). Route each service through one server.',
+        { oai: openaiIps.size, ant: anthropicIps.size }
       );
     } else if (openaiIps.size === 0 && anthropicIps.size === 0) {
       c3.status = 'bad';
@@ -843,20 +871,28 @@
     });
     if (v6Leak || rtcLeak) {
       c4.status = 'bad';
-      c4.text = T(
-        `${rtcLeak ? 'WebRTC выдаёт адрес из другой страны. ' : ''}${v6Leak ? 'IPv6 идёт мимо VPN в другую страну.' : ''}`.trim(),
-        `${rtcLeak ? 'WebRTC leaks an IP from another country. ' : ''}${v6Leak ? 'IPv6 bypasses VPN to another country.' : ''}`.trim()
-      );
+      const parts = [];
+      if (rtcLeak) parts.push(T('WebRTC выдаёт адрес из другой страны.', 'WebRTC leaks an IP from another country.'));
+      if (v6Leak) parts.push(T('IPv6 идёт мимо VPN в другую страну.', 'IPv6 bypasses VPN to another country.'));
+      c4.text = parts.join(' ');
     } else if (webrtc.publicIps.length > 0) {
       c4.status = 'warn';
-      c4.text = T(
-        `WebRTC показывает ${webrtc.publicIps.length} публичный(х) IP, но из той же страны. IPv6 ${ipProto.ipv6 ? 'совпадает с VPN' : 'отключён — утечки нет'}.`,
-        `WebRTC reveals ${webrtc.publicIps.length} public IP(s) in the same country. IPv6 is ${ipProto.ipv6 ? 'aligned with VPN' : 'disabled — no leak'}.`
+      c4.text = TF(
+        'WebRTC показывает {count} публичный(х) IP, но из той же страны. IPv6 {v6state}.',
+        'WebRTC reveals {count} public IP(s) in the same country. IPv6 is {v6state}.',
+        {
+          count: webrtc.publicIps.length,
+          v6state: ipProto.ipv6 ? T('совпадает с VPN', 'aligned with VPN') : T('отключён — утечки нет', 'disabled — no leak')
+        }
       );
     } else {
-      c4.text = T(
-        `WebRTC не раскрывает публичный IP (${webrtc.mdns ? 'защищён mDNS' : 'кандидатов нет'}). IPv6 ${ipProto.ipv6 ? 'идёт через ту же страну' : 'отключён — утечки не будет'}.`,
-        `WebRTC exposes no public IP (${webrtc.mdns ? 'mDNS protected' : 'no candidates'}). IPv6 is ${ipProto.ipv6 ? 'in the same country' : 'disabled — no leak'}.`
+      c4.text = TF(
+        'WebRTC не раскрывает публичный IP ({rtcState}). IPv6 {v6state}.',
+        'WebRTC exposes no public IP ({rtcState}). IPv6 is {v6state}.',
+        {
+          rtcState: webrtc.mdns ? T('защищён mDNS', 'mDNS protected') : T('кандидатов нет', 'no candidates'),
+          v6state: ipProto.ipv6 ? T('идёт через ту же страну', 'in the same country') : T('отключён — утечки не будет', 'disabled — no leak')
+        }
       );
     }
 
@@ -866,25 +902,29 @@
       c5.text = T('Не удалось определить DNS-резолвер (сервис edns.ip-api.com не ответил).', 'Could not detect DNS resolver (edns.ip-api.com did not respond).');
     } else if (dns.countryCode === 'RU' && aiCountry && aiCountry !== 'RU') {
       c5.status = 'warn';
-      c5.text = T(
-        `DNS-запросы идут через Россию (${dns.provider || dns.geo}), хотя сам трафик выходит через ${countryName(aiCountry)}. Лучше включить DNS внутри VPN или DoH.`,
-        `DNS resolves in Russia (${dns.provider || dns.geo}) while traffic exits in ${countryName(aiCountry)}. Enable remote DNS or DoH.`
+      c5.text = TF(
+        'DNS-запросы идут через Россию ({resolver}), хотя сам трафик выходит через {country}. Лучше включить DNS внутри VPN или DoH.',
+        'DNS resolves in Russia ({resolver}) while traffic exits in {country}. Enable remote DNS or DoH.',
+        { resolver: dns.provider || dns.geo, country: countryName(aiCountry) }
       );
     } else if (dns.isPublicAnycast) {
-      c5.text = T(
-        `Используется публичный anycast DNS (${dns.geo || dns.provider}) — утечки к домашнему провайдеру нет.`,
-        `Using public anycast DNS (${dns.geo || dns.provider}) — no leak to your home ISP.`
+      c5.text = TF(
+        'Используется публичный anycast DNS ({resolver}) — утечки к домашнему провайдеру нет.',
+        'Using public anycast DNS ({resolver}) — no leak to your home ISP.',
+        { resolver: dns.geo || dns.provider }
       );
     } else if (dns.countryCode && aiCountry && dns.countryCode !== aiCountry) {
       c5.status = 'warn';
-      c5.text = T(
-        `DNS отвечает из ${countryName(dns.countryCode)} (${dns.provider || 'резолвер'}), а выход — в ${countryName(aiCountry)}.`,
-        `DNS resolves in ${countryName(dns.countryCode)} (${dns.provider || 'resolver'}) while traffic exits in ${countryName(aiCountry)}.`
+      c5.text = TF(
+        'DNS отвечает из {dnsCountry} ({resolver}), а выход — в {aiCountry}.',
+        'DNS resolves in {dnsCountry} ({resolver}) while traffic exits in {aiCountry}.',
+        { dnsCountry: countryName(dns.countryCode), resolver: dns.provider || T('резолвер', 'resolver'), aiCountry: countryName(aiCountry) }
       );
     } else {
-      c5.text = T(
-        `DNS-резолвер (${dns.geo || dns.provider || countryName(dns.countryCode)}) совпадает со страной выхода — утечки к домашнему провайдеру не видно.`,
-        `DNS resolver (${dns.geo || dns.provider || countryName(dns.countryCode)}) matches exit country — no ISP leak detected.`
+      c5.text = TF(
+        'DNS-резолвер ({resolver}) совпадает со страной выхода — утечки к домашнему провайдеру не видно.',
+        'DNS resolver ({resolver}) matches exit country — no ISP leak detected.',
+        { resolver: dns.geo || dns.provider || countryName(dns.countryCode) }
       );
     }
 
@@ -893,17 +933,19 @@
     if (browser.webdriver) issues.push(T('обнаружен флаг webdriver (автоматизация)', 'webdriver automation flag is true'));
     if (browser.uaMismatch) issues.push(T('разная ОС в User-Agent и Client Hints', 'OS mismatch between User-Agent and Client Hints'));
     if (browser.clockDriftSec !== null && Math.abs(browser.clockDriftSec) > 120) issues.push(T('сбиты системные часы', 'system clock is skewed'));
-    if (browser.tzCountryHint && aiCountry && browser.tzCountryHint !== aiCountry) issues.push(T(`часовой пояс ${browser.tz} не совпадает со страной IP`, `timezone ${browser.tz} differs from exit country`));
+    if (browser.tzCountryHint && aiCountry && browser.tzCountryHint !== aiCountry) issues.push(TF('часовой пояс {tz} не совпадает со страной IP', 'timezone {tz} differs from exit country', { tz: browser.tz }));
     if (issues.length > 0) {
       c6.status = 'warn';
-      c6.text = T(
-        `Есть мелкие несовпадения: ${issues.join('; ')}. Отпечаток считается локально и никуда не отправляется.`,
-        `Minor mismatches: ${issues.join('; ')}. Fingerprint stays strictly local in your browser.`
+      c6.text = TF(
+        'Есть мелкие несовпадения: {issues}. Отпечаток считается локально и никуда не отправляется.',
+        'Minor mismatches: {issues}. Fingerprint stays strictly local in your browser.',
+        { issues: issues.join('; ') }
       );
     } else {
-      c6.text = T(
-        `Браузер выглядит естественно (${browser.tz || 'таймзона ок'}, часы точны, флагов автоматизации нет).`,
-        `Browser looks natural (${browser.tz || 'timezone ok'}, clock accurate, no automation flags).`
+      c6.text = TF(
+        'Браузер выглядит естественно ({tz}, часы точны, флагов автоматизации нет).',
+        'Browser looks natural ({tz}, clock accurate, no automation flags).',
+        { tz: browser.tz || T('таймзона ок', 'timezone ok') }
       );
     }
 
@@ -1016,7 +1058,7 @@
     const count = $('historyCount');
     if (!list) return;
     const arr = loadHistory();
-    if (count) count.textContent = arr.length ? T(`${arr.length} сохр.`, `${arr.length} saved`) : T('пусто', 'empty');
+    if (count) count.textContent = arr.length ? TF('{n} сохр.', '{n} saved', { n: arr.length }) : T('пусто', 'empty');
     if (!arr.length) {
       list.innerHTML = `<li class="hist-empty">${esc(T('История хранится только в вашем браузере — после первой проверки здесь появится запись для сравнения разных VPN-серверов.', 'History stays strictly in your browser — compare scores before and after switching VPN servers.'))}</li>`;
       return;
@@ -1052,7 +1094,7 @@
     });
     const okCount = res.services.filter((s) => s.ok && s.allowed !== false).length;
     const badge = $('svcSummaryBadge');
-    if (badge) badge.textContent = T(`доступно ${okCount}/${res.services.length}`, `reachable ${okCount}/${res.services.length}`);
+    if (badge) badge.textContent = TF('доступно {ok}/{total}', 'reachable {ok}/{total}', { ok: okCount, total: res.services.length });
 
     if (!filtered.length) {
       $('servicesBody').innerHTML = `<tr><td colspan="6" class="dim">${esc(T('По выбранному фильтру записей нет — все сервисы в норме.', 'No rows match this filter — all services look healthy.'))}</td></tr>`;
@@ -1104,11 +1146,11 @@
       if (typeof res.prevScore === 'number') {
         const diff = res.score - res.prevScore;
         if (diff > 0) {
-          deltaEl.textContent = T(`+${diff} к прошлой`, `+${diff} vs previous`);
+          deltaEl.textContent = TF('+{diff} к прошлой', '+{diff} vs previous', { diff });
           deltaEl.className = 'badge ok';
           deltaEl.hidden = false;
         } else if (diff < 0) {
-          deltaEl.textContent = T(`${diff} к прошлой`, `${diff} vs previous`);
+          deltaEl.textContent = TF('{diff} к прошлой', '{diff} vs previous', { diff });
           deltaEl.className = 'badge bad';
           deltaEl.hidden = false;
         } else {
@@ -1250,7 +1292,7 @@
       document.body.appendChild(holder);
     }
     holder.textContent = JSON.stringify({
-      version: 3, lang: IS_EN ? 'en' : 'ru',
+      version: 3, lang: LANG,
       timestamp: res.timestamp, score: res.score, verdict: res.verdict, tone: res.tone,
       aiCountry: res.aiCountry, splitTunnel: res.splitTunnel, findings: res.findings,
       ipProto: res.ipProto, dns: res.dns, webrtc: res.webrtc, browser: res.browser,
@@ -1550,7 +1592,7 @@
       },
       {
         k: 'WEBRTC / IPV6',
-        v: res.webrtc.publicIps.length ? T(`WebRTC: ${res.webrtc.publicIps.length} IP`, `WebRTC: ${res.webrtc.publicIps.length} IP`) : T('Утечек нет', 'No leaks'),
+        v: res.webrtc.publicIps.length ? TF('WebRTC: {n} IP', 'WebRTC: {n} IP', { n: res.webrtc.publicIps.length }) : T('Утечек нет', 'No leaks'),
         sub: `IPv6: ${res.ipProto.ipv6 ? T('включён', 'enabled') : T('отключён', 'disabled')} · mDNS: ${res.webrtc.mdns ? T('да', 'yes') : T('нет', 'no')}`,
         ok: res.webrtc.publicIps.length === 0
       },
@@ -1621,7 +1663,7 @@
     // Нижняя строка карточки
     ctx.fillStyle = pal.ok;
     ctx.font = '500 16px "IBM Plex Mono", monospace';
-    ctx.fillText(IS_EN ? 'alfafond.com/check/en' : 'alfafond.com/check', 56, H - 46);
+    ctx.fillText(CHECK_URL, 56, H - 46);
     ctx.textAlign = 'right';
     ctx.fillStyle = pal.dim;
     ctx.font = '400 14px "IBM Plex Mono", monospace';
@@ -1645,8 +1687,8 @@
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
-            title: T(`Проверка сети: ${res.score}/100`, `Network check: ${res.score}/100`),
-            text: T(`Мой результат проверки VPN для ChatGPT и Claude: ${res.score}/100 — alfafond.com/check`, `My VPN check for ChatGPT & Claude: ${res.score}/100 — alfafond.com/check/en`),
+            title: TF('Проверка сети: {score}/100', 'Network check: {score}/100', { score: res.score }),
+            text: TF('Мой результат проверки VPN для ChatGPT и Claude: {score}/100 — {url}', 'My VPN check for ChatGPT & Claude: {score}/100 — {url}', { score: res.score, url: CHECK_URL }),
             files: [file]
           });
           span.textContent = T('Отправлено', 'Shared');
@@ -1848,7 +1890,7 @@
     const btxt = $('sharedBannerText');
     if (banner && btxt) {
       const dt = new Date(res.timestamp).toLocaleString(LOCALE, { dateStyle: 'medium', timeStyle: 'short' });
-      btxt.innerHTML = `<b>${T('Сохранённый результат', 'Shared snapshot')}</b> ${T(`от ${dt} — IP-адреса и данные браузера отправителя не передаются.`, `from ${dt} — sender IP addresses and browser fingerprint are excluded.`)}`;
+      btxt.innerHTML = `<b>${T('Сохранённый результат', 'Shared snapshot')}</b> ${TF('от {dt} — IP-адреса и данные браузера отправителя не передаются.', 'from {dt} — sender IP addresses and browser fingerprint are excluded.', { dt })}`;
       banner.hidden = false;
     }
 
