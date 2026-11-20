@@ -1,18 +1,21 @@
-/* AlfaFond /check — клиентская диагностика сети для ChatGPT, Claude и ИИ-сервисов.
+/* AlfaFond /check — клиентская диагностика сети для ChatGPT, Claude и ИИ-сервисов (RU + EN).
  * Все проверки выполняются прямо в браузере; IP пользователя на сервер AlfaFond не отправляется.
  */
 (function () {
   'use strict';
 
-  // 18 сервисов ИИ за Cloudflare (/cdn-cgi/trace с CORS Access-Control-Allow-Origin: *)
+  const IS_EN = (document.documentElement.lang || 'ru').toLowerCase().startsWith('en');
+  const LOCALE = IS_EN ? 'en-US' : 'ru-RU';
+  const T = (ru, en) => (IS_EN ? en : ru);
+
   const AI_SERVICES = [
     { id: 'chatgpt',        name: 'ChatGPT',           domain: 'chatgpt.com',           group: 'openai',    policy: 'openai' },
     { id: 'openai_api',     name: 'OpenAI API',        domain: 'api.openai.com',        group: 'openai',    policy: 'openai' },
-    { id: 'openai_auth',    name: 'Вход в OpenAI',     domain: 'auth.openai.com',       group: 'openai',    policy: 'openai' },
+    { id: 'openai_auth',    name: T('Вход в OpenAI', 'OpenAI Auth'), domain: 'auth.openai.com', group: 'openai', policy: 'openai' },
     { id: 'sora',           name: 'Sora',              domain: 'sora.chatgpt.com',      group: 'openai',    policy: 'openai' },
     { id: 'claude',         name: 'Claude',            domain: 'claude.ai',             group: 'anthropic', policy: 'anthropic' },
     { id: 'claude_api',     name: 'Claude API',        domain: 'api.anthropic.com',     group: 'anthropic', policy: 'anthropic' },
-    { id: 'claude_console', name: 'Консоль Claude',    domain: 'platform.claude.com',   group: 'anthropic', policy: 'anthropic' },
+    { id: 'claude_console', name: T('Консоль Claude', 'Claude Console'), domain: 'platform.claude.com', group: 'anthropic', policy: 'anthropic' },
     { id: 'perplexity',     name: 'Perplexity',        domain: 'www.perplexity.ai',     group: 'other',     policy: null },
     { id: 'grok',           name: 'Grok',              domain: 'grok.com',              group: 'other',     policy: null },
     { id: 'mistral',        name: 'Le Chat (Mistral)', domain: 'chat.mistral.ai',       group: 'other',     policy: null },
@@ -26,7 +29,6 @@
     { id: 'notion',         name: 'Notion',            domain: 'www.notion.so',         group: 'other',     policy: null }
   ];
 
-  // Ключевые не-Cloudflare сервисы (проверяем доступность и задержку через no-cors, без чтения IP)
   const EXTRA_PROBES = [
     { id: 'gemini',      name: 'Google Gemini',    domain: 'gemini.google.com',   url: 'https://gemini.google.com/favicon.ico' },
     { id: 'aistudio',    name: 'Google AI Studio', domain: 'aistudio.google.com', url: 'https://aistudio.google.com/favicon.ico' },
@@ -35,7 +37,6 @@
     { id: 'huggingface', name: 'HuggingFace',      domain: 'huggingface.co',      url: 'https://huggingface.co/favicon.ico' }
   ];
 
-  // Страны, где OpenAI / Anthropic официально недоступны
   const BLOCKED_OPENAI = new Set([
     'RU', 'BY', 'CN', 'HK', 'MO', 'KP', 'IR', 'SY', 'CU', 'VE',
     'AF', 'CF', 'ER', 'LY', 'SD', 'SS', 'YE', 'SO', 'TD', 'ZW'
@@ -45,12 +46,10 @@
     'AF', 'CF', 'CD', 'ET', 'LY', 'ML', 'MM', 'NI', 'SO', 'SS', 'SD', 'YE', 'ZW'
   ]);
 
-  // Публичные anycast DNS (не означают утечку к домашнему провайдеру)
   const PUBLIC_DNS_KEYWORDS = [
     'google', 'cloudflare', 'quad9', 'opendns', 'cisco', 'adguard', 'nextdns', 'controld', 'mullvad', 'dns.sb', 'cleanbrowsing'
   ];
 
-  // Известные хостинг- и VPN-провайдеры (для кросс-проверки ASN)
   const HOSTING_KEYWORDS = [
     'ovh', 'hetzner', 'digitalocean', 'amazon', 'aws', 'google cloud', 'microsoft azure',
     'linode', 'akamai connected', 'vultr', 'choopa', 'contabo', 'scaleway', 'online s.a.s',
@@ -68,53 +67,63 @@
     'ivpn', 'hide.me', 'adguard', 'hotspot shield', 'tor exit'
   ];
 
-  // Глоссарий терминов простыми словами
   const GLOSSARY = {
     vpn: {
-      title: 'Что такое VPN и прокси?',
-      text: 'Это промежуточный сервер, через который идёт ваш интернет-трафик. Для ChatGPT и Claude вы выглядите так, будто заходите из страны этого сервера, а не из дома.'
+      title: T('Что такое VPN и прокси?', 'What are VPN and proxy?'),
+      text: T(
+        'Это промежуточный сервер, через который идёт ваш интернет-трафик. Для ChatGPT и Claude вы выглядите так, будто заходите из страны этого сервера, а не из дома.',
+        'An intermediary server that routes your internet traffic. ChatGPT and Claude see the exit server country and IP instead of your local ISP.'
+      )
     },
     split: {
-      title: 'Что такое Split-tunneling (раздельная маршрутизация)?',
-      text: 'Режим VPN, при котором зарубежные сайты и ИИ идут через сервер за границей, а российские или локальные сервисы — напрямую. Это удобно и не является утечкой, если все домены самого ИИ идут через один зарубежный сервер.'
+      title: T('Что такое Split-tunneling (раздельная маршрутизация)?', 'What is split-tunneling?'),
+      text: T(
+        'Режим VPN, при котором зарубежные сайты и ИИ идут через сервер за границей, а локальные сервисы — напрямую. Это удобно и не является утечкой, если все домены одного ИИ идут через один зарубежный сервер.',
+        'A VPN mode where selected services (like AI tools) go through the VPN tunnel while local traffic goes direct. It is normal and not a leak as long as all domains of each AI service share a single exit IP.'
+      )
     },
     reputation: {
-      title: 'Что такое репутация IP-адреса?',
-      text: 'Специальные базы отслеживают, был ли конкретный адрес замечен в спаме, ботах, открытых прокси или публичных VPN. Чем чище адрес, тем реже сервисы показывают капчи и блокируют вход.'
+      title: T('Что такое репутация IP-адреса?', 'What is IP reputation?'),
+      text: T(
+        'Специальные базы отслеживают, был ли адрес замечен в спаме, ботах, открытых прокси или публичных VPN. Чем чище адрес, тем реже сервисы показывают капчи и блокируют вход.',
+        'Threat and ASN databases track whether an IP is linked to abuse, open proxies, Tor, or crowded VPN exits. Cleaner IPs trigger fewer captchas and blocks.'
+      )
     },
     datacenter: {
-      title: 'Что такое адрес дата-центра?',
-      text: 'IP-адрес, принадлежащий хостинг-компании (OVH, Hetzner, AWS и т.п.), а не домашнему провайдеру. Свой чистый VPS обычно работает хорошо, но антифрод относится к хостингам строже, чем к домашнему интернету.'
+      title: T('Что такое адрес дата-центра?', 'What is a datacenter IP?'),
+      text: T(
+        'IP-адрес, принадлежащий хостинг-компании (OVH, Hetzner, AWS и т.п.), а не домашнему провайдеру. Свой чистый VPS обычно работает хорошо, но антифрод относится к хостингам строже.',
+        'An IP owned by a hosting provider (OVH, Hetzner, AWS, etc.) rather than a residential ISP. A clean personal VPS usually works fine, though anti-fraud systems scrutinize hosting ranges more closely.'
+      )
     },
     webrtc: {
-      title: 'Что такое утечка WebRTC?',
-      text: 'Технология звонков в браузере (используется и в голосовом режиме ИИ). Чтобы соединиться напрямую, браузер спрашивает свой IP по UDP через STUN-сервер. Если ваш прокси пропускает только TCP, сайт может увидеть настоящий домашний адрес.'
+      title: T('Что такое утечка WebRTC?', 'What is a WebRTC leak?'),
+      text: T(
+        'Технология звонков в браузере (используется и в голосовом режиме ИИ). Браузер спрашивает свой IP по UDP через STUN-сервер. Если прокси проксирует только TCP, сайт может увидеть настоящий домашний адрес.',
+        'Browser real-time voice/video tech that discovers your external IP via STUN over UDP. If your proxy only tunnels TCP, WebRTC can expose your real IP.'
+      )
     },
     ipv6: {
-      title: 'Что такое утечка IPv6?',
-      text: 'Современная версия интернет-адресов. Некоторые VPN заворачивают в туннель только старый IPv4, оставляя IPv6 идти напрямую через провайдера — в итоге сайты с IPv6 видят вашу реальную страну.'
+      title: T('Что такое утечка IPv6?', 'What is an IPv6 leak?'),
+      text: T(
+        'Современная версия интернет-адресов. Некоторые VPN заворачивают в туннель только IPv4, оставляя IPv6 идти напрямую через провайдера — тогда сайты с IPv6 видят вашу реальную страну.',
+        'Some VPN setups tunnel only IPv4 while leaving IPv6 routed directly through your ISP, exposing your real country to dual-stack websites.'
+      )
     },
     dns: {
-      title: 'Что такое утечка DNS?',
-      text: 'DNS — это «телефонная книга» интернета, которая переводит имя сайта в IP-адрес. Если DNS-запросы идут через домашнего провайдера мимо VPN, он видит список открываемых доменов. Публичные DNS (Google, Cloudflare) к домашнему провайдеру не относятся.'
+      title: T('Что такое утечка DNS?', 'What is a DNS leak?'),
+      text: T(
+        'DNS переводит имя сайта в IP-адрес. Если DNS-запросы идут через домашнего провайдера мимо VPN, он видит список открываемых доменов. Публичные DNS (Google, Cloudflare) к домашнему провайдеру не относятся.',
+        'DNS resolves domain names to IPs. If queries bypass your VPN and hit your local ISP resolver, the ISP sees every domain you visit. Public anycast DNS (Google/Cloudflare) is not an ISP leak.'
+      )
     },
     fingerprint: {
-      title: 'Что такое отпечаток браузера?',
-      text: 'Набор параметров, которые браузер сам сообщает сайтам: часовой пояс, язык, точность системных часов, видеокарта, флаг автоматизации webdriver. Сильные расхождения добавляют подозрений антифроду.'
+      title: T('Что такое отпечаток браузера?', 'What is browser fingerprinting?'),
+      text: T(
+        'Набор параметров, которые браузер сообщает сайтам: часовой пояс, язык, точность системных часов, видеокарта, флаг webdriver. Сильные расхождения добавляют подозрений антифроду.',
+        'Browser attributes visible without permissions: timezone, languages, clock accuracy, GPU renderer, and webdriver automation flag. Large mismatches can raise anti-fraud suspicion.'
+      )
     }
-  };
-
-  const COUNTRY_RU = {
-    RU: 'Россия', US: 'США', NL: 'Нидерланды', DE: 'Германия', GB: 'Великобритания',
-    FR: 'Франция', FI: 'Финляндия', SE: 'Швеция', NO: 'Норвегия', CH: 'Швейцария',
-    AT: 'Австрия', PL: 'Польша', CZ: 'Чехия', EE: 'Эстония', LV: 'Латвия', LT: 'Литва',
-    TR: 'Турция', KZ: 'Казахстан', AM: 'Армения', GE: 'Грузия', UA: 'Украина',
-    BY: 'Беларусь', CA: 'Канада', SG: 'Сингапур', JP: 'Япония', KR: 'Южная Корея',
-    AU: 'Австралия', IE: 'Ирландия', ES: 'Испания', IT: 'Италия', PT: 'Португалия',
-    BE: 'Бельгия', DK: 'Дания', LU: 'Люксембург', RO: 'Румыния', BG: 'Болгария',
-    HU: 'Венгрия', SK: 'Словакия', RS: 'Сербия', IL: 'Израиль', AE: 'ОАЭ',
-    IN: 'Индия', BR: 'Бразилия', MX: 'Мексика', HK: 'Гонконг', CN: 'Китай',
-    TW: 'Тайвань', MD: 'Молдова', CY: 'Кипр', GR: 'Греция', IS: 'Исландия'
   };
 
   const TZ_COUNTRY_HINTS = {
@@ -139,6 +148,11 @@
     'America/Toronto': 'CA', 'America/Vancouver': 'CA', 'Australia/Sydney': 'AU'
   };
 
+  const regionNames = (() => {
+    try { return new Intl.DisplayNames([IS_EN ? 'en' : 'ru'], { type: 'region' }); }
+    catch (_) { return null; }
+  })();
+
   const HISTORY_KEY = 'af_netcheck_history_v1';
 
   const state = {
@@ -155,9 +169,15 @@
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   function countryName(code) {
-    if (!code) return 'неизвестно';
+    if (!code) return T('неизвестно', 'unknown');
     const c = String(code).toUpperCase();
-    return COUNTRY_RU[c] ? `${COUNTRY_RU[c]} (${c})` : c;
+    if (regionNames) {
+      try {
+        const label = regionNames.of(c);
+        if (label && label !== c) return `${label} (${c})`;
+      } catch (_) {}
+    }
+    return c;
   }
 
   function isIPv6(ip) {
@@ -205,7 +225,10 @@
       const text = opts.mode === 'no-cors' ? '' : await res.text();
       return { ok: opts.mode === 'no-cors' ? true : res.ok, status: res.status, text, ms: Math.round(performance.now() - t0) };
     } catch (err) {
-      return { ok: false, status: 0, text: '', ms: Math.round(performance.now() - t0), error: err.name === 'AbortError' ? 'таймаут' : 'недоступен' };
+      return {
+        ok: false, status: 0, text: '', ms: Math.round(performance.now() - t0),
+        error: err.name === 'AbortError' ? T('таймаут', 'timeout') : T('недоступен', 'unreachable')
+      };
     } finally {
       clearTimeout(t);
     }
@@ -228,7 +251,6 @@
     return null;
   }
 
-  // --- Прогресс-бар ---
   function setProgress(pct) {
     const bar = $('progressBar');
     const fill = $('progressFill');
@@ -238,7 +260,6 @@
     bar.classList.toggle('done', clamped >= 100);
   }
 
-  // --- Этап 1: опрос 18 ИИ-сервисов ---
   async function checkServices(onProgress) {
     let done = 0;
     const tasks = AI_SERVICES.map(async (svc) => {
@@ -267,7 +288,6 @@
     return Promise.all(tasks);
   }
 
-  // --- Этап 1б: доступность и задержка не-Cloudflare сервисов (no-cors) ---
   async function checkExtraProbes() {
     return Promise.all(EXTRA_PROBES.map(async (p) => {
       const r = await fetchTimeout(`${p.url}?_=${Date.now()}`, { mode: 'no-cors' }, 6000);
@@ -275,7 +295,6 @@
     }));
   }
 
-  // --- Этап 2: IPv4 / IPv6 + 1.1.1.1 direct trace ---
   async function checkIpProtocols() {
     const [v4a, v4b, v6a, v6b, cfDirect] = await Promise.all([
       fetchTimeout('https://api4.ipify.org?format=json', {}, 5500),
@@ -313,7 +332,6 @@
     return { ipv4, ipv6, cfTrace };
   }
 
-  // --- Этап 3: Репутация уникальных IP ---
   async function lookupIpReputation(ip) {
     const encoded = encodeURIComponent(ip);
     const [q1, q2, q3] = await Promise.all([
@@ -323,25 +341,11 @@
     ]);
 
     const rep = {
-      ip,
-      version: isIPv6(ip) ? 'IPv6' : 'IPv4',
-      sources: [],
-      countryCode: null,
-      country: null,
-      city: null,
-      timezone: null,
-      asn: null,
-      org: null,
-      isp: null,
-      isVpn: false,
-      isProxy: false,
-      isTor: false,
-      isDatacenter: false,
-      isMobile: false,
-      riskScore: null,
-      asnHeuristicHosting: false,
-      asnHeuristicVpn: false,
-      disagreement: false
+      ip, version: isIPv6(ip) ? 'IPv6' : 'IPv4', sources: [],
+      countryCode: null, country: null, city: null, timezone: null,
+      asn: null, org: null, isp: null,
+      isVpn: false, isProxy: false, isTor: false, isDatacenter: false, isMobile: false,
+      riskScore: null, asnHeuristicHosting: false, asnHeuristicVpn: false, disagreement: false
     };
 
     if (q1.ok) {
@@ -408,14 +412,10 @@
     return rep;
   }
 
-  // --- Этап 4: WebRTC утечка ---
   function checkWebRTC() {
     return new Promise((resolve) => {
       const RTCPC = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-      if (!RTCPC) {
-        resolve({ supported: false, publicIps: [], localIps: [], mdns: false });
-        return;
-      }
+      if (!RTCPC) { resolve({ supported: false, publicIps: [], localIps: [], mdns: false }); return; }
 
       const publicIps = new Set();
       const localIps = new Set();
@@ -427,12 +427,7 @@
         if (finished) return;
         finished = true;
         try { if (pc) pc.close(); } catch (_) {}
-        resolve({
-          supported: true,
-          publicIps: Array.from(publicIps),
-          localIps: Array.from(localIps),
-          mdns
-        });
+        resolve({ supported: true, publicIps: Array.from(publicIps), localIps: Array.from(localIps), mdns });
       };
 
       try {
@@ -454,9 +449,7 @@
           if (isPrivateIP(addr)) localIps.add(addr);
           else if (typ === 'srflx' || typ === 'prflx' || typ === 'host') publicIps.add(addr);
         };
-        pc.onicegatheringstatechange = () => {
-          if (pc && pc.iceGatheringState === 'complete') finish();
-        };
+        pc.onicegatheringstatechange = () => { if (pc && pc.iceGatheringState === 'complete') finish(); };
         pc.createOffer().then((offer) => pc.setLocalDescription(offer)).catch(finish);
         setTimeout(finish, 4000);
       } catch (_) {
@@ -465,7 +458,6 @@
     });
   }
 
-  // --- Этап 5: DNS-утечка ---
   async function checkDNS() {
     const r = await fetchTimeout(`https://edns.ip-api.com/json?_=${Date.now()}`, {}, 6500);
     if (!r.ok) {
@@ -476,9 +468,7 @@
       const ip = d.dns?.ip || null;
       const geo = d.dns?.geo || null;
       let provider = null;
-      if (geo && geo.includes(' - ')) {
-        provider = geo.split(' - ').slice(1).join(' - ').trim();
-      }
+      if (geo && geo.includes(' - ')) provider = geo.split(' - ').slice(1).join(' - ').trim();
       let countryCode = null;
       if (ip) {
         const rep = await fetchTimeout(`https://api.ipquery.io/${encodeURIComponent(ip)}`, {}, 5000);
@@ -505,18 +495,14 @@
       res.isPublicAnycast = isPublicAnycastDns(res);
       return res;
     } catch (_) {
-      return { ok: false, ip: null, geo: null, countryCode: null, provider: null, isPublicAnycast: false, error: 'ошибка разбора' };
+      return { ok: false, ip: null, geo: null, countryCode: null, provider: null, isPublicAnycast: false, error: T('ошибка разбора', 'parse error') };
     }
   }
 
-  // --- Этап 6: Браузер ---
   function checkBrowser(referenceServerTs) {
     const ua = navigator.userAgent || '';
     const platform = navigator.platform || '';
-    const tz = (() => {
-      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }
-      catch (_) { return ''; }
-    })();
+    const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) { return ''; } })();
     const tzOffsetMin = -new Date().getTimezoneOffset();
     const languages = Array.isArray(navigator.languages) ? navigator.languages.slice(0, 5) : [navigator.language || ''];
     const webdriver = Boolean(navigator.webdriver);
@@ -547,25 +533,16 @@
     } catch (_) {}
 
     return {
-      ua,
-      platform,
-      uaDataPlatform,
-      uaMismatch,
-      webdriver,
-      tz,
+      ua, platform, uaDataPlatform, uaMismatch, webdriver, tz,
       tzCountryHint: TZ_COUNTRY_HINTS[tz] || null,
-      tzOffsetMin,
-      languages,
-      clockDriftSec,
+      tzOffsetMin, languages, clockDriftSec,
       screen: `${window.screen.width}×${window.screen.height} @${window.devicePixelRatio || 1}x`,
       cores: navigator.hardwareConcurrency || null,
       memoryGb: navigator.deviceMemory || null,
-      webglRenderer,
-      cookiesEnabled: navigator.cookieEnabled
+      webglRenderer, cookiesEnabled: navigator.cookieEnabled
     };
   }
 
-  // --- Расчёт скоринга, split-tunneling и находок ---
   function evaluateAll({ services, ipProto, reputations, webrtc, dns, browser }) {
     const findings = [];
     const addFinding = (severity, penalty, title, detail, fix) => {
@@ -576,43 +553,41 @@
     const chatgpt = byId.chatgpt;
     const claude = byId.claude;
 
-    // 1. Доступность ChatGPT и Claude
     if (chatgpt && chatgpt.ok && chatgpt.allowed === false) {
       addFinding('bad', 50,
-        `ChatGPT видит неподдерживаемую страну: ${countryName(chatgpt.loc)}`,
-        'OpenAI не обслуживает эту страну — вход и API будут заблокированы даже с оплаченной подпиской.',
-        'Переключите VPN/прокси на поддерживаемую страну (например, Нидерланды, Германию, США, Финляндию).'
+        T(`ChatGPT видит неподдерживаемую страну: ${countryName(chatgpt.loc)}`, `ChatGPT sees an unsupported country: ${countryName(chatgpt.loc)}`),
+        T('OpenAI не обслуживает эту страну — вход и API будут заблокированы даже с оплаченной подпиской.', 'OpenAI does not serve this country — login and API calls will be blocked even on a paid plan.'),
+        T('Переключите VPN/прокси на поддерживаемую страну (Нидерланды, Германия, США, Финляндия).', 'Switch your VPN/proxy to a supported country (e.g., US, Netherlands, Germany, Finland).')
       );
     } else if (chatgpt && !chatgpt.ok) {
       addFinding('bad', 35,
-        'ChatGPT недоступен из текущей сети',
-        `Запрос к chatgpt.com завершился ошибкой (${chatgpt.error || 'нет ответа'}).`,
-        'Проверьте, что домен chatgpt.com идёт через рабочий VPN/прокси.'
+        T('ChatGPT недоступен из текущей сети', 'ChatGPT is unreachable from this network'),
+        T(`Запрос к chatgpt.com завершился ошибкой (${chatgpt.error || 'нет ответа'}).`, `Request to chatgpt.com failed (${chatgpt.error || 'no response'}).`),
+        T('Проверьте, что домен chatgpt.com идёт через рабочий VPN/прокси.', 'Ensure chatgpt.com is routed through a working VPN/proxy.')
       );
     }
 
     if (claude && claude.ok && claude.allowed === false) {
       addFinding('bad', 50,
-        `Claude видит неподдерживаемую страну: ${countryName(claude.loc)}`,
-        'Anthropic ограничивает доступ из этой страны и может заблокировать аккаунт при входе.',
-        'Направьте домены claude.ai, api.anthropic.com и platform.claude.com через поддерживаемую страну.'
+        T(`Claude видит неподдерживаемую страну: ${countryName(claude.loc)}`, `Claude sees an unsupported country: ${countryName(claude.loc)}`),
+        T('Anthropic ограничивает доступ из этой страны и может заблокировать аккаунт при входе.', 'Anthropic restricts access from this country and may flag or suspend accounts.'),
+        T('Направьте домены claude.ai, api.anthropic.com и platform.claude.com через поддерживаемую страну.', 'Route claude.ai, api.anthropic.com, and platform.claude.com through a supported country.')
       );
     } else if (claude && !claude.ok) {
       addFinding('bad', 35,
-        'Claude недоступен из текущей сети',
-        `Запрос к claude.ai завершился ошибкой (${claude.error || 'нет ответа'}).`,
-        'Проверьте маршрутизацию claude.ai и api.anthropic.com в вашем VPN.'
+        T('Claude недоступен из текущей сети', 'Claude is unreachable from this network'),
+        T(`Запрос к claude.ai завершился ошибкой (${claude.error || 'нет ответа'}).`, `Request to claude.ai failed (${claude.error || 'no response'}).`),
+        T('Проверьте маршрутизацию claude.ai и api.anthropic.com в вашем VPN.', 'Check your VPN routing rules for claude.ai and api.anthropic.com.')
       );
     }
 
-    // 2. Один ли адрес внутри OpenAI / Anthropic
     const openaiIps = new Set(services.filter((s) => s.group === 'openai' && s.ok && s.ip).map((s) => s.ip));
     const openaiLocs = new Set(services.filter((s) => s.group === 'openai' && s.ok && s.loc).map((s) => s.loc));
     if (openaiIps.size > 1) {
       addFinding('warn', 5,
-        `Домены OpenAI видят разные IP (${openaiIps.size} адреса)`,
-        `Сайты OpenAI выходят через разные узлы (${Array.from(openaiLocs).join(', ')}). Для антифрода это похоже на вход из разных мест сразу.`,
-        'Пустите chatgpt.com, api.openai.com, auth.openai.com и sora.chatgpt.com через один выходной сервер.'
+        T(`Домены OpenAI видят разные IP (${openaiIps.size} адреса)`, `OpenAI domains see different IPs (${openaiIps.size} addresses)`),
+        T(`Сайты OpenAI выходят через разные узлы (${Array.from(openaiLocs).join(', ')}). Для антифрода это похоже на вход из разных мест сразу.`, `OpenAI endpoints exit via multiple nodes (${Array.from(openaiLocs).join(', ')}), which looks like simultaneous logins from different places.`),
+        T('Пустите chatgpt.com, api.openai.com, auth.openai.com и sora.chatgpt.com через один сервер.', 'Route chatgpt.com, api.openai.com, auth.openai.com, and sora.chatgpt.com through one exit server.')
       );
     }
 
@@ -620,13 +595,12 @@
     const anthropicLocs = new Set(services.filter((s) => s.group === 'anthropic' && s.ok && s.loc).map((s) => s.loc));
     if (anthropicIps.size > 1) {
       addFinding('warn', 5,
-        `Домены Anthropic видят разные IP (${anthropicIps.size} адреса)`,
-        `Сайты Claude выходят с разных адресов (${Array.from(anthropicLocs).join(', ')}).`,
-        'Пустите claude.ai, api.anthropic.com и platform.claude.com через один сервер VPN.'
+        T(`Домены Anthropic видят разные IP (${anthropicIps.size} адреса)`, `Anthropic domains see different IPs (${anthropicIps.size} addresses)`),
+        T(`Сайты Claude выходят с разных адресов (${Array.from(anthropicLocs).join(', ')}).`, `Claude endpoints exit via multiple nodes (${Array.from(anthropicLocs).join(', ')}).`),
+        T('Пустите claude.ai, api.anthropic.com и platform.claude.com через один сервер VPN.', 'Route claude.ai, api.anthropic.com, and platform.claude.com through a single exit server.')
       );
     }
 
-    // 3. Репутация основных выходных IP
     const primaryIps = new Set([chatgpt?.ip, claude?.ip, ipProto.ipv4].filter(Boolean));
     const primaryReps = Array.from(primaryIps).map((ip) => reputations[ip]).filter(Boolean);
     const anyTor = primaryReps.some((r) => r.isTor);
@@ -638,51 +612,50 @@
 
     if (anyTor) {
       addFinding('bad', 40,
-        'Выходной адрес относится к сети Tor',
-        'Почти все ИИ-сервисы блокируют выходные узлы Tor или требуют бесконечную капчу.',
-        'Используйте обычный VPN или выделенный прокси вместо Tor.'
+        T('Выходной адрес относится к сети Tor', 'Exit IP belongs to the Tor network'),
+        T('Почти все ИИ-сервисы блокируют выходные узлы Tor или требуют бесконечную капчу.', 'Most AI platforms block Tor exit nodes or trigger endless captchas.'),
+        T('Используйте обычный VPN или выделенный прокси вместо Tor.', 'Use a regular VPN or private proxy instead of Tor.')
       );
     }
     if (anyProxy) {
       addFinding('bad', 30,
-        'Адрес помечен как открытый прокси',
-        'Базы репутации видят открытый прокси на выходном адресе — высокий риск блокировки.',
-        'Смените сервер или провайдера VPN на приватный/выделенный IP.'
+        T('Адрес помечен как открытый прокси', 'IP is flagged as an open proxy'),
+        T('Базы репутации видят открытый прокси на выходном адресе — высокий риск блокировки.', 'Reputation databases flag this address as an open proxy — high block risk.'),
+        T('Смените сервер или провайдера VPN на приватный/выделенный IP.', 'Switch to a private VPN server or dedicated IP.')
       );
     }
     if (highRisk) {
       addFinding('bad', 25,
-        `Повышенный риск-скор адреса (${highRisk.riskScore}/100)`,
-        'С этого адреса фиксировались злоупотребления или массовый бот-трафик.',
-        'Переключитесь на другой сервер или менее загруженную локацию.'
+        T(`Повышенный риск-скор адреса (${highRisk.riskScore}/100)`, `Elevated IP risk score (${highRisk.riskScore}/100)`),
+        T('С этого адреса фиксировались злоупотребления или массовый бот-трафик.', 'Recent abuse or automated traffic has been linked to this exit IP.'),
+        T('Переключитесь на другой сервер или менее загруженную локацию.', 'Switch to another server or less crowded exit location.')
       );
     }
     if (anyVpn) {
       addFinding('warn', 15,
-        'Адрес числится в базах VPN',
-        'Антифрод видит, что это публичный VPN-сервер. Само по себе не всегда блокирует, но повышает риск проверок.',
-        'Если ловите частые капчи или отказы, попробуйте свой VPS, менее популярную локацию или резидентный выход.'
+        T('Адрес числится в базах VPN', 'Exit IP is listed in VPN databases'),
+        T('Антифрод видит, что это публичный VPN-сервер. Само по себе не всегда блокирует, но повышает риск проверок.', 'Anti-fraud detects a public VPN exit. Not always an instant block, but increases challenge rate.'),
+        T('При частых капчах попробуйте свой VPS, менее популярную локацию или резидентный выход.', 'If you hit frequent challenges, try a private VPS, less crowded location, or residential exit.')
       );
     }
     if (anyDc) {
+      const dcOrg = primaryReps.find((r) => r.isDatacenter)?.org || T('дата-центр', 'datacenter');
       addFinding('warn', 15,
-        'Выходной IP принадлежит хостингу / дата-центру',
-        `Организация: ${primaryReps.find((r) => r.isDatacenter)?.org || 'дата-центр'}. К адресам хостингов антифрод относится строже, чем к домашним ISP.`,
-        'Для стабильной работы держите чистый выделенный VPS (не шаренный VPN) и не допускайте утечек WebRTC/DNS.'
+        T('Выходной IP принадлежит хостингу / дата-центру', 'Exit IP belongs to a hosting / datacenter ASN'),
+        T(`Организация: ${dcOrg}. К адресам хостингов антифрод относится строже, чем к домашним ISP.`, `Provider: ${dcOrg}. Anti-fraud scrutinizes hosting ranges more than residential ISPs.`),
+        T('Для стабильной работы держите чистый выделенный VPS (не шаренный VPN) и не допускайте утечек WebRTC/DNS.', 'Keep a clean dedicated VPS (not a shared VPN) and ensure no WebRTC/DNS leaks.')
       );
     } else if (anyDisagreeDc) {
+      const hOrg = primaryReps.find((r) => r.asnHeuristicHosting)?.org || '—';
       addFinding('warn', 8,
-        'Источники расходятся: ASN похож на дата-центр',
-        `База рисков не отметила хостинг, но ASN (${primaryReps.find((r) => r.asnHeuristicHosting)?.org || '—'}) относится к хостинг-провайдерам.`,
-        'Обычно это нормально для своего VPS, но стоит следить за отсутствием утечек.'
+        T('Источники расходятся: ASN похож на дата-центр', 'Sources disagree: ASN looks like hosting'),
+        T(`База рисков не отметила хостинг, но ASN (${hOrg}) относится к хостинг-провайдерам.`, `The risk API did not flag datacenter, but ASN (${hOrg}) matches hosting providers.`),
+        T('Обычно это нормально для своего VPS, но стоит следить за отсутствием утечек.', 'Usually fine for a personal VPS as long as there are no leaks.')
       );
     }
 
-    // 4. WebRTC утечка
     const aiCountry = chatgpt?.loc || claude?.loc || primaryReps[0]?.countryCode || null;
     const aiIps = new Set(services.filter((s) => s.ok && s.ip).map((s) => s.ip));
-
-    // Определяем split-tunneling: прямой Cloudflare 1.1.1.1 в другой стране, чем ChatGPT/Claude
     const splitTunnel = Boolean(
       ipProto.cfTrace?.loc && aiCountry && ipProto.cfTrace.loc.toUpperCase() !== aiCountry.toUpperCase()
     );
@@ -698,94 +671,92 @@
       if (leakDiffCountry) {
         const rep = reputations[leakDiffCountry];
         addFinding('bad', 15,
-          `Утечка WebRTC в другую страну (${countryName(rep.countryCode)})`,
-          'Браузер через STUN (UDP) раскрывает адрес из другой страны мимо VPN.',
-          'Включите проксирование UDP в VPN-клиенте или ограничьте WebRTC в настройках браузера.'
+          T(`Утечка WebRTC в другую страну (${countryName(rep.countryCode)})`, `WebRTC leaks an IP from another country (${countryName(rep.countryCode)})`),
+          T('Браузер через STUN (UDP) раскрывает адрес из другой страны мимо VPN.', 'STUN over UDP exposes a public IP from a different country bypassing your VPN.'),
+          T('Включите проксирование UDP в VPN-клиенте или ограничьте WebRTC в настройках браузера.', 'Enable UDP tunneling in your VPN client or restrict WebRTC IP handling in browser settings.')
         );
       } else if (leakSameCountry) {
         addFinding('warn', 5,
-          'WebRTC раскрывает дополнительный публичный IP',
-          'STUN возвращает публичный адрес, отличный от адреса ИИ-сервисов.',
-          'Проверьте настройки WebRTC IP Handling Policy в браузере (disable_non_proxied_udp).'
+          T('WebRTC раскрывает дополнительный публичный IP', 'WebRTC exposes an additional public IP'),
+          T('STUN возвращает публичный адрес, отличный от адреса ИИ-сервисов.', 'STUN returns a public address different from the AI exit IP.'),
+          T('Проверьте настройки WebRTC IP Handling Policy в браузере (disable_non_proxied_udp).', 'Set browser WebRTC IP handling policy to disable_non_proxied_udp.')
         );
       }
       if (webrtcV6) {
         addFinding('warn', 10,
-          'Браузер раскрывает публичный IPv6 через WebRTC',
-          'Публичный IPv6-адрес виден сайтам напрямую через WebRTC.',
-          'Отключите IPv6 на интерфейсе или заверните IPv6 и UDP полностью в VPN.'
+          T('Браузер раскрывает публичный IPv6 через WebRTC', 'Browser exposes a public IPv6 via WebRTC'),
+          T('Публичный IPv6-адрес виден сайтам напрямую через WebRTC.', 'A public IPv6 address is directly visible to sites via WebRTC.'),
+          T('Отключите IPv6 на интерфейсе или заверните IPv6 и UDP полностью в VPN.', 'Disable IPv6 on the interface or tunnel both IPv6 and UDP through your VPN.')
         );
       }
     }
 
-    // 5. IPv6 мимо VPN
     const v4Rep = ipProto.ipv4 ? reputations[ipProto.ipv4] : null;
     const v6Rep = ipProto.ipv6 ? reputations[ipProto.ipv6] : null;
     if (ipProto.ipv4 && ipProto.ipv6 && v4Rep?.countryCode && v6Rep?.countryCode &&
         v4Rep.countryCode.toUpperCase() !== v6Rep.countryCode.toUpperCase()) {
       addFinding('bad', 15,
-        `IPv6 идёт мимо VPN (${countryName(v6Rep.countryCode)} вместо ${countryName(v4Rep.countryCode)})`,
-        'IPv4 и IPv6 выходят из разных стран — сервисы с поддержкой IPv6 могут видеть ваш реальный адрес.',
-        'Включите IPv6-туннель в VPN либо отключите IPv6 в системе/клиенте.'
+        T(`IPv6 идёт мимо VPN (${countryName(v6Rep.countryCode)} вместо ${countryName(v4Rep.countryCode)})`, `IPv6 bypasses VPN (${countryName(v6Rep.countryCode)} vs IPv4 ${countryName(v4Rep.countryCode)})`),
+        T('IPv4 и IPv6 выходят из разных стран — сервисы с поддержкой IPv6 могут видеть ваш реальный адрес.', 'IPv4 and IPv6 exit in different countries — dual-stack sites may see your real location.'),
+        T('Включите IPv6-туннель в VPN либо отключите IPv6 в системе/клиенте.', 'Enable IPv6 tunneling in your VPN or disable IPv6 on your system.')
       );
     }
 
-    // 6. Умная проверка DNS (отличаем публичный anycast DNS от домашнего провайдера)
     if (dns.ok && dns.countryCode && aiCountry) {
       const dnsC = dns.countryCode.toUpperCase();
       const aiC = aiCountry.toUpperCase();
       if (dnsC === 'RU' && aiC !== 'RU') {
         addFinding('warn', 10,
-          `DNS-запросы идут через Россию (${dns.provider || dns.geo || 'RU'}) при зарубежном VPN`,
-          'Домашний провайдер видит запрашиваемые домены, а несовпадение страны DNS и IP заметно антифроду.',
-          'Включите DNS-over-HTTPS (DoH) в браузере или проксирование DNS (FakeIP / remote DNS) в VPN-клиенте.'
+          T(`DNS-запросы идут через Россию (${dns.provider || dns.geo || 'RU'}) при зарубежном VPN`, `DNS queries resolve in Russia (${dns.provider || dns.geo || 'RU'}) while exiting abroad`),
+          T('Домашний провайдер видит запрашиваемые домены, а несовпадение страны DNS и IP заметно антифроду.', 'Your local ISP can see queried domains, and DNS/IP country mismatch is visible to anti-fraud.'),
+          T('Включите DNS-over-HTTPS (DoH) в браузере или проксирование DNS (FakeIP / remote DNS) в VPN-клиенте.', 'Enable DNS-over-HTTPS (DoH) in browser or remote DNS / FakeIP in your VPN client.')
         );
       } else if (dnsC !== aiC && !dns.isPublicAnycast) {
         addFinding('warn', 5,
-          `DNS-резолвер стороннего провайдера в другой стране (${countryName(dnsC)} vs ${countryName(aiC)})`,
-          `Резолвер: ${dns.geo || dns.provider || dnsC}.`,
-          'Настройте DNS внутри VPN-туннеля или включите Cloudflare/Google DoH.'
+          T(`DNS-резолвер стороннего провайдера в другой стране (${countryName(dnsC)} vs ${countryName(aiC)})`, `Non-anycast DNS resolver in another country (${countryName(dnsC)} vs ${countryName(aiC)})`),
+          T(`Резолвер: ${dns.geo || dns.provider || dnsC}.`, `Resolver: ${dns.geo || dns.provider || dnsC}.`),
+          T('Настройте DNS внутри VPN-туннеля или включите Cloudflare/Google DoH.', 'Route DNS inside your VPN tunnel or enable Cloudflare/Google DoH.')
         );
       }
     }
 
-    // 7. Браузер
     if (browser.webdriver) {
       addFinding('warn', 10,
-        'Флаг navigator.webdriver = true (управление автоматизацией)',
-        'Сайты видят, что браузер запущен под управлением скрипта или headless-драйвера.',
-        'Для обычной работы используйте стандартный профиль браузера; при запуске через check.sh этот флаг ожидаем.'
+        T('Флаг navigator.webdriver = true (управление автоматизацией)', 'navigator.webdriver = true (automation detected)'),
+        T('Сайты видят, что браузер запущен под управлением скрипта или headless-драйвера.', 'Websites detect that the browser is driven by automation or headless mode.'),
+        T('Для обычной работы используйте стандартный профиль браузера; при запуске через check.sh этот флаг ожидаем.', 'Use a regular browser profile for normal sessions; this flag is expected when running check.sh.')
       );
     }
     if (browser.tzCountryHint && aiCountry && browser.tzCountryHint !== aiCountry.toUpperCase()) {
       addFinding('warn', 5,
-        `Часовой пояс браузера (${browser.tz}) не совпадает со страной IP (${countryName(aiCountry)})`,
-        'Несоответствие таймзоны и IP — слабый вторичный признак VPN.',
-        'Обычно не мешает работе, менять системное время не обязательно — достаточно отсутствия утечек.'
+        T(`Часовой пояс браузера (${browser.tz}) не совпадает со страной IP (${countryName(aiCountry)})`, `Browser timezone (${browser.tz}) does not match exit country (${countryName(aiCountry)})`),
+        T('Несоответствие таймзоны и IP — слабый вторичный признак VPN.', 'Timezone/IP mismatch is a mild secondary VPN signal.'),
+        T('Обычно не мешает работе, менять системное время не обязательно — достаточно отсутствия утечек.', 'Usually harmless on its own; no need to change system time if there are no leaks.')
       );
     }
     if (browser.uaMismatch) {
       addFinding('warn', 5,
-        'Браузер называет разную ОС в User-Agent и Client Hints',
-        `User-Agent и userAgentData (${browser.uaDataPlatform}) противоречат друг другу.`,
-        'Отключите расширения, подменяющие только строку User-Agent без Client Hints.'
+        T('Браузер называет разную ОС в User-Agent и Client Hints', 'User-Agent and Client Hints report conflicting OS'),
+        T(`User-Agent и userAgentData (${browser.uaDataPlatform}) противоречат друг другу.`, `User-Agent conflicts with userAgentData (${browser.uaDataPlatform}).`),
+        T('Отключите расширения, подменяющие только строку User-Agent без Client Hints.', 'Disable extensions that spoof User-Agent without updating Client Hints.')
       );
     }
     if (browser.clockDriftSec !== null && Math.abs(browser.clockDriftSec) > 120) {
+      const mins = Math.round(Math.abs(browser.clockDriftSec) / 60);
       addFinding('warn', 5,
-        `Системные часы сбиты на ${Math.round(Math.abs(browser.clockDriftSec) / 60)} мин`,
-        'Сильное расхождение времени ломает токены авторизации, 2FA и вызывает подозрения антифрода.',
-        'Включите автоматическую синхронизацию времени по NTP в настройках ОС.'
+        T(`Системные часы сбиты на ${mins} мин`, `System clock is off by ${mins} min`),
+        T('Сильное расхождение времени ломает токены авторизации, 2FA и вызывает подозрения антифрода.', 'Large clock skew breaks auth tokens, 2FA, and raises anti-fraud flags.'),
+        T('Включите автоматическую синхронизацию времени по NTP в настройках ОС.', 'Enable automatic NTP time synchronization in your OS settings.')
       );
     }
 
     const totalPenalty = findings.reduce((acc, f) => acc + f.penalty, 0);
     const score = Math.max(0, Math.min(100, 100 - totalPenalty));
 
-    let verdict = 'Отличное подключение';
+    let verdict = T('Отличное подключение', 'Great connection');
     let tone = 'ok';
-    if (score < 50) { verdict = 'Высокий риск блокировки'; tone = 'bad'; }
-    else if (score < 80) { verdict = 'Есть замечания'; tone = 'warn'; }
+    if (score < 50) { verdict = T('Высокий риск блокировки', 'High risk of blocks'); tone = 'bad'; }
+    else if (score < 80) { verdict = T('Есть замечания', 'Some warnings'); tone = 'warn'; }
 
     const simpleCards = buildSimpleCards({
       byId, ipProto, primaryReps, reputations, webrtc, dns, browser,
@@ -799,45 +770,70 @@
     const cg = byId.chatgpt;
     const cl = byId.claude;
 
-    let c1 = { status: 'ok', title: 'Пустят ли ChatGPT и Claude', terms: ['vpn', 'split'], text: '' };
+    let c1 = { status: 'ok', title: T('Пустят ли ChatGPT и Claude', 'Will ChatGPT and Claude let you in?'), terms: ['vpn', 'split'], text: '' };
     if (cg?.allowed === true && cl?.allowed === true) {
-      c1.text = `Оба сервиса видят поддерживаемую страну: ChatGPT — ${countryName(cg.loc)}, Claude — ${countryName(cl.loc)}.` +
-        (splitTunnel ? ` Прямой маршрут (1.1.1.1) идёт через ${countryName(ipProto.cfTrace.loc)} — у вас работает split-tunneling, это нормально.` : ' По геоблокировке проблем нет.');
+      c1.text = T(
+        `Оба сервиса видят поддерживаемую страну: ChatGPT — ${countryName(cg.loc)}, Claude — ${countryName(cl.loc)}.` +
+        (splitTunnel ? ` Прямой маршрут (1.1.1.1) идёт через ${countryName(ipProto.cfTrace.loc)} — у вас работает split-tunneling, это нормально.` : ' По геоблокировке проблем нет.'),
+        `Both services see a supported country: ChatGPT — ${countryName(cg.loc)}, Claude — ${countryName(cl.loc)}.` +
+        (splitTunnel ? ` Direct route (1.1.1.1) exits in ${countryName(ipProto.cfTrace.loc)} — split-tunneling is active and working normally.` : ' No geo-blocking issues.')
+      );
     } else if (cg?.allowed === false || cl?.allowed === false) {
       c1.status = 'bad';
-      c1.text = `Есть геоблокировка: ChatGPT видит ${cg?.ok ? countryName(cg.loc) : 'недоступен'}, Claude видит ${cl?.ok ? countryName(cl.loc) : 'недоступен'}. Нужен VPN в поддерживаемой стране.`;
+      c1.text = T(
+        `Есть геоблокировка: ChatGPT видит ${cg?.ok ? countryName(cg.loc) : 'недоступен'}, Claude видит ${cl?.ok ? countryName(cl.loc) : 'недоступен'}. Нужен VPN в поддерживаемой стране.`,
+        `Geo-block detected: ChatGPT sees ${cg?.ok ? countryName(cg.loc) : 'unreachable'}, Claude sees ${cl?.ok ? countryName(cl.loc) : 'unreachable'}. Switch VPN to a supported region.`
+      );
     } else {
       c1.status = 'warn';
-      c1.text = `Часть сервисов не ответила: ChatGPT (${cg?.ok ? countryName(cg.loc) : cg?.error || 'ошибка'}), Claude (${cl?.ok ? countryName(cl.loc) : cl?.error || 'ошибка'}).`;
+      c1.text = T(
+        `Часть сервисов не ответила: ChatGPT (${cg?.ok ? countryName(cg.loc) : cg?.error || 'ошибка'}), Claude (${cl?.ok ? countryName(cl.loc) : cl?.error || 'ошибка'}).`,
+        `Some services did not respond: ChatGPT (${cg?.ok ? countryName(cg.loc) : cg?.error || 'error'}), Claude (${cl?.ok ? countryName(cl.loc) : cl?.error || 'error'}).`
+      );
     }
 
-    let c2 = { status: 'ok', title: 'Не подозрительный ли адрес', terms: ['reputation', 'datacenter'], text: '' };
+    let c2 = { status: 'ok', title: T('Не подозрительный ли адрес', 'Is the exit IP clean?'), terms: ['reputation', 'datacenter'], text: '' };
     const rep0 = primaryReps[0];
     if (!rep0) {
       c2.status = 'warn';
-      c2.text = 'Базы репутации не ответили за отведённое время. Попробуйте повторить проверку.';
+      c2.text = T('Базы репутации не ответили за отведённое время. Попробуйте повторить проверку.', 'Reputation APIs timed out. Try re-running the check.');
     } else if (rep0.isTor || rep0.isProxy || (rep0.riskScore || 0) >= 50) {
       c2.status = 'bad';
-      c2.text = `Адрес (${rep0.org || rep0.asn || 'неизвестный провайдер'}) помечен как рискованный (Tor/прокси/злоупотребления). Лучше сменить сервер.`;
+      c2.text = T(
+        `Адрес (${rep0.org || rep0.asn || 'неизвестный провайдер'}) помечен как рискованный (Tor/прокси/злоупотребления). Лучше сменить сервер.`,
+        `Address (${rep0.org || rep0.asn || 'unknown provider'}) is flagged as high-risk (Tor/proxy/abuse). Switch exit server.`
+      );
     } else if (rep0.isVpn || rep0.isDatacenter || rep0.asnHeuristicHosting) {
       c2.status = 'warn';
-      c2.text = `Выход идёт через хостинг/VPN (${rep0.org || rep0.isp || rep0.asn || 'дата-центр'}). Для своего чистого VPS это обычно работает стабильно, но антифрод присматривается внимательнее.`;
+      c2.text = T(
+        `Выход идёт через хостинг/VPN (${rep0.org || rep0.isp || rep0.asn || 'дата-центр'}). Для своего чистого VPS это обычно работает стабильно, но антифрод присматривается внимательнее.`,
+        `Traffic exits via hosting/VPN (${rep0.org || rep0.isp || rep0.asn || 'datacenter'}). A clean personal VPS usually works fine, though anti-fraud watches hosting ranges closer.`
+      );
     } else {
-      c2.text = `Адрес выглядит чистым (${rep0.org || rep0.isp || 'обычный провайдер'}), в базах VPN, Tor и прокси не замечен.`;
+      c2.text = T(
+        `Адрес выглядит чистым (${rep0.org || rep0.isp || 'обычный провайдер'}), в базах VPN, Tor и прокси не замечен.`,
+        `Address looks clean (${rep0.org || rep0.isp || 'regular ISP'}), not listed in VPN, Tor, or open-proxy databases.`
+      );
     }
 
-    let c3 = { status: 'ok', title: 'Один ли адрес у каждой нейросети', terms: ['split'], text: '' };
+    let c3 = { status: 'ok', title: T('Один ли адрес у каждой нейросети', 'Single exit IP per AI service?'), terms: ['split'], text: '' };
     if (openaiIps.size > 1 || anthropicIps.size > 1) {
       c3.status = 'warn';
-      c3.text = `Домены внутри одного сервиса видят разные IP (OpenAI: ${openaiIps.size}, Anthropic: ${anthropicIps.size}). Лучше пустить все домены одного сервиса через один сервер.`;
+      c3.text = T(
+        `Домены внутри одного сервиса видят разные IP (OpenAI: ${openaiIps.size}, Anthropic: ${anthropicIps.size}). Лучше пустить все домены одного сервиса через один сервер.`,
+        `Subdomains of the same platform see multiple IPs (OpenAI: ${openaiIps.size}, Anthropic: ${anthropicIps.size}). Route each service through one server.`
+      );
     } else if (openaiIps.size === 0 && anthropicIps.size === 0) {
       c3.status = 'bad';
-      c3.text = 'Не удалось получить ответы ни от OpenAI, ни от Anthropic.';
+      c3.text = T('Не удалось получить ответы ни от OpenAI, ни от Anthropic.', 'Neither OpenAI nor Anthropic endpoints responded.');
     } else {
-      c3.text = 'Все домены OpenAI видят один и тот же адрес, и все домены Anthropic — тоже один. Сессия выглядит цельной.';
+      c3.text = T(
+        'Все домены OpenAI видят один и тот же адрес, и все домены Anthropic — тоже один. Сессия выглядит цельной.',
+        'All OpenAI domains share one IP and all Anthropic domains share one IP. Sessions look consistent.'
+      );
     }
 
-    let c4 = { status: 'ok', title: 'Не просвечивает ли настоящий адрес', terms: ['webrtc', 'ipv6'], text: '' };
+    let c4 = { status: 'ok', title: T('Не просвечивает ли настоящий адрес', 'Any WebRTC or IPv6 leaks?'), terms: ['webrtc', 'ipv6'], text: '' };
     const v4Rep = ipProto.ipv4 ? reputations[ipProto.ipv4] : null;
     const v6Rep = ipProto.ipv6 ? reputations[ipProto.ipv6] : null;
     const v6Leak = ipProto.ipv4 && ipProto.ipv6 && v4Rep?.countryCode && v6Rep?.countryCode && v4Rep.countryCode !== v6Rep.countryCode;
@@ -847,113 +843,141 @@
     });
     if (v6Leak || rtcLeak) {
       c4.status = 'bad';
-      c4.text = `${rtcLeak ? 'WebRTC выдаёт адрес из другой страны. ' : ''}${v6Leak ? 'IPv6 идёт мимо VPN в другую страну.' : ''}`.trim();
+      c4.text = T(
+        `${rtcLeak ? 'WebRTC выдаёт адрес из другой страны. ' : ''}${v6Leak ? 'IPv6 идёт мимо VPN в другую страну.' : ''}`.trim(),
+        `${rtcLeak ? 'WebRTC leaks an IP from another country. ' : ''}${v6Leak ? 'IPv6 bypasses VPN to another country.' : ''}`.trim()
+      );
     } else if (webrtc.publicIps.length > 0) {
       c4.status = 'warn';
-      c4.text = `WebRTC показывает ${webrtc.publicIps.length} публичный(х) IP, но из той же страны. IPv6 ${ipProto.ipv6 ? 'совпадает с VPN' : 'отключён — утечки нет'}.`;
+      c4.text = T(
+        `WebRTC показывает ${webrtc.publicIps.length} публичный(х) IP, но из той же страны. IPv6 ${ipProto.ipv6 ? 'совпадает с VPN' : 'отключён — утечки нет'}.`,
+        `WebRTC reveals ${webrtc.publicIps.length} public IP(s) in the same country. IPv6 is ${ipProto.ipv6 ? 'aligned with VPN' : 'disabled — no leak'}.`
+      );
     } else {
-      c4.text = `WebRTC не раскрывает публичный IP (${webrtc.mdns ? 'защищён mDNS' : 'кандидатов нет'}). IPv6 ${ipProto.ipv6 ? 'идёт через ту же страну' : 'отключён — утечки не будет'}.`;
+      c4.text = T(
+        `WebRTC не раскрывает публичный IP (${webrtc.mdns ? 'защищён mDNS' : 'кандидатов нет'}). IPv6 ${ipProto.ipv6 ? 'идёт через ту же страну' : 'отключён — утечки не будет'}.`,
+        `WebRTC exposes no public IP (${webrtc.mdns ? 'mDNS protected' : 'no candidates'}). IPv6 is ${ipProto.ipv6 ? 'in the same country' : 'disabled — no leak'}.`
+      );
     }
 
-    let c5 = { status: 'ok', title: 'Видит ли провайдер, куда вы заходите', terms: ['dns'], text: '' };
+    let c5 = { status: 'ok', title: T('Видит ли провайдер, куда вы заходите', 'Can your ISP see DNS queries?'), terms: ['dns'], text: '' };
     if (!dns.ok) {
       c5.status = 'warn';
-      c5.text = 'Не удалось определить DNS-резолвер (сервис edns.ip-api.com не ответил).';
+      c5.text = T('Не удалось определить DNS-резолвер (сервис edns.ip-api.com не ответил).', 'Could not detect DNS resolver (edns.ip-api.com did not respond).');
     } else if (dns.countryCode === 'RU' && aiCountry && aiCountry !== 'RU') {
       c5.status = 'warn';
-      c5.text = `DNS-запросы идут через Россию (${dns.provider || dns.geo}), хотя сам трафик выходит через ${countryName(aiCountry)}. Лучше включить DNS внутри VPN или DoH.`;
+      c5.text = T(
+        `DNS-запросы идут через Россию (${dns.provider || dns.geo}), хотя сам трафик выходит через ${countryName(aiCountry)}. Лучше включить DNS внутри VPN или DoH.`,
+        `DNS resolves in Russia (${dns.provider || dns.geo}) while traffic exits in ${countryName(aiCountry)}. Enable remote DNS or DoH.`
+      );
     } else if (dns.isPublicAnycast) {
-      c5.text = `Используется публичный anycast DNS (${dns.geo || dns.provider}) — утечки к домашнему провайдеру нет.`;
+      c5.text = T(
+        `Используется публичный anycast DNS (${dns.geo || dns.provider}) — утечки к домашнему провайдеру нет.`,
+        `Using public anycast DNS (${dns.geo || dns.provider}) — no leak to your home ISP.`
+      );
     } else if (dns.countryCode && aiCountry && dns.countryCode !== aiCountry) {
       c5.status = 'warn';
-      c5.text = `DNS отвечает из ${countryName(dns.countryCode)} (${dns.provider || 'резолвер'}), а выход — в ${countryName(aiCountry)}.`;
+      c5.text = T(
+        `DNS отвечает из ${countryName(dns.countryCode)} (${dns.provider || 'резолвер'}), а выход — в ${countryName(aiCountry)}.`,
+        `DNS resolves in ${countryName(dns.countryCode)} (${dns.provider || 'resolver'}) while traffic exits in ${countryName(aiCountry)}.`
+      );
     } else {
-      c5.text = `DNS-резолвер (${dns.geo || dns.provider || countryName(dns.countryCode)}) совпадает со страной выхода — утечки к домашнему провайдеру не видно.`;
+      c5.text = T(
+        `DNS-резолвер (${dns.geo || dns.provider || countryName(dns.countryCode)}) совпадает со страной выхода — утечки к домашнему провайдеру не видно.`,
+        `DNS resolver (${dns.geo || dns.provider || countryName(dns.countryCode)}) matches exit country — no ISP leak detected.`
+      );
     }
 
-    let c6 = { status: 'ok', title: 'Не странный ли браузер', terms: ['fingerprint'], text: '' };
+    let c6 = { status: 'ok', title: T('Не странный ли браузер', 'Does your browser look normal?'), terms: ['fingerprint'], text: '' };
     const issues = [];
-    if (browser.webdriver) issues.push('обнаружен флаг webdriver (автоматизация)');
-    if (browser.uaMismatch) issues.push('разная ОС в User-Agent и Client Hints');
-    if (browser.clockDriftSec !== null && Math.abs(browser.clockDriftSec) > 120) issues.push('сбиты системные часы');
-    if (browser.tzCountryHint && aiCountry && browser.tzCountryHint !== aiCountry) issues.push(`часовой пояс ${browser.tz} не совпадает со страной IP`);
+    if (browser.webdriver) issues.push(T('обнаружен флаг webdriver (автоматизация)', 'webdriver automation flag is true'));
+    if (browser.uaMismatch) issues.push(T('разная ОС в User-Agent и Client Hints', 'OS mismatch between User-Agent and Client Hints'));
+    if (browser.clockDriftSec !== null && Math.abs(browser.clockDriftSec) > 120) issues.push(T('сбиты системные часы', 'system clock is skewed'));
+    if (browser.tzCountryHint && aiCountry && browser.tzCountryHint !== aiCountry) issues.push(T(`часовой пояс ${browser.tz} не совпадает со страной IP`, `timezone ${browser.tz} differs from exit country`));
     if (issues.length > 0) {
       c6.status = 'warn';
-      c6.text = `Есть мелкие несовпадения: ${issues.join('; ')}. Отпечаток считается локально и никуда не отправляется.`;
+      c6.text = T(
+        `Есть мелкие несовпадения: ${issues.join('; ')}. Отпечаток считается локально и никуда не отправляется.`,
+        `Minor mismatches: ${issues.join('; ')}. Fingerprint stays strictly local in your browser.`
+      );
     } else {
-      c6.text = `Браузер выглядит естественно (${browser.tz || 'таймзона ок'}, часы точны, флагов автоматизации нет).`;
+      c6.text = T(
+        `Браузер выглядит естественно (${browser.tz || 'таймзона ок'}, часы точны, флагов автоматизации нет).`,
+        `Browser looks natural (${browser.tz || 'timezone ok'}, clock accurate, no automation flags).`
+      );
     }
 
     return [c1, c2, c3, c4, c5, c6];
   }
 
-  // --- Генерация Markdown-отчёта ---
   function buildAiReport(res) {
     const lines = [];
-    lines.push('# Проверка сети для ChatGPT и Claude (alfafond.com/check)');
-    lines.push(`Дата: ${new Date(res.timestamp).toLocaleString('ru-RU')}`);
-    lines.push(`Балл подключения: **${res.score}/100** (${res.verdict})`);
+    lines.push(T('# Проверка сети для ChatGPT и Claude (alfafond.com/check)', '# Network Check for ChatGPT & Claude (alfafond.com/check/en)'));
+    lines.push(`${T('Дата', 'Date')}: ${new Date(res.timestamp).toLocaleString(LOCALE)}`);
+    lines.push(`${T('Балл подключения', 'Connection score')}: **${res.score}/100** (${res.verdict})`);
     lines.push('');
 
     const cg = res.services.find((s) => s.id === 'chatgpt');
     const cl = res.services.find((s) => s.id === 'claude');
-    lines.push('## Кратко');
-    lines.push(`- ChatGPT: ${cg?.ok ? `${maskIp(cg.ip)} · ${countryName(cg.loc)} · colo ${cg.colo} · ${cg.allowed ? 'пустит' : 'ЗАБЛОКИРОВАН'}` : `ошибка (${cg?.error || 'нет ответа'})`}`);
-    lines.push(`- Claude: ${cl?.ok ? `${maskIp(cl.ip)} · ${countryName(cl.loc)} · colo ${cl.colo} · ${cl.allowed ? 'пустит' : 'ЗАБЛОКИРОВАН'}` : `ошибка (${cl?.error || 'нет ответа'})`}`);
+    lines.push(T('## Кратко', '## Summary'));
+    lines.push(`- ChatGPT: ${cg?.ok ? `${maskIp(cg.ip)} · ${countryName(cg.loc)} · colo ${cg.colo} · ${cg.allowed ? T('пустит', 'allowed') : T('ЗАБЛОКИРОВАН', 'BLOCKED')}` : `${T('ошибка', 'error')} (${cg?.error || '—'})`}`);
+    lines.push(`- Claude: ${cl?.ok ? `${maskIp(cl.ip)} · ${countryName(cl.loc)} · colo ${cl.colo} · ${cl.allowed ? T('пустит', 'allowed') : T('ЗАБЛОКИРОВАН', 'BLOCKED')}` : `${T('ошибка', 'error')} (${cl?.error || '—'})`}`);
     if (res.ipProto.cfTrace) {
-      lines.push(`- Прямой Cloudflare 1.1.1.1: ${maskIp(res.ipProto.cfTrace.ip)} · ${countryName(res.ipProto.cfTrace.loc)} · colo ${res.ipProto.cfTrace.colo}${res.splitTunnel ? ' (split-tunneling)' : ''}`);
+      lines.push(`- Cloudflare 1.1.1.1: ${maskIp(res.ipProto.cfTrace.ip)} · ${countryName(res.ipProto.cfTrace.loc)} · colo ${res.ipProto.cfTrace.colo}${res.splitTunnel ? ' (split-tunneling)' : ''}`);
     }
-    lines.push(`- IPv4 выход: ${res.ipProto.ipv4 ? maskIp(res.ipProto.ipv4) : 'нет'} · IPv6 выход: ${res.ipProto.ipv6 ? maskIp(res.ipProto.ipv6) : 'нет'}`);
-    lines.push(`- DNS-резолвер: ${res.dns.ok ? `${maskIp(res.dns.ip)} (${res.dns.geo || res.dns.provider || '—'}${res.dns.isPublicAnycast ? ', публичный anycast DNS' : ''})` : 'не определён'}`);
-    lines.push(`- WebRTC публичные IP: ${res.webrtc.publicIps.length ? res.webrtc.publicIps.map(maskIp).join(', ') : (res.webrtc.mdns ? 'нет (mDNS защищён)' : 'нет')}`);
+    lines.push(`- IPv4: ${res.ipProto.ipv4 ? maskIp(res.ipProto.ipv4) : T('нет', 'none')} · IPv6: ${res.ipProto.ipv6 ? maskIp(res.ipProto.ipv6) : T('нет', 'none')}`);
+    lines.push(`- DNS: ${res.dns.ok ? `${maskIp(res.dns.ip)} (${res.dns.geo || res.dns.provider || '—'}${res.dns.isPublicAnycast ? ', anycast' : ''})` : T('не определён', 'unknown')}`);
+    lines.push(`- WebRTC public IPs: ${res.webrtc.publicIps.length ? res.webrtc.publicIps.map(maskIp).join(', ') : (res.webrtc.mdns ? T('нет (mDNS защищён)', 'none (mDNS protected)') : T('нет', 'none'))}`);
     lines.push('');
 
-    lines.push('## Находки');
+    lines.push(T('## Находки', '## Findings'));
     if (!res.findings.length) {
-      lines.push('- Проблем не обнаружено.');
+      lines.push(T('- Проблем не обнаружено.', '- No issues found.'));
     } else {
       for (const f of res.findings) {
-        lines.push(`- [−${f.penalty}] **${f.title}** — ${f.detail} Совет: ${f.fix}`);
+        lines.push(`- [−${f.penalty}] **${f.title}** — ${f.detail} ${T('Совет', 'Fix')}: ${f.fix}`);
       }
     }
     lines.push('');
 
-    lines.push('## Репутация выходных IP');
+    lines.push(T('## Репутация выходных IP', '## Exit IP Reputation'));
     for (const rep of Object.values(res.reputations)) {
       const flags = [
         rep.isTor && 'TOR',
         rep.isProxy && 'PROXY',
         rep.isVpn && 'VPN',
-        (rep.isDatacenter || rep.asnHeuristicHosting) && (rep.isDatacenter ? 'DATACENTER' : 'DATACENTER (спорно)'),
+        (rep.isDatacenter || rep.asnHeuristicHosting) && (rep.isDatacenter ? 'DATACENTER' : 'DATACENTER (disputed)'),
         rep.isMobile && 'MOBILE'
       ].filter(Boolean);
-      lines.push(`- ${maskIp(rep.ip)} (${rep.version}): ${countryName(rep.countryCode)}, ${rep.city || '—'}, ${rep.asn || '—'} ${rep.org || rep.isp || ''}, флаги: ${flags.length ? flags.join(', ') : 'чисто'}, risk=${rep.riskScore ?? '—'}`);
+      lines.push(`- ${maskIp(rep.ip)} (${rep.version}): ${countryName(rep.countryCode)}, ${rep.city || '—'}, ${rep.asn || '—'} ${rep.org || rep.isp || ''}, flags: ${flags.length ? flags.join(', ') : 'clean'}, risk=${rep.riskScore ?? '—'}`);
     }
     lines.push('');
 
-    lines.push('## Сервисы ИИ (18 · Cloudflare trace)');
+    lines.push(T('## Сервисы ИИ (18 · Cloudflare trace)', '## AI Services (18 · Cloudflare trace)'));
     for (const s of res.services) {
       const allowTxt = s.allowed === true ? 'OK' : s.allowed === false ? 'BLOCK' : '—';
-      lines.push(`- ${s.name} (${s.domain}): ${s.ok ? `${maskIp(s.ip)} | ${s.loc || '—'} | ${s.colo || '—'} | ${allowTxt} | ${s.ms}мс` : `FAIL (${s.error})`}`);
+      lines.push(`- ${s.name} (${s.domain}): ${s.ok ? `${maskIp(s.ip)} | ${s.loc || '—'} | ${s.colo || '—'} | ${allowTxt} | ${s.ms}ms` : `FAIL (${s.error})`}`);
     }
     lines.push('');
 
     if (res.extraProbes?.length) {
-      lines.push('## Доп. доступность (пинг без чтения IP)');
+      lines.push(T('## Доп. доступность (пинг без чтения IP)', '## Extra Reachability (latency only, no IP read)'));
       for (const p of res.extraProbes) {
-        lines.push(`- ${p.name} (${p.domain}): ${p.ok ? `доступен (${p.ms}мс)` : `недоступен (${p.error})`}`);
+        lines.push(`- ${p.name} (${p.domain}): ${p.ok ? `${T('доступен', 'reachable')} (${p.ms}ms)` : `${T('недоступен', 'unreachable')} (${p.error})`}`);
       }
       lines.push('');
     }
 
-    lines.push('## Браузер (локально)');
-    lines.push(`- Таймзона: ${res.browser.tz || '—'}, языки: ${res.browser.languages.join(', ')}, webdriver: ${res.browser.webdriver}, дрейф часов: ${res.browser.clockDriftSec ?? '—'}с, UA mismatch: ${res.browser.uaMismatch}`);
+    lines.push(T('## Браузер (локально)', '## Browser (local)'));
+    lines.push(`- TZ: ${res.browser.tz || '—'}, langs: ${res.browser.languages.join(', ')}, webdriver: ${res.browser.webdriver}, clock drift: ${res.browser.clockDriftSec ?? '—'}s, UA mismatch: ${res.browser.uaMismatch}`);
     lines.push('');
-    lines.push('Проанализируй этот отчёт и скажи коротко по пунктам, что нужно поправить в VPN/прокси/браузере, чтобы ChatGPT и Claude работали стабильно и без риска блокировки.');
+    lines.push(T(
+      'Проанализируй этот отчёт и скажи коротко по пунктам, что нужно поправить в VPN/прокси/браузере, чтобы ChatGPT и Claude работали стабильно и без риска блокировки.',
+      'Analyze this report and list concise, actionable fixes for my VPN, proxy, or browser so ChatGPT and Claude work reliably without risk of blocks.'
+    ));
     return lines.join('\n');
   }
 
-  // --- История в localStorage + дельта ---
   function loadHistory() {
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -985,20 +1009,20 @@
     const count = $('historyCount');
     if (!list) return;
     const arr = loadHistory();
-    if (count) count.textContent = arr.length ? `${arr.length} сохр.` : 'пусто';
+    if (count) count.textContent = arr.length ? T(`${arr.length} сохр.`, `${arr.length} saved`) : T('пусто', 'empty');
     if (!arr.length) {
-      list.innerHTML = '<li class="hist-empty">История хранится только в вашем браузере — после первой проверки здесь появится запись для сравнения разных VPN-серверов.</li>';
+      list.innerHTML = `<li class="hist-empty">${esc(T('История хранится только в вашем браузере — после первой проверки здесь появится запись для сравнения разных VPN-серверов.', 'History stays strictly in your browser — compare scores before and after switching VPN servers.'))}</li>`;
       return;
     }
     list.innerHTML = arr.map((it) => {
       const d = new Date(it.ts);
-      const t = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-      const day = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+      const t = d.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+      const day = d.toLocaleDateString(LOCALE, { day: '2-digit', month: '2-digit' });
       return `<li>
         <span class="hist-score ${esc(it.tone)}">${it.score}</span>
         <div class="hist-meta">
           <b>${esc(countryName(it.loc))}</b>
-          <span>${esc(it.provider)} · находок: ${it.findings}</span>
+          <span>${esc(it.provider)} · ${T('находок', 'findings')}: ${it.findings}</span>
         </div>
         <span class="hist-time">${day} ${t}</span>
       </li>`;
@@ -1021,23 +1045,24 @@
     });
     const okCount = res.services.filter((s) => s.ok && s.allowed !== false).length;
     const badge = $('svcSummaryBadge');
-    if (badge) badge.textContent = `доступно ${okCount}/${res.services.length}`;
+    if (badge) badge.textContent = T(`доступно ${okCount}/${res.services.length}`, `reachable ${okCount}/${res.services.length}`);
 
     if (!filtered.length) {
-      $('servicesBody').innerHTML = '<tr><td colspan="6" class="dim">По выбранному фильтру записей нет — все сервисы в норме.</td></tr>';
+      $('servicesBody').innerHTML = `<tr><td colspan="6" class="dim">${esc(T('По выбранному фильтру записей нет — все сервисы в норме.', 'No rows match this filter — all services look healthy.'))}</td></tr>`;
       return;
     }
+    const msUnit = T('мс', 'ms');
     $('servicesBody').innerHTML = filtered.map((s) => {
-      let allowCell = '<span class="dim">нет списка</span>';
-      if (s.allowed === true) allowCell = '<span class="badge ok">пустит</span>';
-      else if (s.allowed === false) allowCell = '<span class="badge bad">блок</span>';
+      let allowCell = `<span class="dim">${T('нет списка', 'no list')}</span>`;
+      if (s.allowed === true) allowCell = `<span class="badge ok">${T('пустит', 'allowed')}</span>`;
+      else if (s.allowed === false) allowCell = `<span class="badge bad">${T('блок', 'blocked')}</span>`;
       return `<tr>
         <td><b>${esc(s.name)}</b><br><span class="dim mono-xs">${esc(s.domain)}</span></td>
-        <td class="mono-xs">${s.ok ? esc(maskIp(s.ip)) : `<span class="bad-t">${esc(s.error || 'ошибка')}</span>`}</td>
+        <td class="mono-xs">${s.ok ? esc(maskIp(s.ip)) : `<span class="bad-t">${esc(s.error || T('ошибка', 'error'))}</span>`}</td>
         <td>${s.loc ? esc(countryName(s.loc)) : '—'}</td>
         <td class="mono-xs">${esc(s.colo || '—')}</td>
         <td>${allowCell}</td>
-        <td class="mono-xs num">${s.ms} мс</td>
+        <td class="mono-xs num">${s.ms} ${msUnit}</td>
       </tr>`;
     }).join('');
   }
@@ -1067,21 +1092,20 @@
     $('scoreVerdict').textContent = res.verdict;
     $('scoreVerdict').className = `score-verdict ${res.tone}`;
 
-    // Дельта относительно предыдущей проверки
     const deltaEl = $('scoreDelta');
     if (deltaEl) {
       if (typeof res.prevScore === 'number') {
         const diff = res.score - res.prevScore;
         if (diff > 0) {
-          deltaEl.textContent = `+${diff} к прошлой`;
+          deltaEl.textContent = T(`+${diff} к прошлой`, `+${diff} vs previous`);
           deltaEl.className = 'badge ok';
           deltaEl.hidden = false;
         } else if (diff < 0) {
-          deltaEl.textContent = `${diff} к прошлой`;
+          deltaEl.textContent = T(`${diff} к прошлой`, `${diff} vs previous`);
           deltaEl.className = 'badge bad';
           deltaEl.hidden = false;
         } else {
-          deltaEl.textContent = 'как в прошлой';
+          deltaEl.textContent = T('как в прошлой', 'same as previous');
           deltaEl.className = 'badge';
           deltaEl.hidden = false;
         }
@@ -1094,45 +1118,43 @@
     const cl = res.services.find((s) => s.id === 'claude');
     $('sumChatgpt').innerHTML = cg?.ok
       ? `<span class="dot ${cg.allowed ? 'ok' : 'bad'}"></span>${esc(countryName(cg.loc))} · <code>${esc(maskIp(cg.ip))}</code>`
-      : `<span class="dot bad"></span>${esc(cg?.error || 'недоступен')}`;
+      : `<span class="dot bad"></span>${esc(cg?.error || T('недоступен', 'unreachable'))}`;
     $('sumClaude').innerHTML = cl?.ok
       ? `<span class="dot ${cl.allowed ? 'ok' : 'bad'}"></span>${esc(countryName(cl.loc))} · <code>${esc(maskIp(cl.ip))}</code>`
-      : `<span class="dot bad"></span>${esc(cl?.error || 'недоступен')}`;
+      : `<span class="dot bad"></span>${esc(cl?.error || T('недоступен', 'unreachable'))}`;
     $('sumCfDirect').innerHTML = res.ipProto.cfTrace
       ? `${res.splitTunnel ? '<span class="badge ok" style="margin-right:6px">split-tunnel</span>' : ''}${esc(countryName(res.ipProto.cfTrace.loc))} · <code>${esc(maskIp(res.ipProto.cfTrace.ip))}</code>`
       : '—';
     $('sumDns').innerHTML = res.dns.ok
       ? `${res.dns.isPublicAnycast ? '<span class="badge ok" style="margin-right:6px">anycast</span>' : ''}${esc(res.dns.geo || res.dns.provider || countryName(res.dns.countryCode))}`
-      : '<span class="dim">не определён</span>';
+      : `<span class="dim">${T('не определён', 'unknown')}</span>`;
 
-    // Находки
     const flist = $('findingsList');
     if (!res.findings.length) {
       flist.innerHTML = `<div class="finding ok">
-        <div class="f-head"><b>Критических проблем не найдено</b><span class="f-pen ok">−0</span></div>
-        <p>Подключение выглядит чисто: страна поддерживается, утечек WebRTC/IPv6/DNS не обнаружено.${res.splitTunnel ? ' Split-tunneling работает корректно.' : ''}</p>
+        <div class="f-head"><b>${T('Критических проблем не найдено', 'No critical issues found')}</b><span class="f-pen ok">−0</span></div>
+        <p>${T('Подключение выглядит чисто: страна поддерживается, утечек WebRTC/IPv6/DNS не обнаружено.', 'Connection looks clean: country is supported and no WebRTC/IPv6/DNS leaks were detected.')}${res.splitTunnel ? T(' Split-tunneling работает корректно.', ' Split-tunneling works properly.') : ''}</p>
       </div>`;
     } else {
       flist.innerHTML = res.findings.map((f) => `<div class="finding ${esc(f.severity)}">
         <div class="f-head"><b>${esc(f.title)}</b><span class="f-pen ${esc(f.severity)}">−${f.penalty}</span></div>
         <p>${esc(f.detail)}</p>
-        <p class="f-fix"><b>Что сделать:</b> ${esc(f.fix)}</p>
+        <p class="f-fix"><b>${T('Что сделать:', 'How to fix:')}</b> ${esc(f.fix)}</p>
       </div>`).join('');
     }
 
-    // 6 простых карточек + кликабельные чипы терминов
     const termLabels = {
-      vpn: 'Что такое VPN?',
-      split: 'Что такое split-tunneling?',
-      reputation: 'Репутация IP?',
-      datacenter: 'Адрес дата-центра?',
-      webrtc: 'Что такое WebRTC?',
-      ipv6: 'Что такое IPv6?',
-      dns: 'Утечка DNS?',
-      fingerprint: 'Отпечаток браузера?'
+      vpn: T('Что такое VPN?', 'What is VPN?'),
+      split: T('Что такое split-tunneling?', 'What is split-tunneling?'),
+      reputation: T('Репутация IP?', 'IP reputation?'),
+      datacenter: T('Адрес дата-центра?', 'Datacenter IP?'),
+      webrtc: T('Что такое WebRTC?', 'What is WebRTC?'),
+      ipv6: T('Что такое IPv6?', 'What is IPv6?'),
+      dns: T('Утечка DNS?', 'DNS leak?'),
+      fingerprint: T('Отпечаток браузера?', 'Fingerprinting?')
     };
     $('simpleGrid').innerHTML = res.simpleCards.map((c) => {
-      const badge = c.status === 'ok' ? 'OK' : c.status === 'warn' ? 'Внимание' : 'Проблема';
+      const badge = c.status === 'ok' ? 'OK' : c.status === 'warn' ? T('Внимание', 'Warning') : T('Проблема', 'Issue');
       const chips = (c.terms || []).map((t) =>
         `<button type="button" class="term-chip${state.activeTerm === t ? ' on' : ''}" data-term="${esc(t)}">${esc(termLabels[t] || t)}</button>`
       ).join('');
@@ -1147,32 +1169,30 @@
       btn.addEventListener('click', () => showGlossary(btn.dataset.term));
     });
 
-    // Блок доп. сервисов (Gemini, AI Studio, GitHub, Cursor, HuggingFace)
     const extraEl = $('extraProbesGrid');
+    const msUnit = T('мс', 'ms');
     if (extraEl && res.extraProbes) {
       extraEl.innerHTML = res.extraProbes.map((p) => `
         <div class="probe-pill ${p.ok ? 'ok' : 'bad'}">
           <span class="dot ${p.ok ? 'ok' : 'bad'}"></span>
           <b>${esc(p.name)}</b>
-          <span class="mono-xs dim">${p.ok ? `${p.ms} мс` : esc(p.error || 'недоступен')}</span>
+          <span class="mono-xs dim">${p.ok ? `${p.ms} ${msUnit}` : esc(p.error || T('недоступен', 'unreachable'))}</span>
         </div>
       `).join('');
     }
 
-    // Таблица 18 сервисов с фильтром
     renderServicesTable(res);
 
-    // Таблица репутации IP
     const reps = Object.values(res.reputations);
     $('repBody').innerHTML = reps.length ? reps.map((r) => {
       const badges = [];
       if (r.isTor) badges.push('<span class="badge bad">Tor</span>');
       if (r.isProxy) badges.push('<span class="badge bad">Proxy</span>');
       if (r.isVpn) badges.push('<span class="badge warn">VPN</span>');
-      if (r.isDatacenter) badges.push('<span class="badge warn">Хостинг</span>');
-      else if (r.asnHeuristicHosting) badges.push('<span class="badge warn">Хостинг (спорно)</span>');
-      if (r.isMobile) badges.push('<span class="badge ok">Мобильный</span>');
-      if (!badges.length) badges.push('<span class="badge ok">Чисто</span>');
+      if (r.isDatacenter) badges.push(`<span class="badge warn">${T('Хостинг', 'Hosting')}</span>`);
+      else if (r.asnHeuristicHosting) badges.push(`<span class="badge warn">${T('Хостинг (спорно)', 'Hosting (disputed)')}</span>`);
+      if (r.isMobile) badges.push(`<span class="badge ok">${T('Мобильный', 'Mobile')}</span>`);
+      if (!badges.length) badges.push(`<span class="badge ok">${T('Чисто', 'Clean')}</span>`);
       return `<tr>
         <td class="mono-xs">${esc(maskIp(r.ip))}<br><span class="dim">${esc(r.version)}</span></td>
         <td>${esc(countryName(r.countryCode))}<br><span class="dim">${esc(r.city || '—')}</span></td>
@@ -1181,43 +1201,40 @@
         <td class="mono-xs num">${r.riskScore !== null ? `${r.riskScore}/100` : '—'}</td>
         <td class="mono-xs dim">${esc(r.sources.join(', ') || '—')}</td>
       </tr>`;
-    }).join('') : '<tr><td colspan="6" class="dim">Нет данных по адресам.</td></tr>';
+    }).join('') : `<tr><td colspan="6" class="dim">${T('Нет данных по адресам.', 'No IP data yet.')}</td></tr>`;
 
-    // WebRTC / IPv6 / DNS
     $('leakWebrtc').innerHTML = `
-      <div class="kv"><span>Поддержка</span><b>${res.webrtc.supported ? 'да' : 'отключён'}</b></div>
-      <div class="kv"><span>Публичные IP (STUN)</span><code>${res.webrtc.publicIps.length ? esc(res.webrtc.publicIps.map(maskIp).join(', ')) : 'не обнаружены'}</code></div>
-      <div class="kv"><span>mDNS защита</span><b>${res.webrtc.mdns ? 'да (.local)' : 'нет / не сработал'}</b></div>
-      <div class="kv"><span>Локальные IP</span><code>${res.webrtc.localIps.length ? esc(res.webrtc.localIps.join(', ')) : 'скрыты'}</code></div>
+      <div class="kv"><span>${T('Поддержка', 'Supported')}</span><b>${res.webrtc.supported ? T('да', 'yes') : T('отключён', 'disabled')}</b></div>
+      <div class="kv"><span>${T('Публичные IP (STUN)', 'Public IPs (STUN)')}</span><code>${res.webrtc.publicIps.length ? esc(res.webrtc.publicIps.map(maskIp).join(', ')) : T('не обнаружены', 'none detected')}</code></div>
+      <div class="kv"><span>${T('mDNS защита', 'mDNS protection')}</span><b>${res.webrtc.mdns ? T('да (.local)', 'yes (.local)') : T('нет / не сработал', 'none')}</b></div>
+      <div class="kv"><span>${T('Локальные IP', 'Local IPs')}</span><code>${res.webrtc.localIps.length ? esc(res.webrtc.localIps.join(', ')) : T('скрыты', 'hidden')}</code></div>
     `;
     const v4r = res.ipProto.ipv4 ? res.reputations[res.ipProto.ipv4] : null;
     const v6r = res.ipProto.ipv6 ? res.reputations[res.ipProto.ipv6] : null;
     $('leakIpv6').innerHTML = `
-      <div class="kv"><span>IPv4 выход</span><code>${res.ipProto.ipv4 ? esc(maskIp(res.ipProto.ipv4)) : 'нет ответа'}</code></div>
-      <div class="kv"><span>Страна IPv4</span><b>${v4r?.countryCode ? esc(countryName(v4r.countryCode)) : '—'}</b></div>
-      <div class="kv"><span>IPv6 выход</span><code>${res.ipProto.ipv6 ? esc(maskIp(res.ipProto.ipv6)) : 'отключён (утечки нет)'}</code></div>
-      <div class="kv"><span>Страна IPv6</span><b>${v6r?.countryCode ? esc(countryName(v6r.countryCode)) : '—'}</b></div>
+      <div class="kv"><span>${T('IPv4 выход', 'IPv4 exit')}</span><code>${res.ipProto.ipv4 ? esc(maskIp(res.ipProto.ipv4)) : T('нет ответа', 'no response')}</code></div>
+      <div class="kv"><span>${T('Страна IPv4', 'IPv4 country')}</span><b>${v4r?.countryCode ? esc(countryName(v4r.countryCode)) : '—'}</b></div>
+      <div class="kv"><span>${T('IPv6 выход', 'IPv6 exit')}</span><code>${res.ipProto.ipv6 ? esc(maskIp(res.ipProto.ipv6)) : T('отключён (утечки нет)', 'disabled (no leak)')}</code></div>
+      <div class="kv"><span>${T('Страна IPv6', 'IPv6 country')}</span><b>${v6r?.countryCode ? esc(countryName(v6r.countryCode)) : '—'}</b></div>
     `;
     $('leakDns').innerHTML = `
-      <div class="kv"><span>IP резолвера</span><code>${res.dns.ok ? esc(maskIp(res.dns.ip)) : 'не определён'}</code></div>
-      <div class="kv"><span>Страна / провайдер</span><b>${esc(res.dns.geo || res.dns.provider || '—')}</b></div>
-      <div class="kv"><span>Тип DNS</span><b>${res.dns.isPublicAnycast ? '<span class="ok-t">Публичный anycast</span>' : 'Обычный / ISP'}</b></div>
+      <div class="kv"><span>${T('IP резолвера', 'Resolver IP')}</span><code>${res.dns.ok ? esc(maskIp(res.dns.ip)) : T('не определён', 'unknown')}</code></div>
+      <div class="kv"><span>${T('Страна / провайдер', 'Country / provider')}</span><b>${esc(res.dns.geo || res.dns.provider || '—')}</b></div>
+      <div class="kv"><span>${T('Тип DNS', 'DNS type')}</span><b>${res.dns.isPublicAnycast ? `<span class="ok-t">${T('Публичный anycast', 'Public anycast')}</span>` : T('Обычный / ISP', 'Standard / ISP')}</b></div>
     `;
 
-    // Браузер
     const b = res.browser;
     $('browserGrid').innerHTML = `
-      <div class="kv"><span>Часовой пояс</span><b>${esc(b.tz || '—')} (UTC${b.tzOffsetMin >= 0 ? '+' : ''}${b.tzOffsetMin / 60})</b></div>
-      <div class="kv"><span>Дрейф часов (vs CF)</span><b>${b.clockDriftSec !== null ? `${b.clockDriftSec > 0 ? '+' : ''}${b.clockDriftSec} сек` : '—'}</b></div>
+      <div class="kv"><span>${T('Часовой пояс', 'Timezone')}</span><b>${esc(b.tz || '—')} (UTC${b.tzOffsetMin >= 0 ? '+' : ''}${b.tzOffsetMin / 60})</b></div>
+      <div class="kv"><span>${T('Дрейф часов (vs CF)', 'Clock drift (vs CF)')}</span><b>${b.clockDriftSec !== null ? `${b.clockDriftSec > 0 ? '+' : ''}${b.clockDriftSec} ${T('сек', 'sec')}` : '—'}</b></div>
       <div class="kv"><span>navigator.webdriver</span><b>${b.webdriver ? '<span class="bad-t">true</span>' : '<span class="ok-t">false</span>'}</b></div>
-      <div class="kv"><span>Языки</span><b>${esc(b.languages.join(', ') || '—')}</b></div>
-      <div class="kv"><span>Платформа / Client Hints</span><b>${esc(b.platform || '—')}${b.uaDataPlatform ? ` / ${esc(b.uaDataPlatform)}` : ''}</b></div>
-      <div class="kv"><span>Экран / ядра / RAM</span><b>${esc(b.screen)} · ${b.cores || '—'} ядер · ${b.memoryGb ? `${b.memoryGb} ГБ` : '—'}</b></div>
+      <div class="kv"><span>${T('Языки', 'Languages')}</span><b>${esc(b.languages.join(', ') || '—')}</b></div>
+      <div class="kv"><span>${T('Платформа / Client Hints', 'Platform / Client Hints')}</span><b>${esc(b.platform || '—')}${b.uaDataPlatform ? ` / ${esc(b.uaDataPlatform)}` : ''}</b></div>
+      <div class="kv"><span>${T('Экран / ядра / RAM', 'Screen / cores / RAM')}</span><b>${esc(b.screen)} · ${b.cores || '—'} ${T('ядер', 'cores')} · ${b.memoryGb ? `${b.memoryGb} ${T('ГБ', 'GB')}` : '—'}</b></div>
       <div class="kv"><span>WebGL renderer</span><code class="wrap-code">${esc(b.webglRenderer)}</code></div>
       <div class="kv"><span>User-Agent</span><code class="wrap-code">${esc(b.ua)}</code></div>
     `;
 
-    // Машиночитаемый JSON для headless-скрипта
     let holder = $('alfafond-check-result');
     if (!holder) {
       holder = document.createElement('script');
@@ -1226,27 +1243,16 @@
       document.body.appendChild(holder);
     }
     holder.textContent = JSON.stringify({
-      version: 2,
-      timestamp: res.timestamp,
-      score: res.score,
-      verdict: res.verdict,
-      tone: res.tone,
-      aiCountry: res.aiCountry,
-      splitTunnel: res.splitTunnel,
-      findings: res.findings,
-      ipProto: res.ipProto,
-      dns: res.dns,
-      webrtc: res.webrtc,
-      browser: res.browser,
-      reputations: res.reputations,
-      services: res.services,
-      extraProbes: res.extraProbes,
+      version: 3, lang: IS_EN ? 'en' : 'ru',
+      timestamp: res.timestamp, score: res.score, verdict: res.verdict, tone: res.tone,
+      aiCountry: res.aiCountry, splitTunnel: res.splitTunnel, findings: res.findings,
+      ipProto: res.ipProto, dns: res.dns, webrtc: res.webrtc, browser: res.browser,
+      reputations: res.reputations, services: res.services, extraProbes: res.extraProbes,
       markdownReport: buildAiReport(res)
     });
     document.documentElement.setAttribute('data-check-done', '1');
   }
 
-  // --- Главный запуск проверки ---
   async function runCheck() {
     if (state.running) return;
     state.running = true;
@@ -1265,15 +1271,15 @@
     setProgress(6);
     $('scoreNum').textContent = '··';
     $('scoreNum').className = 'score-num';
-    $('scoreVerdict').textContent = 'Проверяем подключение…';
+    $('scoreVerdict').textContent = T('Проверяем подключение…', 'Checking connection…');
     $('scoreVerdict').className = 'score-verdict';
     if ($('scoreDelta')) $('scoreDelta').hidden = true;
     setStep('services', `0/${AI_SERVICES.length}`, 'active');
-    setStep('rep', 'ждёт');
-    setStep('webrtc', 'идёт', 'active');
-    setStep('ipv6', 'идёт', 'active');
-    setStep('dns', 'идёт', 'active');
-    setStep('browser', 'ждёт');
+    setStep('rep', T('ждёт', 'waiting'));
+    setStep('webrtc', T('идёт', 'running'), 'active');
+    setStep('ipv6', T('идёт', 'running'), 'active');
+    setStep('dns', T('идёт', 'running'), 'active');
+    setStep('browser', T('ждёт', 'waiting'));
 
     let progressPts = 6;
     const bump = (delta) => { progressPts = Math.min(96, progressPts + delta); setProgress(progressPts); };
@@ -1284,17 +1290,17 @@
     });
     const extraP = checkExtraProbes().then((res) => { bump(6); return res; });
     const ipProtoP = checkIpProtocols().then((res) => {
-      setStep('ipv6', res.ipv6 ? 'есть' : 'нет', 'ok');
+      setStep('ipv6', res.ipv6 ? T('есть', 'yes') : T('нет', 'none'), 'ok');
       bump(8);
       return res;
     });
     const webrtcP = checkWebRTC().then((res) => {
-      setStep('webrtc', res.publicIps.length ? `${res.publicIps.length} IP` : 'чисто', res.publicIps.length ? 'warn' : 'ok');
+      setStep('webrtc', res.publicIps.length ? `${res.publicIps.length} IP` : T('чисто', 'clean'), res.publicIps.length ? 'warn' : 'ok');
       bump(8);
       return res;
     });
     const dnsP = checkDNS().then((res) => {
-      setStep('dns', res.ok ? (res.isPublicAnycast ? 'anycast' : (res.countryCode || 'ok')) : 'ошибка', res.ok ? 'ok' : 'warn');
+      setStep('dns', res.ok ? (res.isPublicAnycast ? 'anycast' : (res.countryCode || 'ok')) : T('ошибка', 'error'), res.ok ? 'ok' : 'warn');
       bump(8);
       return res;
     });
@@ -1324,25 +1330,17 @@
       setStep('rep', `${repDone}/${uniqueIps.length}`, repDone === uniqueIps.length ? 'ok' : 'active');
       bump(12 / Math.max(1, uniqueIps.length));
     }));
-    if (!uniqueIps.length) setStep('rep', 'нет IP', 'warn');
+    if (!uniqueIps.length) setStep('rep', T('нет IP', 'no IP'), 'warn');
 
     const refTs = cg?.ts || cl?.ts || ipProto.cfTrace?.ts || services.find((s) => s.ts)?.ts || null;
     const browser = checkBrowser(refTs);
-    setStep('browser', browser.webdriver || browser.uaMismatch ? 'замечания' : 'ok', browser.webdriver || browser.uaMismatch ? 'warn' : 'ok');
+    setStep('browser', browser.webdriver || browser.uaMismatch ? T('замечания', 'warnings') : 'ok', browser.webdriver || browser.uaMismatch ? 'warn' : 'ok');
     setProgress(100);
 
     const evalRes = evaluateAll({ services, ipProto, reputations, webrtc, dns, browser });
     const fullResult = {
-      timestamp: Date.now(),
-      prevScore,
-      ...evalRes,
-      services,
-      extraProbes,
-      ipProto,
-      reputations,
-      webrtc,
-      dns,
-      browser
+      timestamp: Date.now(), prevScore, ...evalRes,
+      services, extraProbes, ipProto, reputations, webrtc, dns, browser
     };
 
     state.result = fullResult;
@@ -1373,7 +1371,7 @@
       document.execCommand('copy');
       ta.remove();
     }
-    span.textContent = okLabel || 'Скопировано';
+    span.textContent = okLabel || T('Скопировано', 'Copied');
     setTimeout(() => { span.textContent = orig; }, 2000);
   }
 
@@ -1398,7 +1396,7 @@
 
     $('btnCopyReport').addEventListener('click', () => {
       if (!state.result) return;
-      copyText(buildAiReport(state.result), $('btnCopyReport'), 'Скопировано');
+      copyText(buildAiReport(state.result), $('btnCopyReport'), T('Скопировано', 'Copied'));
     });
 
     const btnDl = $('btnDownloadReport');
@@ -1414,7 +1412,7 @@
       const b = $('btnHideIp');
       b.setAttribute('aria-pressed', String(state.hideIp));
       b.classList.toggle('active', state.hideIp);
-      b.querySelector('span').textContent = state.hideIp ? 'Показать IP' : 'Скрыть IP';
+      b.querySelector('span').textContent = state.hideIp ? T('Показать IP', 'Show IP') : T('Скрыть IP', 'Hide IP');
       if (state.result) renderAll(state.result);
     });
 
@@ -1477,14 +1475,14 @@
     });
 
     $('btnCopyCmd').addEventListener('click', () => {
-      copyText($('agentCmd').textContent, $('btnCopyCmd'), 'Скопировано');
+      copyText($('agentCmd').textContent, $('btnCopyCmd'), T('Скопировано', 'Copied'));
     });
 
     $('btnCopySkill').addEventListener('click', async () => {
       const btn = $('btnCopySkill');
       const r = await fetchTimeout('/check-skill.md', {}, 5000);
-      if (r.ok && r.text) copyText(r.text, btn, 'Скилл скопирован');
-      else copyText('https://alfafond.com/check-skill.md', btn, 'Скопирована ссылка');
+      if (r.ok && r.text) copyText(r.text, btn, T('Скилл скопирован', 'Skill copied'));
+      else copyText('https://alfafond.com/check-skill.md', btn, T('Скопирована ссылка', 'Link copied'));
     });
 
     runCheck();

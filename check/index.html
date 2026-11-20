@@ -12,6 +12,47 @@
 <meta property="og:image" content="https://alfafond.com/assets/og-ru.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://alfafond.com/check/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/check/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/check/en/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/check/en/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "AlfaFond Network Check — проверка IP и VPN для ChatGPT и Claude",
+      "url": "https://alfafond.com/check/",
+      "applicationCategory": "NetworkingApplication",
+      "operatingSystem": "Web, macOS, Linux, Windows",
+      "inLanguage": "ru",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "Клиентская диагностика IP, VPN, split-tunneling, WebRTC, IPv6, DNS и отпечатка браузера глазами 18 сервисов ИИ (ChatGPT, Claude, Perplexity, Grok и др.)."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Как страница узнаёт, какой IP видит ChatGPT и Claude?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Браузер запрашивает служебный эндпоинт /cdn-cgi/trace напрямую на доменах chatgpt.com, claude.ai и ещё 16 сервисов ИИ тем же маршрутом, которым идёт ваш обычный трафик." }
+        },
+        {
+          "@type": "Question",
+          "name": "Прямой маршрут показывает Россию, а ChatGPT — США. Это утечка?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Нет, это нормальный split-tunneling (раздельная маршрутизация), при условии что все домены OpenAI и Anthropic идут через поддерживаемую страну и нет утечек WebRTC/DNS." }
+        },
+        {
+          "@type": "Question",
+          "name": "Сохраняет ли AlfaFond мой IP?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Нет. Страница полностью статическая на GitHub Pages, все проверки идут прямо из браузера, а история хранится только в localStorage вашего устройства." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233ecf8e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial,sans-serif' font-weight='700' font-size='15' fill='%230a0b0e'%3EAF%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,6 +87,12 @@
   .bar nav a,.mob-link{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
     padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
   .bar nav a:hover,.mob-link:hover{background:var(--card-h);color:var(--txt)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
   .mob-link{display:none;border:1px solid var(--line)}
   @media(max-width:740px){.bar nav{display:none}.mob-link{display:inline-flex}}
 
@@ -287,14 +334,19 @@
         <span class="path">/check</span>
       </a>
     </div>
-    <nav aria-label="Навигация">
-      <a href="/dev/ru/">Услуги /dev</a>
-      <a href="/cases/ai-chatbot/">ИИ-чатбот</a>
-      <a href="/cases/telegram-bot/">TG-бот</a>
-      <a href="/blog/">Блог</a>
-      <a href="#agent">Для агента</a>
-    </nav>
-    <a class="mob-link" href="/dev/ru/">Услуги /dev</a>
+    <div class="bar-right">
+      <nav aria-label="Навигация">
+        <a href="/dev/ru/">Услуги /dev</a>
+        <a href="/cases/ai-chatbot/">ИИ-чатбот</a>
+        <a href="/cases/telegram-bot/">TG-бот</a>
+        <a href="/blog/">Блог</a>
+        <a href="#agent">Для агента</a>
+      </nav>
+      <a class="mob-link" href="/dev/ru/">/dev</a>
+      <div class="lang" role="group" aria-label="Язык">
+        <a href="/check/" hreflang="ru" class="on" aria-current="true">RU</a><a href="/check/en/" hreflang="en">EN</a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -613,7 +665,7 @@
   </div>
 </footer>
 
-<script src="/check/check.js"></script>
+<script src="/check/check.js?v=3"></script>
 <script src="/assistant.js"></script>
 </body>
 </html>
