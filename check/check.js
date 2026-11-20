@@ -1270,10 +1270,12 @@
     const btn = $('btnRun');
     const btnCopy = $('btnCopyReport');
     const btnDl = $('btnDownloadReport');
+    const btnShare = $('btnSharePng');
     btn.disabled = true;
     btn.classList.add('loading');
     btnCopy.disabled = true;
     if (btnDl) btnDl.disabled = true;
+    if (btnShare) btnShare.disabled = true;
 
     setProgress(6);
     $('scoreNum').textContent = '··';
@@ -1359,6 +1361,7 @@
     btn.classList.remove('loading');
     btnCopy.disabled = false;
     if (btnDl) btnDl.disabled = false;
+    if (btnShare) btnShare.disabled = false;
     state.running = false;
   }
 
@@ -1396,6 +1399,272 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  function rr(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(x, y, w, h, r);
+    } else {
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+  }
+
+  function renderShareCardCanvas(res) {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const pal = isLight ? {
+      bg: '#f6f7f9', card: '#ffffff', line: 'rgba(15,23,42,0.12)',
+      txt: '#111827', sub: '#4b5563', dim: '#64748b',
+      ok: '#15803d', okDim: 'rgba(21,128,61,0.11)',
+      warn: '#b45309', warnDim: 'rgba(180,83,9,0.12)',
+      bad: '#b91c1c', badDim: 'rgba(185,28,28,0.11)',
+      tile: '#3ecf8e', tileTxt: '#0a0b0e'
+    } : {
+      bg: '#101217', card: '#161a23', line: 'rgba(255,255,255,0.10)',
+      txt: '#f4f5f7', sub: '#a0a6b0', dim: '#8a909b',
+      ok: '#3ecf8e', okDim: 'rgba(62,207,142,0.14)',
+      warn: '#e0a23c', warnDim: 'rgba(224,162,60,0.15)',
+      bad: '#e0675b', badDim: 'rgba(224,103,91,0.16)',
+      tile: '#3ecf8e', tileTxt: '#0a0b0e'
+    };
+
+    const W = 1200, H = 630;
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const ctx = c.getContext('2d');
+
+    // Фон + мягкое свечение сверху
+    ctx.fillStyle = pal.bg;
+    ctx.fillRect(0, 0, W, H);
+    const grd = ctx.createRadialGradient(W * 0.5, -40, 20, W * 0.5, -40, 520);
+    grd.addColorStop(0, isLight ? 'rgba(21,128,61,0.09)' : 'rgba(62,207,142,0.12)');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    // Шапка карточки
+    rr(ctx, 56, 46, 40, 40, 10);
+    ctx.fillStyle = pal.tile;
+    ctx.fill();
+    ctx.fillStyle = pal.tileTxt;
+    ctx.font = '700 18px Geologica, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('AF', 76, 67);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = pal.txt;
+    ctx.font = '700 22px Geologica, Arial, sans-serif';
+    ctx.fillText('ALFAFOND', 110, 66);
+    ctx.fillStyle = pal.ok;
+    ctx.font = '500 18px "IBM Plex Mono", monospace';
+    ctx.fillText('/check', 246, 66);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = pal.dim;
+    ctx.font = '400 15px "IBM Plex Mono", monospace';
+    const dt = new Date(res.timestamp).toLocaleString(LOCALE, { dateStyle: 'medium', timeStyle: 'short' });
+    ctx.fillText(`${dt} · ${T('IP скрыты', 'IPs masked')}`, W - 56, 66);
+
+    // Левая панель — главный балл
+    const toneColor = res.tone === 'ok' ? pal.ok : res.tone === 'warn' ? pal.warn : pal.bad;
+    const toneBg = res.tone === 'ok' ? pal.okDim : res.tone === 'warn' ? pal.warnDim : pal.badDim;
+    rr(ctx, 56, 118, 430, 396, 20);
+    ctx.fillStyle = pal.card;
+    ctx.fill();
+    ctx.strokeStyle = pal.line;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = pal.dim;
+    ctx.font = '500 14px "IBM Plex Mono", monospace';
+    ctx.fillText(T('БАЛЛ ПОДКЛЮЧЕНИЯ', 'CONNECTION SCORE'), 88, 158);
+
+    ctx.fillStyle = toneColor;
+    ctx.font = '700 124px Geologica, Arial, sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    const scoreStr = String(res.score);
+    ctx.fillText(scoreStr, 86, 294);
+    const scoreW = ctx.measureText(scoreStr).width;
+    ctx.fillStyle = pal.dim;
+    ctx.font = '400 32px "IBM Plex Mono", monospace';
+    ctx.fillText('/100', 86 + scoreW + 10, 294);
+
+    // Вердикт-бейдж
+    ctx.font = '600 20px Geologica, Arial, sans-serif';
+    const vw = ctx.measureText(res.verdict).width;
+    rr(ctx, 88, 320, Math.min(366, vw + 32), 40, 10);
+    ctx.fillStyle = toneBg;
+    ctx.fill();
+    ctx.fillStyle = toneColor;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(res.verdict, 104, 341);
+
+    const cg = res.services.find((s) => s.id === 'chatgpt');
+    const cl = res.services.find((s) => s.id === 'claude');
+    const primaryRep = (cg?.ip && res.reputations[cg.ip]) || Object.values(res.reputations)[0];
+    const okServices = res.services.filter((s) => s.ok && s.allowed !== false).length;
+
+    ctx.fillStyle = pal.sub;
+    ctx.font = '400 16px "Golos Text", Arial, sans-serif';
+    ctx.fillText(`${T('Сервисы ИИ:', 'AI services:')} ${okServices}/${res.services.length}`, 88, 404);
+    const prov = primaryRep ? `${primaryRep.org || primaryRep.isp || '—'}${primaryRep.asn ? ` (${primaryRep.asn})` : ''}` : '—';
+    ctx.fillText(`${T('Провайдер:', 'Provider:')} ${prov.slice(0, 32)}`, 88, 434);
+    ctx.fillText(`${T('Находок:', 'Findings:')} ${res.findings.length}${res.splitTunnel ? ' · split-tunnel' : ''}`, 88, 464);
+
+    // Правая часть — 4 статусных плитки (без реальных IP)
+    const cards = [
+      {
+        k: 'CHATGPT',
+        v: cg?.ok ? countryName(cg.loc) : T('Недоступен', 'Unreachable'),
+        sub: cg?.ok ? (cg.allowed ? `${T('Пустит', 'Allowed')} · ${cg.colo || 'CF'} · ${cg.ms}ms` : T('Заблокирован', 'Blocked')) : (cg?.error || 'error'),
+        ok: Boolean(cg?.ok && cg?.allowed)
+      },
+      {
+        k: 'CLAUDE',
+        v: cl?.ok ? countryName(cl.loc) : T('Недоступен', 'Unreachable'),
+        sub: cl?.ok ? (cl.allowed ? `${T('Пустит', 'Allowed')} · ${cl.colo || 'CF'} · ${cl.ms}ms` : T('Заблокирован', 'Blocked')) : (cl?.error || 'error'),
+        ok: Boolean(cl?.ok && cl?.allowed)
+      },
+      {
+        k: 'WEBRTC / IPV6',
+        v: res.webrtc.publicIps.length ? T(`WebRTC: ${res.webrtc.publicIps.length} IP`, `WebRTC: ${res.webrtc.publicIps.length} IP`) : T('Утечек нет', 'No leaks'),
+        sub: `IPv6: ${res.ipProto.ipv6 ? T('включён', 'enabled') : T('отключён', 'disabled')} · mDNS: ${res.webrtc.mdns ? T('да', 'yes') : T('нет', 'no')}`,
+        ok: res.webrtc.publicIps.length === 0
+      },
+      {
+        k: 'DNS',
+        v: res.dns.ok ? (res.dns.isPublicAnycast ? T('Публичный anycast', 'Public anycast') : countryName(res.dns.countryCode)) : T('Не определён', 'Unknown'),
+        sub: (res.dns.geo || res.dns.provider || 'edns.ip-api.com').slice(0, 34),
+        ok: Boolean(res.dns.ok && (res.dns.isPublicAnycast || res.dns.countryCode !== 'RU'))
+      }
+    ];
+
+    cards.forEach((item, idx) => {
+      const col = idx % 2;
+      const row = Math.floor(idx / 2);
+      const x = 514 + col * 324;
+      const y = 118 + row * 144;
+      rr(ctx, x, y, 306, 126, 16);
+      ctx.fillStyle = pal.card;
+      ctx.fill();
+      ctx.strokeStyle = pal.line;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = pal.dim;
+      ctx.font = '500 13px "IBM Plex Mono", monospace';
+      ctx.fillText(item.k, x + 22, y + 30);
+
+      // Статусная точка
+      ctx.beginPath();
+      ctx.arc(x + 282, y + 30, 5, 0, Math.PI * 2);
+      ctx.fillStyle = item.ok ? pal.ok : pal.warn;
+      ctx.fill();
+
+      ctx.fillStyle = pal.txt;
+      ctx.font = '600 20px Geologica, Arial, sans-serif';
+      ctx.fillText(item.v.slice(0, 23), x + 22, y + 66);
+
+      ctx.fillStyle = pal.sub;
+      ctx.font = '400 14px "IBM Plex Mono", monospace';
+      ctx.fillText(item.sub.slice(0, 30), x + 22, y + 98);
+    });
+
+    // Блок главных находок справа внизу
+    rr(ctx, 514, 406, 630, 108, 16);
+    ctx.fillStyle = pal.card;
+    ctx.fill();
+    ctx.strokeStyle = pal.line;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = pal.dim;
+    ctx.font = '500 13px "IBM Plex Mono", monospace';
+    ctx.fillText(T('ГЛАВНЫЕ НАХОДКИ', 'TOP FINDINGS'), 536, 434);
+    ctx.fillStyle = pal.txt;
+    ctx.font = '400 15px "Golos Text", Arial, sans-serif';
+    if (!res.findings.length) {
+      ctx.fillStyle = pal.ok;
+      ctx.fillText(T('Проблем не обнаружено — подключение чистое.', 'No issues detected — connection looks clean.'), 536, 472);
+    } else {
+      res.findings.slice(0, 2).forEach((f, i) => {
+        ctx.fillStyle = f.severity === 'bad' ? pal.bad : pal.warn;
+        ctx.fillText(`−${f.penalty}  ${f.title}`.slice(0, 62), 536, 464 + i * 26);
+      });
+    }
+
+    // Нижняя строка карточки
+    ctx.fillStyle = pal.ok;
+    ctx.font = '500 16px "IBM Plex Mono", monospace';
+    ctx.fillText(IS_EN ? 'alfafond.com/check/en' : 'alfafond.com/check', 56, H - 46);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = pal.dim;
+    ctx.font = '400 14px "IBM Plex Mono", monospace';
+    ctx.fillText(T('100% в браузере · без сохранения IP', '100% in-browser · zero IP logging'), W - 56, H - 46);
+
+    return c;
+  }
+
+  async function shareResultPng(res, btn) {
+    const span = btn.querySelector('span') || btn;
+    const orig = btn.dataset.orig || span.textContent;
+    btn.dataset.orig = orig;
+    try {
+      const canvas = renderShareCardCanvas(res);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) return;
+      const filename = `alfafond-check-${res.score}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
+
+      // 1. Нативный Web Share на мобильных (Telegram / WhatsApp / AirDrop)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: T(`Проверка сети: ${res.score}/100`, `Network check: ${res.score}/100`),
+            text: T(`Мой результат проверки VPN для ChatGPT и Claude: ${res.score}/100 — alfafond.com/check`, `My VPN check for ChatGPT & Claude: ${res.score}/100 — alfafond.com/check/en`),
+            files: [file]
+          });
+          span.textContent = T('Отправлено', 'Shared');
+          setTimeout(() => { span.textContent = orig; }, 2000);
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+        }
+      }
+
+      // 2. Десктоп: пробуем скопировать PNG в буфер + сохраняем файл
+      let copied = false;
+      if (navigator.clipboard && window.ClipboardItem) {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          copied = true;
+        } catch (_) {}
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1200);
+
+      span.textContent = copied ? T('PNG скопирован и скачан', 'PNG copied & saved') : T('PNG скачан', 'PNG saved');
+      setTimeout(() => { span.textContent = orig; }, 2400);
+    } catch (_) {
+      span.textContent = T('Ошибка PNG', 'PNG error');
+      setTimeout(() => { span.textContent = orig; }, 2000);
+    }
+  }
+
   function initTheme() {
     const btn = $('btnTheme');
     if (!btn) return;
@@ -1423,6 +1692,14 @@
     renderHistory();
 
     $('btnRun').addEventListener('click', runCheck);
+
+    const btnShare = $('btnSharePng');
+    if (btnShare) {
+      btnShare.addEventListener('click', () => {
+        if (!state.result) return;
+        shareResultPng(state.result, btnShare);
+      });
+    }
 
     $('btnCopyReport').addEventListener('click', () => {
       if (!state.result) return;

@@ -58,6 +58,7 @@ h1{font-family:var(--disp);font-weight:600;font-size:clamp(2rem,4.4vw,3.1rem);li
 .btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
 .btn-ghost:hover:not(:disabled){border-color:var(--line-h);background:var(--card-h)}
 .btn-ghost.active{background:var(--ok-dim);border-color:rgba(62,207,142,.4);color:var(--ok)}
+.btn-icon{padding:10px 11px}
 .btn:disabled{opacity:.5;cursor:default;transform:none}
 .btn.loading svg.spin-icon{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
