@@ -1446,15 +1446,24 @@
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
 
-    // Шапка карточки
+    // Шапка карточки — фирменная векторная плитка AF с градиентом (идентична SVG на сайте)
     rr(ctx, 56, 46, 40, 40, 10);
-    ctx.fillStyle = pal.tile;
+    const tileGrad = ctx.createLinearGradient(56, 46, 96, 86);
+    tileGrad.addColorStop(0, '#4ae39e');
+    tileGrad.addColorStop(1, '#25b876');
+    ctx.fillStyle = tileGrad;
     ctx.fill();
+    rr(ctx, 57, 47, 38, 38, 9);
+    ctx.strokeStyle = 'rgba(255,255,255,0.24)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(56, 46);
+    ctx.scale(40 / 32, 40 / 32);
     ctx.fillStyle = pal.tileTxt;
-    ctx.font = '700 18px Geologica, Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('AF', 76, 67);
+    ctx.fill(new Path2D('M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z'), 'evenodd');
+    ctx.fill(new Path2D('M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z'));
+    ctx.restore();
 
     ctx.textAlign = 'left';
     ctx.fillStyle = pal.txt;

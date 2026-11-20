@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var CF_BEACON_TOKEN = ''; // Cloudflare Web Analytics: 32-символьный token (бесплатно, 0 cookies)
+  var CF_BEACON_TOKEN = 'c881004b94ff4a1cb3666ce7db5257ea'; // Cloudflare Web Analytics (бесплатно, 0 cookies)
   var GOATCOUNTER_SITE = ''; // GoatCounter: поддомен вида 'alfafond' (https://alfafond.goatcounter.com)
   var YM_ID = 0;             // Яндекс.Метрика: числовой ID счётчика (если нужен РФ-трафик)
 
