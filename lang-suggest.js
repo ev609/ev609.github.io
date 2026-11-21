@@ -3,19 +3,44 @@
  * версию → остальные выпадают из индекса). Вместо этого — ненавязчивый
  * дисмиссбл-баннер; URL альтернативы берём из hreflang самой страницы (если
  * перевода нет — тихо no-op); выбор запоминаем в localStorage (больше не нудим).
- * Поддерживает RU / EN / ZH / ES и светлую тему html[data-theme="light"].
+ * Поддерживает RU / EN / ZH / ES, светлую тему html[data-theme="light"],
+ * запоминает ручной выбор в шапке (.lang a) и сохраняет #r=... при смене языка.
  */
 (function () {
   'use strict';
   try {
     var KEY = 'af_lang_pref';
-    if (localStorage.getItem(KEY)) return; // выбор уже сделан — не навязываемся
-
+    var save = function (v) { try { localStorage.setItem(KEY, v); } catch (e) {} };
     var baseLang = function (s) {
       s = (s || '').toLowerCase();
       if (s.indexOf('zh') === 0) return 'zh';
       return s.slice(0, 2);
     };
+    var withHash = function (href) {
+      if (!href || !location.hash || href.indexOf('#') >= 0) return href;
+      return href + location.hash;
+    };
+
+    // Всегда слушаем ручное переключение языка в шапке (.lang a[hreflang]):
+    // обновляем выбор в localStorage и переносим #r=... (снимок результата на /check/*).
+    var wireSwitchers = function () {
+      document.querySelectorAll('.lang a[hreflang]').forEach(function (a) {
+        if (a.dataset.afLangWired) return;
+        a.dataset.afLangWired = '1';
+        a.addEventListener('click', function () {
+          var code = baseLang(a.getAttribute('hreflang'));
+          if (code) save(code);
+          var rawHref = a.getAttribute('href');
+          if (rawHref && location.hash && location.hash.indexOf('#r=') === 0 && rawHref.indexOf('#') < 0) {
+            a.setAttribute('href', rawHref + location.hash);
+          }
+        });
+      });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireSwitchers);
+    else wireSwitchers();
+
+    if (localStorage.getItem(KEY)) return; // выбор уже сделан — не навязываемся
 
     var cur = baseLang(document.documentElement.lang || 'en');
 
@@ -39,12 +64,11 @@
       if (code === cur) return; // предпочитаемый язык уже открыт
       if (alts[code]) { want = code; break; }
     }
-    // Если ни один предпочитаемый язык не переведён, для не-RU/не-ZH/не-ES предлагаем EN (если он есть)
     if (!want && cur !== 'en' && alts.en) want = 'en';
     if (!want || want === cur) return;
 
     var target = alts[want];
-    var norm = function (u) { return (u || '').replace(/\/+$/, ''); };
+    var norm = function (u) { return (u || '').split('#')[0].replace(/\/+$/, ''); };
     if (!target || norm(location.href) === norm(target)) return;
 
     var STAY = {
@@ -87,8 +111,6 @@ html[data-theme="light"] .afl-no:hover{color:#111827;border-color:rgba(15,23,42,
     st.textContent = css;
     document.head.appendChild(st);
 
-    var save = function (v) { try { localStorage.setItem(KEY, v); } catch (e) {} };
-
     var bar = document.createElement('div');
     bar.className = 'afl-bar';
     bar.setAttribute('role', 'region');
@@ -99,9 +121,12 @@ html[data-theme="light"] .afl-no:hover{color:#111827;border-color:rgba(15,23,42,
 
     var yes = document.createElement('a');
     yes.className = 'afl-yes';
-    yes.href = target;
+    yes.href = withHash(target);
     yes.textContent = T.yes;
-    yes.addEventListener('click', function () { save(want); });
+    yes.addEventListener('click', function () {
+      save(want);
+      yes.href = withHash(target);
+    });
 
     var no = document.createElement('button');
     no.className = 'afl-no';
