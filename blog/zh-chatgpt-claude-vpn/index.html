@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>为什么开了 VPN 还是会被 ChatGPT 和 Claude 封号或弹验证 — 10 秒检测指南 | AlfaFond</title>
+<meta name="description" content="技术解析使用 VPN/代理访问 ChatGPT、Claude 和 OpenAI API 时频繁触发验证码或封号的 5 个真实原因：分流多出口、/cdn-cgi/trace、IP 纯净度、WebRTC/IPv6/DNS 泄露与 10 秒纯本地检测。">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:url" content="https://alfafond.com/blog/zh-chatgpt-claude-vpn/">
+<meta property="og:title" content="为什么开了 VPN 还是会被 ChatGPT 和 Claude 封号或弹验证">
+<meta property="og:description" content="为什么普通查 IP 网站测不出分流隐患：直连 18 项 AI 域名 /cdn-cgi/trace、多源 IP 纯净度、WebRTC/IPv6/Anycast DNS 与零日志本地检测。">
+<meta property="og:image" content="https://alfafond.com/assets/og-check-zh.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://alfafond.com/assets/og-check-zh.png">
+<link rel="canonical" href="https://alfafond.com/blog/zh-chatgpt-claude-vpn/">
+<link rel="alternate" hreflang="zh-Hans" href="https://alfafond.com/blog/zh-chatgpt-claude-vpn/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/blog/why-chatgpt-and-claude-block-vpns/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/blog/pochemu-chatgpt-i-claude-baniat-vpn/">
+<link rel="alternate" hreflang="es" href="https://alfafond.com/blog/es-por-que-chatgpt-y-claude-bloquean-vpn/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/blog/why-chatgpt-and-claude-block-vpns/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "为什么开了 VPN 还是会被 ChatGPT 和 Claude 封号或弹验证 — 10 秒检测指南",
+  "description": "技术解析 ChatGPT 和 Claude 触发风控验证与封号的 5 个核心网络原因：分流多出口、/cdn-cgi/trace、IP 纯净度、WebRTC、IPv6 与 DNS。",
+  "url": "https://alfafond.com/blog/zh-chatgpt-claude-vpn/",
+  "image": "https://alfafond.com/assets/og-check-zh.png",
+  "datePublished": "2026-11-21",
+  "dateModified": "2026-11-21",
+  "inLanguage": "zh-Hans",
+  "author": { "@type": "Organization", "name": "AlfaFond", "url": "https://alfafond.com/" },
+  "publisher": { "@type": "Organization", "name": "AlfaFond", "url": "https://alfafond.com/" }
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%234ae39e%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2325b876%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%22.75%22%20y%3D%22.75%22%20width%3D%2230.5%22%20height%3D%2230.5%22%20rx%3D%227.25%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.22%29%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10%208.5H12L16.5%2023.5H13.7L12.75%2020.1H9.25L8.3%2023.5H5.5L10%208.5ZM11%2012.1L9.8%2017.6H12.2L11%2012.1Z%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20d%3D%22M18.2%208.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#8a909b;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --disp:'Geologica','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --body:'Golos Text','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.72;-webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.18rem;letter-spacing:.04em;text-transform:uppercase}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar nav a.on{color:var(--ok);background:var(--ok-dim)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 8px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s;white-space:nowrap}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:680px){.bar nav{display:none}}
+
+  .hero{padding:84px 28px 52px}
+  h1{font-family:var(--disp);font-weight:600;line-height:1.18;letter-spacing:-.02em}
+  h1 .ok{color:var(--ok)}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--body);font-size:.86rem;
+    padding:12px 22px;border-radius:9px;transition:transform .15s,box-shadow .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:600}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+  .cta-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+
+  .pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+  @media(max-width:760px){.pipeline{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.pipeline{grid-template-columns:1fr}}
+  .pstage{border:1px solid var(--line);border-radius:12px;padding:16px 15px;background:var(--card)}
+  .pstage.demo{border-color:rgba(62,207,142,.4);background:var(--ok-dim)}
+  .pstage .pn{font-family:var(--mono);font-size:.66rem;color:var(--ok);letter-spacing:.14em;margin-bottom:6px}
+  .pstage h4{font-family:var(--disp);font-weight:600;font-size:.92rem;color:var(--txt);margin-bottom:6px}
+  .pstage p{font-size:.82rem!important;line-height:1.55!important;margin:0!important;color:var(--sub)}
+  .pstage .tag{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:.64rem;color:var(--ok);
+    background:rgba(62,207,142,.12);padding:2px 8px;border-radius:99px}
+
+  .art{max-width:740px;margin:0 auto}
+  .art-meta{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--dim);margin-bottom:14px}
+  .art h1{font-size:clamp(1.85rem,4.2vw,2.65rem);margin-bottom:8px}
+  .art .lede{color:var(--sub);font-size:1.06rem;line-height:1.78;margin:18px 0 8px}
+  .art h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.25rem,2.5vw,1.55rem);margin:40px 0 12px}
+  .art h3{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);margin:24px 0 8px}
+  .art p{color:var(--sub);font-size:1.02rem;line-height:1.82;margin:14px 0}
+  .art ul{margin:14px 0;padding:0;list-style:none}
+  .art ul li{position:relative;padding-left:22px;margin:10px 0;color:var(--sub);font-size:1.02rem;line-height:1.76}
+  .art ul li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  .art b,.art strong{color:var(--txt);font-weight:600}
+  .art a:not(.btn){color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.4)}
+  .art a:not(.btn):hover{border-bottom-color:var(--ok)}
+  .art a.btn-ok{color:#07120c}
+  .art a.btn-ghost{color:var(--txt)}
+  .art code{font-family:var(--mono);font-size:.85em;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:5px;color:var(--txt)}
+  .art pre{background:#06070a;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:18px 0;font-family:var(--mono);font-size:.82rem;color:var(--sub);line-height:1.7}
+  .art blockquote{border-left:2px solid var(--ok);padding:4px 0 4px 18px;margin:18px 0;color:var(--txt);font-size:1.02rem}
+  .lab-note{font-size:.94rem!important;color:var(--txt)!important;padding:14px 18px;border-radius:11px;
+    background:var(--card);border:1px solid var(--line);margin:22px 0!important}
+  .art-cta{border:1px solid rgba(62,207,142,.3);border-radius:14px;padding:26px 28px;margin-top:38px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .art-cta h3{margin-top:0}
+  .art-cta p{font-size:.95rem}
+  a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){.btn{transition:none}html{scroll-behavior:auto}}
+</style>
+<link rel="stylesheet" href="/depth.css?v=2">
+<link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g1)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg>
+      <span>AlfaFond <span class="path">/blog</span></span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="导航">
+        <a href="/dev/">工程开发</a><a href="/ru/en/">研究</a><a href="/check/zh/">网络检测</a><a href="/blog/en/" class="on">博客</a>
+      </nav>
+      <div class="lang" role="group" aria-label="语言">
+        <a href="/blog/pochemu-chatgpt-i-claude-baniat-vpn/" hreflang="ru">RU</a><a href="/blog/why-chatgpt-and-claude-block-vpns/" hreflang="en">EN</a><a href="/blog/zh-chatgpt-claude-vpn/" hreflang="zh-Hans" class="on" aria-current="true">中文</a><a href="/blog/es-por-que-chatgpt-y-claude-bloquean-vpn/" hreflang="es">ES</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<article class="hero wrap art">
+  <div class="art-meta">博客 · 网络与 AI 基础设施 · 2026</div>
+  <h1>为什么开了 VPN 还是会被 ChatGPT 和 Claude <span class="ok">封号或弹验证</span></h1>
+  <p class="lede">明明已经连上了美国或日本节点，普通查 IP 网站也显示正常，但打开 ChatGPT 却无限循环 Cloudflare 人机验证，或者 Claude 付费账号突然被封。本文拆解普通 IP 检测站看不到的 5 个技术原因，并给出 10 秒纯浏览器本地排查方案（零服务端日志）。</p>
+
+  <h2>1. 为什么分流模式下普通查 IP 网站会“说谎”</h2>
+  <p>绝大多数开发者并不会走全局代理，而是使用 <b>分流（Split-tunneling）</b>：国内网站直连，AI 域名走 Clash / sing-box / Xray 策略组。此时普通测速或查 IP 网站显示的往往只是<b>直连出口</b>或默认代理组，而不是 <code>chatgpt.com</code> 与 <code>claude.ai</code> 真正看到的出口 IP。</p>
+  <p>更隐蔽的问题是<b>同平台多出口</b>：当订阅策略开启了负载均衡或不同子域名命中了不同规则，<code>chatgpt.com</code> 走德国、<code>auth.openai.com</code> 走荷兰、<code>api.openai.com</code> 走美国。在 OpenAI / Anthropic 风控侧，这会被直接判定为同一账号同时在多个国家异地登录。</p>
+
+  <div class="pipeline" aria-label="AI 真实网络检测流程">
+    <div class="pstage"><div class="pn">01</div><h4>域名 Trace</h4><p>浏览器沿真实分流规则直连 18 个 AI 域名。</p></div>
+    <div class="pstage"><div class="pn">02</div><h4>IP 纯净度</h4><p>3 家独立信誉库 + ASN 交叉核验。</p></div>
+    <div class="pstage"><div class="pn">03</div><h4>泄露探测</h4><p>WebRTC (UDP)、IPv6 绕过与真实 DNS。</p></div>
+    <div class="pstage demo"><div class="pn">04</div><h4>0–100 报告</h4><p>本地评分 + 可直接发给 AI 的修复报告。</p><span class="tag">零 IP 日志</span></div>
+  </div>
+
+  <h2>2. 如何精确看到 ChatGPT 和 Claude 看到的出口 IP</h2>
+  <p>OpenAI、Anthropic、Perplexity、Grok、Mistral、Midjourney、OpenRouter 等主流 AI 平台几乎全部部署在 <b>Cloudflare</b> 后方，且各域名开放了支持 CORS 的 <code>/cdn-cgi/trace</code> 接口。浏览器直接访问 <code>https://chatgpt.com/cdn-cgi/trace</code> 或 <code>https://claude.ai/cdn-cgi/trace</code> 时，走的是与您日常对话<b>完全一致的代理规则与节点</b>：</p>
+  <pre>fl=671f142
+h=chatgpt.com
+ip=203.0.113.42
+ts=1763712000.123
+loc=NL
+colo=AMS
+tls=TLSv1.3</pre>
+  <p>三个关键字段一目了然：真实出口 <code>ip</code>、决定地区封锁的 <code>loc</code>，以及 Cloudflare 接入机房 <code>colo</code>。把同一平台的所有子域名（<code>chatgpt.com</code>、<code>api.openai.com</code>、<code>auth.openai.com</code>、<code>sora.chatgpt.com</code>）一起测一遍，立刻能看出有没有“节点分裂”。</p>
+
+  <p class="lab-note">→ 立即检测 18 项 AI 服务出口 IP（含 Gemini、Cursor、GitHub 连通性）：<a href="/check/zh/?utm_source=blog_zh&amp;utm_content=zh-chatgpt-vpn-mid">打开免费本地检测 /check/zh →</a></p>
+
+  <h2>3. IP 纯净度：为什么万人骑机场比独享 VPS 更容易风控</h2>
+  <p>即使地区受支持，出口 IP 的历史信誉也直接决定验证码频率。多人共享的公共 VPN / 机场出口同时承载成百上千用户和自动化脚本，极易在风控库中积累高风险评分，导致频繁触发人机验证或账号受限。</p>
+  <p>同时，单一 IP 库常常误报：有的库把干净的个人 VPS 标成机房高风险，有的库把移动 CGNAT 误判成开放代理。更靠谱的做法是至少交叉对比 3 个独立数据源（如 <code>ipquery.io</code>、<code>ipwho.is</code>、<code>ipapi.is</code>）并结合 ASN 特征，在多源结果不一致时明确标出分歧。</p>
+
+  <h2>4. 三个真实泄露与一个常见的 DNS 误区</h2>
+  <ul>
+    <li><b>WebRTC 通过 UDP 泄露：</b>如果浏览器代理仅转发 TCP，WebRTC STUN 探测会绕过代理直接走 UDP 暴露真实本地 IP。解决方法是在代理客户端开启 UDP 转发，或在浏览器开启 mDNS / <code>disable_non_proxied_udp</code>。</li>
+    <li><b>IPv6 绕过代理隧道：</b>不少代理配置只接管了 IPv4，让 IPv6 直接经本地宽带出去。支持双栈的网站（含 Cloudflare）就能通过 IPv6 看到真实地区，而只测 IPv4 的网站却显示一切正常。</li>
+    <li><b>本地运营商 DNS 泄露：</b>流量走海外节点，但 DNS 查询仍在本地运营商解析，不仅暴露访问域名，也会让风控发现 DNS 与 IP 地区不匹配。</li>
+    <li><b>常见误区：“DNS 地区和出口 IP 不同就一定是泄露”。</b>不对。如果使用的是公共 Anycast DNS（如 Cloudflare <code>1.1.1.1</code>、Google <code>8.8.8.8</code>、Quad9、NextDNS），解析会就近路由到最近节点，并不经过本地运营商，不属于运营商 DNS 泄露。</li>
+  </ul>
+
+  <h2>5. 浏览器本地一致性信号</h2>
+  <ul>
+    <li><b>系统时间偏差（&gt; 2 分钟）：</b>会直接破坏登录令牌、2FA 校验，并与服务器时间形成明显异常。请保持系统自动 NTP 校时开启。</li>
+    <li><b><code>User-Agent</code> 与 <code>Client Hints</code> 冲突：</b>只改 UA 字符串却不更新 <code>navigator.userAgentData</code> 的插件，反而比正常浏览器更显眼。</li>
+    <li><b><code>navigator.webdriver = true</code>：</b>自动化框架（Playwright/Selenium）特征，日常使用建议使用常规浏览器配置文件。</li>
+  </ul>
+
+  <h2>6. 10 秒完成全套排查（浏览器或命令行）</h2>
+  <p>我们把上述所有检测整合成了一个托管在 GitHub Pages 的纯静态页面 <a href="/check/zh/?utm_source=blog_zh&amp;utm_content=zh-chatgpt-vpn-body">alfafond.com/check/zh</a>：<b>100% 在您的浏览器本地运行</b>，没有后端，绝不记录或上传 IP。</p>
+  <p>点击<b>“复制 AI 报告”</b>可一键生成干净的 Markdown 诊断摘要，直接贴给 Claude / ChatGPT / Cursor 帮您修改 sing-box、Clash 或 Xray 分流配置；也可以用命令行（零安装）在服务器或 AI 编程 Agent 中运行：</p>
+  <pre>curl -fsSL https://alfafond.com/check.sh | sh</pre>
+  <blockquote>受支持地区的干净独享 VPS + 同平台所有域名固定单出口 + 无 WebRTC / IPv6 / DNS 泄露 = 长期稳定免折腾。</blockquote>
+
+  <div class="art-cta">
+    <h3>立即检测您的当前网络</h3>
+    <p>耗时 5–12 秒，免费、免注册、零 IP 日志。支持中文、英文、俄文和西班牙文。</p>
+    <div class="cta-row">
+      <a class="btn btn-ok" href="/check/zh/?utm_source=blog_zh&amp;utm_content=zh-chatgpt-vpn-cta">开始检测 /check/zh →</a>
+      <a class="btn btn-ghost" href="/check-skill.md" target="_blank" rel="noopener">查看 Agent Skill</a>
+    </div>
+  </div>
+</article>
+
+<footer class="af-foot">
+  <div class="wrap">
+    <div class="af-foot-row">
+      <div class="af-foot-brand">
+        <a class="af-foot-logo" href="/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g2)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg><span>ALFAFOND <span class="path">/blog</span></span></a>
+        <span class="af-foot-copy">© 2026 AlfaFond</span>
+      </div>
+      <nav class="af-foot-nav" aria-label="页脚导航"><a href="/dev/">工程开发 /dev</a><a href="/ru/en/">研究</a><a href="/check/zh/">网络检测</a><a href="/blog/en/">博客</a><a href="https://github.com/ev609" target="_blank" rel="noopener">GitHub</a></nav>
+    </div>
+  </div>
+</footer>
+<script src="/assistant.js?v=3"></script>
+<script src="/lang-suggest.js?v=3"></script>
+<script defer src="/analytics.js?v=2"></script>
+</body>
+</html>
