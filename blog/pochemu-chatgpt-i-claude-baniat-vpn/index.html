@@ -110,8 +110,10 @@
   .art ul li{position:relative;padding-left:22px;margin:9px 0;color:var(--sub);font-size:1.04rem;line-height:1.7}
   .art ul li::before{content:"—";position:absolute;left:0;color:var(--ok)}
   .art b,.art strong{color:var(--txt);font-weight:500}
-  .art a{color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.4)}
-  .art a:hover{border-bottom-color:var(--ok)}
+  .art a:not(.btn){color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.4)}
+  .art a:not(.btn):hover{border-bottom-color:var(--ok)}
+  .art a.btn-ok{color:#07120c}
+  .art a.btn-ghost{color:var(--txt)}
   .art code{font-family:var(--mono);font-size:.85em;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:5px;color:var(--txt)}
   .art pre{background:#06070a;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:18px 0;font-family:var(--mono);font-size:.82rem;color:var(--sub);line-height:1.7}
   .art blockquote{border-left:2px solid var(--ok);padding:4px 0 4px 18px;margin:18px 0;color:var(--txt);font-size:1.03rem}
