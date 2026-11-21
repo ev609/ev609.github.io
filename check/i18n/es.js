@@ -260,5 +260,9 @@ window.AF_CHECK_I18N.es = {
   "The hostname explicitly points to a VPN or tunnel endpoint. Anti-fraud systems inspect PTR records even when public lists are clean.": "El nombre de host apunta explícitamente a un nodo VPN o túnel. Los sistemas antifraude inspeccionan el registro PTR aunque las listas públicas estén limpias.",
   "Set a neutral PTR record on a private VPS, or switch to a less crowded server if using a shared VPN.": "Configura un PTR neutral en tu VPS privado o cambia a un servidor menos saturado si usas una VPN compartida.",
   "Abuse": "Abuso",
-  "VPN (PTR)": "VPN (PTR)"
+  "VPN (PTR)": "VPN (PTR)",
+  "No network response — VPN is still connecting or offline": "Sin respuesta de red — la VPN aún se está conectando o estás sin conexión",
+  "None of the 18 services or IP probes responded. This typically happens during the first 2–5 seconds after starting or switching a VPN.": "Ninguno de los 18 servicios ni sondas de IP respondió. Suele ocurrir en los primeros 2–5 segundos tras iniciar o cambiar de VPN.",
+  "Wait 3–5 seconds for the tunnel to settle and click Check again.": "Espera 3–5 segundos a que el túnel se estabilice y vuelve a pulsar Comprobar.",
+  "No network response": "Sin respuesta de red"
 };

@@ -274,7 +274,7 @@
   async function checkServices(onProgress) {
     let done = 0;
     const tasks = AI_SERVICES.map(async (svc) => {
-      const r = await fetchTimeout(`https://${svc.domain}/cdn-cgi/trace`, {}, 7500);
+      const r = await fetchTimeout(`https://${svc.domain}/cdn-cgi/trace`, {}, 10000);
       done += 1;
       onProgress(done, AI_SERVICES.length);
       if (!r.ok) {
@@ -308,11 +308,11 @@
 
   async function checkIpProtocols() {
     const [v4a, v4b, v6a, v6b, cfDirect] = await Promise.all([
-      fetchTimeout('https://api4.ipify.org?format=json', {}, 5500),
-      fetchTimeout('https://ipv4.icanhazip.com/', {}, 5500),
+      fetchTimeout('https://api4.ipify.org?format=json', {}, 8000),
+      fetchTimeout('https://ipv4.icanhazip.com/', {}, 8000),
       fetchTimeout('https://api6.ipify.org?format=json', {}, 4000),
       fetchTimeout('https://ipv6.icanhazip.com/', {}, 4000),
-      fetchTimeout('https://1.1.1.1/cdn-cgi/trace', {}, 5000)
+      fetchTimeout('https://1.1.1.1/cdn-cgi/trace', {}, 8000)
     ]);
 
     let ipv4 = null;
@@ -643,6 +643,30 @@
     const byId = Object.fromEntries(services.map((s) => [s.id, s]));
     const chatgpt = byId.chatgpt;
     const claude = byId.claude;
+    const reachableServices = services.filter((s) => s.ok).length;
+    const noNetwork = reachableServices === 0 && !ipProto.ipv4 && !ipProto.cfTrace;
+
+    if (noNetwork) {
+      addFinding('bad', 100,
+        T('Нет ответа от сети — VPN ещё подключается или офлайн', 'No network response — VPN is still connecting or offline'),
+        T('Ни один из 18 сервисов и IP-датчиков не ответил. Обычно так бывает в первые 2–5 секунд после запуска или переключения VPN.', 'None of the 18 services or IP probes responded. This typically happens during the first 2–5 seconds after starting or switching a VPN.'),
+        T('Подождите 3–5 секунд, пока туннель установится, и нажмите «Проверить» ещё раз.', 'Wait 3–5 seconds for the tunnel to settle and click Check again.')
+      );
+      const simpleCards = buildSimpleCards({
+        byId, ipProto, primaryReps: [], reputations, webrtc, dns, browser,
+        openaiIps: new Set(), anthropicIps: new Set(), aiCountry: null, splitTunnel: false
+      });
+      return {
+        score: 0,
+        verdict: T('Нет ответа сети', 'No network response'),
+        tone: 'bad',
+        noNetwork: true,
+        findings,
+        simpleCards,
+        aiCountry: null,
+        splitTunnel: false
+      };
+    }
 
     if (chatgpt && chatgpt.ok && chatgpt.allowed === false) {
       addFinding('bad', 50,
@@ -1121,20 +1145,26 @@
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
       const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
+      if (!Array.isArray(arr)) return [];
+      // Не показываем старые пустые прогоны, снятые в момент переподключения VPN
+      return arr.filter((it) => it && !(it.loc === '—' && it.provider === '—'));
     } catch (_) { return []; }
   }
 
   function saveHistoryItem(res) {
     try {
+      if (res.noNetwork) return;
       const cg = res.services.find((s) => s.id === 'chatgpt');
       const primaryRep = cg?.ip ? res.reputations[cg.ip] : Object.values(res.reputations)[0];
+      const loc = cg?.loc || res.aiCountry || '—';
+      const provider = primaryRep?.org || primaryRep?.isp || '—';
+      if (loc === '—' && provider === '—') return;
       const item = {
         ts: res.timestamp,
         score: res.score,
         tone: res.tone,
-        loc: cg?.loc || res.aiCountry || '—',
-        provider: primaryRep?.org || primaryRep?.isp || '—',
+        loc,
+        provider,
         findings: res.findings.length
       };
       const arr = loadHistory();

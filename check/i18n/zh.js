@@ -260,5 +260,9 @@ window.AF_CHECK_I18N.zh = {
   "The hostname explicitly points to a VPN or tunnel endpoint. Anti-fraud systems inspect PTR records even when public lists are clean.": "主机名直接指向 VPN 或隧道节点。即使部分公共库未标记，反风控系统也会检查 PTR 记录。",
   "Set a neutral PTR record on a private VPS, or switch to a less crowded server if using a shared VPN.": "自建 VPS 建议配置中性 PTR 记录；若为共享商业 VPN，请切换到更冷门的节点。",
   "Abuse": "滥用",
-  "VPN (PTR)": "VPN (PTR)"
+  "VPN (PTR)": "VPN (PTR)",
+  "No network response — VPN is still connecting or offline": "网络无响应 — VPN 正在连接或已离线",
+  "None of the 18 services or IP probes responded. This typically happens during the first 2–5 seconds after starting or switching a VPN.": "18 个服务和 IP 探测均未响应。通常发生在启动或切换 VPN 后的前 2–5 秒。",
+  "Wait 3–5 seconds for the tunnel to settle and click Check again.": "请等待 3–5 秒待隧道建立完成后，再次点击检测。",
+  "No network response": "网络无响应"
 };
