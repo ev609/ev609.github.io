@@ -252,5 +252,13 @@ window.AF_CHECK_I18N.zh = {
   "Show IP": "显示 IP",
   "Hide IP": "隐藏 IP",
   "Skill copied": "Skill 已复制",
-  "Link copied": "链接已复制"
+  "Link copied": "链接已复制",
+  "IP is listed in abuse / DNSBL databases ({src})": "IP 被列入滥用 / DNSBL 黑名单 ({src})",
+  "Automated traffic, spam, or open-proxy abuse has been reported from this IP — elevated risk of blocks and captchas.": "该 IP 存在自动化滥用、垃圾流量或开放代理记录，触发验证码和封禁的风险较高。",
+  "Switch to a different server or a clean dedicated IP.": "请更换其他节点或使用干净的独享 IP。",
+  "Reverse DNS (PTR) indicates a VPN/tunnel ({ptr})": "反向 DNS (PTR) 暴露了 VPN/隧道特征 ({ptr})",
+  "The hostname explicitly points to a VPN or tunnel endpoint. Anti-fraud systems inspect PTR records even when public lists are clean.": "主机名直接指向 VPN 或隧道节点。即使部分公共库未标记，反风控系统也会检查 PTR 记录。",
+  "Set a neutral PTR record on a private VPS, or switch to a less crowded server if using a shared VPN.": "自建 VPS 建议配置中性 PTR 记录；若为共享商业 VPN，请切换到更冷门的节点。",
+  "Abuse": "滥用",
+  "VPN (PTR)": "VPN (PTR)"
 };

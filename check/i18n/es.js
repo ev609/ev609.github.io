@@ -252,5 +252,13 @@ window.AF_CHECK_I18N.es = {
   "Show IP": "Mostrar IP",
   "Hide IP": "Ocultar IP",
   "Skill copied": "Skill copiado",
-  "Link copied": "Enlace copiado"
+  "Link copied": "Enlace copiado",
+  "IP is listed in abuse / DNSBL databases ({src})": "IP listada en bases de abuso / DNSBL ({src})",
+  "Automated traffic, spam, or open-proxy abuse has been reported from this IP — elevated risk of blocks and captchas.": "Se ha registrado tráfico automatizado, spam o proxy abierto en esta IP: mayor riesgo de bloqueos y captchas.",
+  "Switch to a different server or a clean dedicated IP.": "Cambia a otro servidor o utiliza una IP dedicada limpia.",
+  "Reverse DNS (PTR) indicates a VPN/tunnel ({ptr})": "El DNS inverso (PTR) indica una VPN o túnel ({ptr})",
+  "The hostname explicitly points to a VPN or tunnel endpoint. Anti-fraud systems inspect PTR records even when public lists are clean.": "El nombre de host apunta explícitamente a un nodo VPN o túnel. Los sistemas antifraude inspeccionan el registro PTR aunque las listas públicas estén limpias.",
+  "Set a neutral PTR record on a private VPS, or switch to a less crowded server if using a shared VPN.": "Configura un PTR neutral en tu VPS privado o cambia a un servidor menos saturado si usas una VPN compartida.",
+  "Abuse": "Abuso",
+  "VPN (PTR)": "VPN (PTR)"
 };

@@ -343,20 +343,35 @@
     return { ipv4, ipv6, cfTrace };
   }
 
+  const PTR_VPN_RE = /(^|[.-])(vpn|tunnel|proxy|socks|wireguard|wg\d*|openvpn|ovpn|vless|vmess|xray|shadowsocks|nordvpn|mullvad|proton|surfshark|expressvpn|cyberghost|windscribe|hide\.me|torguard)([.-]|$)/i;
+  const PTR_TOR_RE = /(^|[.-])(tor-?exit|exit-?node|tor-?relay|tor\.|exit\.)/i;
+
+  function reverseIPv4(ip) {
+    if (!ip || isIPv6(ip)) return null;
+    const parts = String(ip).trim().split('.');
+    if (parts.length !== 4 || !parts.every((p) => /^\d+$/.test(p))) return null;
+    return parts.reverse().join('.');
+  }
+
   async function lookupIpReputation(ip) {
     const encoded = encodeURIComponent(ip);
-    const [q1, q2, q3] = await Promise.all([
+    const rev4 = reverseIPv4(ip);
+    const [q1, q2, q3, qPtr, qTor, qDrone] = await Promise.all([
       fetchTimeout(`https://api.ipquery.io/${encoded}`, {}, 6500),
       fetchTimeout(`https://ipwho.is/${encoded}`, {}, 6500),
-      fetchTimeout(`https://api.ipapi.is/?q=${encoded}`, {}, 6500)
+      fetchTimeout(`https://api.ipapi.is/?q=${encoded}`, {}, 6500),
+      rev4 ? fetchTimeout(`https://dns.google/resolve?name=${rev4}.in-addr.arpa&type=PTR`, {}, 4500) : Promise.resolve({ ok: false }),
+      rev4 ? fetchTimeout(`https://dns.google/resolve?name=${rev4}.dnsel.torproject.org&type=A`, {}, 4500) : Promise.resolve({ ok: false }),
+      rev4 ? fetchTimeout(`https://dns.google/resolve?name=${rev4}.dnsbl.dronebl.org&type=A`, {}, 4500) : Promise.resolve({ ok: false })
     ]);
 
     const rep = {
       ip, version: isIPv6(ip) ? 'IPv6' : 'IPv4', sources: [],
       countryCode: null, country: null, city: null, timezone: null,
-      asn: null, org: null, isp: null,
-      isVpn: false, isProxy: false, isTor: false, isDatacenter: false, isMobile: false,
-      riskScore: null, asnHeuristicHosting: false, asnHeuristicVpn: false, disagreement: false
+      asn: null, org: null, isp: null, ptr: null, vpnService: null,
+      isVpn: false, isProxy: false, isTor: false, isDatacenter: false, isMobile: false, isAbuser: false,
+      torConfirmed: false, dnsblHits: [],
+      riskScore: null, asnHeuristicHosting: false, asnHeuristicVpn: false, ptrHeuristicVpn: false, disagreement: false
     };
 
     if (q1.ok) {
@@ -372,11 +387,11 @@
           rep.org = d.isp?.org || rep.org;
           rep.isp = d.isp?.isp || rep.isp;
           if (d.risk) {
-            rep.isVpn = Boolean(d.risk.is_vpn);
-            rep.isProxy = Boolean(d.risk.is_proxy);
-            rep.isTor = Boolean(d.risk.is_tor);
-            rep.isDatacenter = Boolean(d.risk.is_datacenter);
-            rep.isMobile = Boolean(d.risk.is_mobile);
+            if (d.risk.is_vpn) rep.isVpn = true;
+            if (d.risk.is_proxy) rep.isProxy = true;
+            if (d.risk.is_tor) rep.isTor = true;
+            if (d.risk.is_datacenter) rep.isDatacenter = true;
+            if (d.risk.is_mobile) rep.isMobile = true;
             if (typeof d.risk.risk_score === 'number') rep.riskScore = d.risk.risk_score;
           }
         }
@@ -404,12 +419,77 @@
         const d = JSON.parse(q3.text);
         if (d && d.ip) {
           rep.sources.push('ipapi.is');
-          rep.country = rep.country || d.country;
-          rep.city = rep.city || d.city;
-          rep.timezone = rep.timezone || d.timezone;
-          rep.asn = rep.asn || (typeof d.asn === 'string' ? d.asn.split(' ')[0] : null);
-          rep.org = rep.org || (typeof d.asn === 'string' ? d.asn.replace(/^AS\d+\s*/, '') : null) || d.company;
-          if (!rep.isp && d.company && d.company !== 'Private Customer') rep.isp = d.company;
+          rep.countryCode = rep.countryCode || d.location?.country_code || null;
+          rep.country = rep.country || d.location?.country || (typeof d.country === 'string' ? d.country : null);
+          rep.city = rep.city || d.location?.city || (typeof d.city === 'string' ? d.city : null);
+          rep.timezone = rep.timezone || d.location?.timezone || (typeof d.timezone === 'string' ? d.timezone : null);
+          if (!rep.asn && d.asn) {
+            rep.asn = typeof d.asn === 'object'
+              ? (d.asn.asn ? `AS${d.asn.asn}` : null)
+              : String(d.asn).split(' ')[0];
+          }
+          if (!rep.org && d.asn && typeof d.asn === 'object' && d.asn.org) rep.org = d.asn.org;
+          if (!rep.org && d.company && typeof d.company === 'object' && d.company.name) rep.org = d.company.name;
+          if (!rep.isp && d.company && typeof d.company === 'object' && d.company.name) rep.isp = d.company.name;
+          if (d.is_tor) rep.isTor = true;
+          if (d.is_proxy) rep.isProxy = true;
+          if (d.is_vpn) rep.isVpn = true;
+          if (d.is_datacenter) rep.isDatacenter = true;
+          if (d.is_mobile) rep.isMobile = true;
+          if (d.is_abuser) rep.isAbuser = true;
+          if (d.vpn && d.vpn.service) rep.vpnService = d.vpn.service;
+          const abScore = parseFloat(d.company?.abuser_score) || parseFloat(d.asn?.abuser_score) || 0;
+          if (abScore > 0) {
+            const scaled = Math.min(100, Math.round(abScore * 1000));
+            if (rep.riskScore === null || scaled > rep.riskScore) rep.riskScore = scaled;
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (qPtr.ok) {
+      try {
+        const d = JSON.parse(qPtr.text);
+        if (d && (d.Status === 0 || d.Status === 3)) {
+          const ans = Array.isArray(d.Answer) ? d.Answer.find((a) => a.type === 12 && a.data) : null;
+          if (ans) {
+            rep.ptr = String(ans.data).replace(/\.$/, '');
+            rep.sources.push('rDNS');
+            if (PTR_TOR_RE.test(rep.ptr)) rep.isTor = true;
+            if (PTR_VPN_RE.test(rep.ptr)) rep.ptrHeuristicVpn = true;
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (qTor.ok) {
+      try {
+        const d = JSON.parse(qTor.text);
+        if (d && (d.Status === 0 || d.Status === 3)) {
+          rep.sources.push('Tor DNSEL');
+          const hits = Array.isArray(d.Answer) ? d.Answer.map((a) => a.data) : [];
+          if (d.Status === 0 && hits.some((v) => String(v).trim() === '127.0.0.2')) {
+            rep.isTor = true;
+            rep.torConfirmed = true;
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (qDrone.ok) {
+      try {
+        const d = JSON.parse(qDrone.text);
+        if (d && (d.Status === 0 || d.Status === 3)) {
+          rep.sources.push('DroneBL');
+          const hits = Array.isArray(d.Answer) ? d.Answer.map((a) => String(a.data || '').trim()) : [];
+          const validHits = hits.filter((v) => /^127\.0\.0\.\d+$/.test(v) && v !== '127.0.0.255');
+          if (d.Status === 0 && validHits.length) {
+            rep.isAbuser = true;
+            rep.dnsblHits.push('DroneBL');
+            if (validHits.some((v) => ['127.0.0.8', '127.0.0.9', '127.0.0.10', '127.0.0.14', '127.0.0.15'].includes(v))) {
+              rep.isProxy = true;
+            }
+          }
         }
       } catch (_) {}
     }
@@ -418,7 +498,7 @@
     rep.asnHeuristicHosting = HOSTING_KEYWORDS.some((kw) => blob.includes(kw));
     rep.asnHeuristicVpn = VPN_KEYWORDS.some((kw) => blob.includes(kw));
     if (!rep.isDatacenter && rep.asnHeuristicHosting) rep.disagreement = true;
-    if (!rep.isVpn && rep.asnHeuristicVpn) rep.disagreement = true;
+    if (!rep.isVpn && (rep.asnHeuristicVpn || rep.ptrHeuristicVpn)) rep.disagreement = true;
 
     return rep;
   }
@@ -618,6 +698,8 @@
     const anyProxy = primaryReps.some((r) => r.isProxy);
     const anyVpn = primaryReps.some((r) => r.isVpn);
     const anyDc = primaryReps.some((r) => r.isDatacenter);
+    const anyAbuser = primaryReps.find((r) => r.isAbuser);
+    const ptrVpn = primaryReps.find((r) => !r.isVpn && r.ptrHeuristicVpn);
     const anyDisagreeDc = primaryReps.some((r) => !r.isDatacenter && r.asnHeuristicHosting);
     const highRisk = primaryReps.find((r) => typeof r.riskScore === 'number' && r.riskScore >= 50);
 
@@ -641,12 +723,25 @@
         T('С этого адреса фиксировались злоупотребления или массовый бот-трафик.', 'Recent abuse or automated traffic has been linked to this exit IP.'),
         T('Переключитесь на другой сервер или менее загруженную локацию.', 'Switch to another server or less crowded exit location.')
       );
+    } else if (anyAbuser) {
+      const abSrc = anyAbuser.dnsblHits?.length ? anyAbuser.dnsblHits.join(', ') : 'ipapi.is';
+      addFinding('bad', 20,
+        TF('Адрес числится в базах злоупотреблений / DNSBL ({src})', 'IP is listed in abuse / DNSBL databases ({src})', { src: abSrc }),
+        T('С этого адреса фиксировались бот-активность, спам или открытые прокси — повышенный риск блокировок и капч.', 'Automated traffic, spam, or open-proxy abuse has been reported from this IP — elevated risk of blocks and captchas.'),
+        T('Смените сервер или используйте чистый выделенный IP.', 'Switch to a different server or a clean dedicated IP.')
+      );
     }
     if (anyVpn) {
       addFinding('warn', 15,
         T('Адрес числится в базах VPN', 'Exit IP is listed in VPN databases'),
         T('Антифрод видит, что это публичный VPN-сервер. Само по себе не всегда блокирует, но повышает риск проверок.', 'Anti-fraud detects a public VPN exit. Not always an instant block, but increases challenge rate.'),
         T('При частых капчах попробуйте свой VPS, менее популярную локацию или резидентный выход.', 'If you hit frequent challenges, try a private VPS, less crowded location, or residential exit.')
+      );
+    } else if (ptrVpn) {
+      addFinding('warn', 15,
+        TF('Обратный DNS (PTR) указывает на VPN/туннель ({ptr})', 'Reverse DNS (PTR) indicates a VPN/tunnel ({ptr})', { ptr: ptrVpn.ptr }),
+        T('Имя хоста явно выдаёт VPN-сервер или туннель. Антифрод и детекторы прокси учитывают PTR-записи даже при чистых публичных базах.', 'The hostname explicitly points to a VPN or tunnel endpoint. Anti-fraud systems inspect PTR records even when public lists are clean.'),
+        T('Для своего VPS задайте нейтральную PTR-запись; если это общий VPN — выберите менее заметный сервер.', 'Set a neutral PTR record on a private VPS, or switch to a less crowded server if using a shared VPN.')
       );
     }
     if (anyDc) {
@@ -821,14 +916,14 @@
     if (!rep0) {
       c2.status = 'warn';
       c2.text = T('Базы репутации не ответили за отведённое время. Попробуйте повторить проверку.', 'Reputation APIs timed out. Try re-running the check.');
-    } else if (rep0.isTor || rep0.isProxy || (rep0.riskScore || 0) >= 50) {
+    } else if (rep0.isTor || rep0.isProxy || rep0.isAbuser || (rep0.riskScore || 0) >= 50) {
       c2.status = 'bad';
       c2.text = TF(
         'Адрес ({provider}) помечен как рискованный (Tor/прокси/злоупотребления). Лучше сменить сервер.',
         'Address ({provider}) is flagged as high-risk (Tor/proxy/abuse). Switch exit server.',
         { provider: rep0.org || rep0.asn || T('неизвестный провайдер', 'unknown provider') }
       );
-    } else if (rep0.isVpn || rep0.isDatacenter || rep0.asnHeuristicHosting) {
+    } else if (rep0.isVpn || rep0.ptrHeuristicVpn || rep0.isDatacenter || rep0.asnHeuristicHosting) {
       c2.status = 'warn';
       c2.text = TF(
         'Выход идёт через хостинг/VPN ({provider}). Для своего чистого VPS это обычно работает стабильно, но антифрод присматривается внимательнее.',
@@ -987,11 +1082,13 @@
       const flags = [
         rep.isTor && 'TOR',
         rep.isProxy && 'PROXY',
+        rep.isAbuser && 'ABUSE',
         rep.isVpn && 'VPN',
+        !rep.isVpn && rep.ptrHeuristicVpn && 'VPN (PTR)',
         (rep.isDatacenter || rep.asnHeuristicHosting) && (rep.isDatacenter ? 'DATACENTER' : 'DATACENTER (disputed)'),
         rep.isMobile && 'MOBILE'
       ].filter(Boolean);
-      lines.push(`- ${maskIp(rep.ip)} (${rep.version}): ${countryName(rep.countryCode)}, ${rep.city || '—'}, ${rep.asn || '—'} ${rep.org || rep.isp || ''}, flags: ${flags.length ? flags.join(', ') : 'clean'}, risk=${rep.riskScore ?? '—'}`);
+      lines.push(`- ${maskIp(rep.ip)} (${rep.version}): ${countryName(rep.countryCode)}, ${rep.city || '—'}, ${rep.asn || '—'} ${rep.org || rep.isp || ''}${rep.ptr ? `, PTR=${rep.ptr}` : ''}, flags: ${flags.length ? flags.join(', ') : 'clean'}, risk=${rep.riskScore ?? '—'}, sources=${rep.sources.join('/') || '—'}`);
     }
     lines.push('');
 
@@ -1237,13 +1334,15 @@
       const badges = [];
       if (r.isTor) badges.push('<span class="badge bad">Tor</span>');
       if (r.isProxy) badges.push('<span class="badge bad">Proxy</span>');
+      if (r.isAbuser) badges.push(`<span class="badge bad">${T('Абьюз', 'Abuse')}</span>`);
       if (r.isVpn) badges.push('<span class="badge warn">VPN</span>');
+      else if (r.ptrHeuristicVpn) badges.push(`<span class="badge warn">${T('VPN (PTR)', 'VPN (PTR)')}</span>`);
       if (r.isDatacenter) badges.push(`<span class="badge warn">${T('Хостинг', 'Hosting')}</span>`);
       else if (r.asnHeuristicHosting) badges.push(`<span class="badge warn">${T('Хостинг (спорно)', 'Hosting (disputed)')}</span>`);
       if (r.isMobile) badges.push(`<span class="badge ok">${T('Мобильный', 'Mobile')}</span>`);
       if (!badges.length) badges.push(`<span class="badge ok">${T('Чисто', 'Clean')}</span>`);
       return `<tr>
-        <td class="mono-xs">${esc(maskIp(r.ip))}<br><span class="dim">${esc(r.version)}</span></td>
+        <td class="mono-xs">${esc(maskIp(r.ip))}<br><span class="dim">${esc(r.version)}${r.ptr ? ` · ${esc(r.ptr)}` : ''}</span></td>
         <td>${esc(countryName(r.countryCode))}<br><span class="dim">${esc(r.city || '—')}</span></td>
         <td><b>${esc(r.org || r.isp || '—')}</b><br><span class="dim mono-xs">${esc(r.asn || '—')}</span></td>
         <td><div class="badges">${badges.join('')}</div></td>
