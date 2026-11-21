@@ -15,6 +15,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://alfafond.com/assets/og-check-ru.png">
 <link rel="canonical" href="https://alfafond.com/blog/pochemu-chatgpt-i-claude-baniat-vpn/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/blog/pochemu-chatgpt-i-claude-baniat-vpn/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/blog/why-chatgpt-and-claude-block-vpns/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/blog/why-chatgpt-and-claude-block-vpns/">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -66,6 +69,11 @@
   .bar nav a:hover{background:var(--card-h);color:var(--txt)}
   .bar nav a.on{color:var(--ok);background:var(--ok-dim)}
   .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
   @media(max-width:680px){.bar nav{display:none}}
 
   .hero{padding:84px 28px 52px}
@@ -132,6 +140,9 @@
       <nav aria-label="Разделы">
         <a href="/dev/ru/">Услуги</a><a href="/dev/ru/#cases">Кейсы</a><a href="/check/">Проверка сети</a><a href="/blog/" class="on">Блог</a>
       </nav>
+      <div class="lang" role="group" aria-label="Язык">
+        <a href="/blog/pochemu-chatgpt-i-claude-baniat-vpn/" hreflang="ru" class="on" aria-current="true">RU</a><a href="/blog/why-chatgpt-and-claude-block-vpns/" hreflang="en">EN</a>
+      </div>
     </div>
   </div>
 </div>
