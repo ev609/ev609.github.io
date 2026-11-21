@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnkey SaaS CRM — Ladero Case Study | AlfaFond /dev</title>
+<meta name="description" content="We built and operate a production SaaS: cloud CRM for service businesses (FastAPI, React, PostgreSQL, multi-tenancy, billing, messenger integrations). Live product ladero.ru. Custom SaaS and web application development.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://alfafond.com/cases/en/saas-crm/">
+<meta property="og:title" content="Turnkey SaaS CRM — Ladero Case Study | AlfaFond /dev">
+<meta property="og:description" content="Production SaaS we designed, built, and run: multi-tenant CRM for service businesses with billing and messenger integrations.">
+<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/cases/en/saas-crm/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/cases/saas-crm/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/cases/en/saas-crm/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/cases/en/saas-crm/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%234ae39e%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2325b876%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%22.75%22%20y%3D%22.75%22%20width%3D%2230.5%22%20height%3D%2230.5%22%20rx%3D%227.25%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.22%29%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10%208.5H12L16.5%2023.5H13.7L12.75%2020.1H9.25L8.3%2023.5H5.5L10%208.5ZM11%2012.1L9.8%2017.6H12.2L11%2012.1Z%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20d%3D%22M18.2%208.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#8a909b;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --warn:#e0a23c; --bad:#e0675b;
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.18rem;letter-spacing:.04em;text-transform:uppercase}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:680px){.bar nav{display:none}}
+
+  .hero{padding:84px 28px 52px}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);margin-bottom:22px}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(2.2rem,5.4vw,3.6rem);
+    line-height:1.06;letter-spacing:-.035em;max-width:18ch;text-wrap:balance}
+  h1 .ok{color:var(--ok)}
+  .lead{color:var(--sub);max-width:60ch;margin-top:22px;font-size:1.04rem;text-wrap:pretty}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:26px}
+  .chip{font-family:var(--mono);font-size:.7rem;color:var(--sub);padding:5px 12px;
+    border:1px solid var(--line);border-radius:99px;background:var(--card)}
+  .chip.hl{color:var(--ok);background:var(--ok-dim);border-color:rgba(62,207,142,.25)}
+  .chip.wip{color:var(--warn);background:rgba(224,162,60,.12);border-color:rgba(224,162,60,.3)}
+  .cta-row{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;
+    padding:13px 24px;border-radius:9px;transition:transform .15s,box-shadow .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+
+  section.wrap{margin-top:clamp(72px,8vw,124px)}
+  section.wrap:first-of-type{margin-top:clamp(44px,5vw,72px)}
+  section.wrap:last-of-type{padding-bottom:clamp(64px,7vw,96px)}
+  .sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ok);
+    display:flex;align-items:center;gap:16px;margin-bottom:14px}
+  .sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(62,207,142,.35),transparent)}
+  h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.45rem,3vw,2rem);line-height:1.14;
+    letter-spacing:-.025em;text-wrap:balance}
+  h2 .ok{color:var(--ok)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .cell{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 24px;
+    transition:border-color .18s}
+  .cell:hover{border-color:var(--line-h)}
+  .cell h3{font-family:var(--disp);font-weight:600;font-size:.98rem;margin-bottom:10px;letter-spacing:-.01em}
+  .cell p{font-size:.85rem;color:var(--sub);text-wrap:pretty}
+
+  .diff{border:1px solid rgba(62,207,142,.3);border-radius:16px;padding:36px 34px;margin-top:32px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .diff p{color:var(--sub);max-width:68ch;margin-top:12px;font-size:.92rem;text-wrap:pretty}
+
+  ul.flat{list-style:none;margin-top:16px}
+  ul.flat li{padding-left:24px;position:relative;margin:8px 0;font-size:.88rem;color:var(--sub);text-wrap:pretty}
+  ul.flat li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  ul.flat b{color:var(--txt);font-weight:500}
+
+  .guard{display:flex;gap:14px;align-items:flex-start;margin-top:26px;padding:20px 22px;
+    border:1px solid rgba(62,207,142,.3);border-radius:14px;background:var(--ok-dim)}
+  .guard svg{flex:none;margin-top:2px}
+  .guard p{font-size:.88rem;color:var(--txt);text-wrap:pretty}
+  .guard b{font-weight:500}
+  .guard span{color:var(--sub)}
+
+  .tryit-h{font-family:var(--disp);font-weight:600;font-size:1.05rem;letter-spacing:-.015em;margin-top:30px}
+  .contact{margin-top:26px;max-width:620px}
+  .f-row{display:flex;gap:10px;flex-wrap:wrap}
+  .f-row input{flex:1;min-width:200px}
+  .contact input,.contact textarea{width:100%;font-family:var(--body);font-size:.9rem;color:var(--txt);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+  .contact input::placeholder,.contact textarea::placeholder{color:var(--dim)}
+  .contact input:focus,.contact textarea:focus{outline:none;border-color:var(--ok)}
+  .contact textarea{resize:vertical}
+  .contact .btn{border:none;cursor:pointer;margin-top:2px}
+  .f-note{display:block;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:12px}
+
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:44px;align-items:start}
+  @media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:30px}}
+  .hero-demo{position:relative}
+  .hero-demo .demo-tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ok);margin-bottom:10px;display:block}
+  .hero-demo .rag-demo{margin-top:0}
+  .rag-demo{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 18px 16px}
+  .rag-foot{font-size:.74rem;color:var(--dim);margin-top:12px;text-wrap:pretty}
+  .dash-head{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);margin-bottom:16px}
+  .price{margin-top:18px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  .price-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line)}
+  .price-svc{font-size:.92rem;color:var(--txt)}
+  .price-svc b{color:var(--ok);font-weight:500}
+  .price-val{font-family:var(--mono);font-size:.9rem;color:var(--ok);white-space:nowrap;font-weight:500}
+  .price-note{font-size:.82rem;color:var(--sub);padding:15px 20px;text-wrap:pretty;margin:0}
+  .price-note b{color:var(--txt);font-weight:500}
+
+  footer{border-top:1px solid var(--line);padding:32px 0 48px;margin-top:28px}
+  footer .cols{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+  .mono-s{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+
+  a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){
+    .btn,.cell{transition:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+  <link rel="stylesheet" href="/depth.css?v=2">
+  <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/dev/">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g1)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg>
+      <span>AlfaFond <span class="path">/dev</span></span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="Sections">
+        <a href="#what">What it is</a><a href="#tech">Engineering</a><a href="#proof">Live product</a><a href="#build">What we build</a><a href="#contact">Order</a>
+      </nav>
+      <div class="lang" aria-label="Language">
+        <a href="/cases/saas-crm/" hreflang="ru" lang="ru">RU</a>
+        <a class="on" href="/cases/en/saas-crm/" hreflang="en" lang="en" aria-current="page">EN</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="hero wrap">
+ <div class="hero-grid">
+  <div class="hero-copy">
+   <div class="kicker">Case Study · Production SaaS CRM</div>
+   <h1>We don't just build bots — <span class="ok">we run production SaaS.</span></h1>
+   <p class="lead">Ladero is a cloud CRM for service businesses that we designed, built, and operate in production. Multi-tenant architecture, subscription billing, messenger integrations, and 24/7 operation with real paying accounts. It proves we take products from architecture to long-term live operation — not just one-off scripts.</p>
+   <div class="chips">
+     <span class="chip hl">production SaaS</span>
+     <span class="chip">FastAPI · React</span>
+     <span class="chip">PostgreSQL</span>
+     <span class="chip">multi-tenancy</span>
+     <span class="chip">billing · messengers</span>
+   </div>
+   <div class="cta-row">
+     <a class="btn btn-ok" href="#contact">Discuss your project →</a>
+     <a class="btn btn-ghost" href="https://ladero.ru" target="_blank" rel="noopener">Live product</a>
+   </div>
+  </div>
+  <div class="hero-demo">
+    <span class="demo-tag">↗ Not a mockup — a live production service</span>
+    <div class="rag-demo" style="padding:22px">
+      <div class="dash-head" style="margin-bottom:14px">Inside the platform</div>
+      <ul class="flat" style="margin-top:0">
+        <li><b>Work orders &amp; clients</b> — job tracking, history, and status pipelines.</li>
+        <li><b>Technician KPIs &amp; analytics</b> — performance and revenue metrics.</li>
+        <li><b>Unified inbox</b> — WhatsApp, Telegram, and MAX in a single window.</li>
+        <li><b>Automated alerts</b> — deadline and status notifications.</li>
+      </ul>
+      <p class="rag-foot" style="margin-top:14px">Multi-brand engine: both Ladero and a commercial service-center network (atkweb.ru) run on the same platform.</p>
+    </div>
+  </div>
+ </div>
+</header>
+
+<section class="wrap" id="what">
+  <div class="sec-label">01 · What it is</div>
+  <h2>A vertical CRM for service businesses, <span class="ok">running in production</span></h2>
+  <div class="grid2">
+    <div class="cell">
+      <h3>Full-cycle product</h3>
+      <p>Not a landing page or prototype: self-serve onboarding, subscription tiers, billing, isolated tenant data, and automated messaging.</p>
+    </div>
+    <div class="cell">
+      <h3>Real users &amp; payments</h3>
+      <p>The platform runs 24/7 with live accounts and billing. It also powers the public commercial web presence of a service-center network.</p>
+    </div>
+    <div class="cell">
+      <h3>Vertical focus</h3>
+      <p>Tailored to repair shops and service centers: work orders, SLA deadlines, and messenger threads — leaner and faster than bloated generic CRMs.</p>
+    </div>
+    <div class="cell">
+      <h3>Multi-brand architecture</h3>
+      <p>A single codebase serves multiple brands with separate domains, transactional email senders, and visual themes without code duplication.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="tech">
+  <div class="sec-label">02 · Engineering</div>
+  <h2>What this proves <span class="ok">for your project</span></h2>
+  <ul class="flat">
+    <li><b>FastAPI + PostgreSQL backend</b> — REST API, multi-method auth (password, OTP code, magic link), and background workers.</li>
+    <li><b>React / TypeScript frontend</b> — marketing pages, tenant dashboards, lazy-loaded bundles, and host-based branding.</li>
+    <li><b>Strict multi-tenancy</b> — every tenant's rows and credentials are isolated by <code>tenant_id</code>.</li>
+    <li><b>Billing &amp; plan quotas</b> — subscription state machine, quota enforcement, payment webhooks, and invoicing.</li>
+    <li><b>Integrations</b> — WhatsApp Business, Telegram, MAX, per-tenant SMTP, and payment gateways.</li>
+    <li><b>Production operations</b> — zero-downtime deploys, health checks, backups, and ongoing maintenance.</li>
+  </ul>
+  <div class="guard">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 8.3 8 10 4.6-1.7 8-5 8-10V5l-8-3Z" stroke="#3ecf8e" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="#3ecf8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <p><b>Honest disclosure.</b> <span>Ladero is our own in-house product rather than a client commission. We showcase it as proof of engineering maturity: we design, ship, and operate multi-tenant SaaS systems over the long haul.</span></p>
+  </div>
+</section>
+
+<section class="wrap" id="proof">
+  <div class="sec-label">03 · Live product</div>
+  <h2>Don't take our word for it — <span class="ok">open it live</span></h2>
+  <p class="lead">Both production domains are live right now. Click through — we bring the exact same engineering discipline to client web services and MVPs.</p>
+  <div class="grid2">
+    <a class="cell" href="https://ladero.ru" target="_blank" rel="noopener" style="text-decoration:none;display:block;color:var(--txt)">
+      <h3>ladero.ru →</h3>
+      <p>SaaS CRM product site: plans, registration, and tenant workspace.</p>
+    </a>
+    <a class="cell" href="https://atkweb.ru" target="_blank" rel="noopener" style="text-decoration:none;display:block;color:var(--txt)">
+      <h3>atkweb.ru →</h3>
+      <p>Commercial service-center network running on the same multi-brand platform.</p>
+    </a>
+  </div>
+</section>
+
+<section class="wrap" id="build">
+  <div class="diff">
+    <div class="sec-label">04 · What we build for you</div>
+    <h2>Custom web application or SaaS <span class="ok">tailored to your workflow</span></h2>
+    <ul class="flat">
+      <li><b>Scoped MVP on a predictable timeline</b> — a working first release instead of an endless rewrite.</li>
+      <li><b>User accounts, plans, and billing</b> — ready for monetization from day one.</li>
+      <li><b>Integrations</b> — messengers, CRMs, payment gateways, and internal APIs.</li>
+      <li><b>Admin panel &amp; analytics</b> — full visibility and control over operations.</li>
+      <li><b>Your hosting &amp; ownership</b> — deployed on your servers or cloud; 100% of code and data stay with you.</li>
+      <li><b>No technical background required</b> — you receive a deployed, documented product.</li>
+    </ul>
+    <h3 class="tryit-h">Indicative pricing</h3>
+    <div class="price">
+      <div class="price-row"><span class="price-svc"><b>Web Application / SaaS MVP</b></span><span class="price-val">from $1,800 / 150 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">Landing Page / Marketing Site</span><span class="price-val">from $350 / 30 000 ₽</span></div>
+      <div class="price-row"><span class="price-svc">Integration / Automation</span><span class="price-val">from $250 / 20 000 ₽</span></div>
+      <p class="price-note">Indicative starting points — exact fixed price after scoping your feature set and integrations. <b>Zero risk:</b> free architectural review before payment; milestone billing or escrow; free post-launch bugfix warranty.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="contact">
+  <div class="sec-label">05 · Order</div>
+  <h2>Describe your product — <span class="ok">we'll reply to your contact</span></h2>
+  <p class="lead">What kind of web service you need, for what business, and the core features or integrations. That's enough for an initial estimate.</p>
+  <form class="contact" action="https://api.web3forms.com/submit" method="POST">
+    <input type="hidden" name="access_key" value="500d8f26-693d-481a-9062-b02aa72a97db">
+    <input type="hidden" name="subject" value="AlfaFond — SaaS / Web Service inquiry (EN)">
+    <input type="hidden" name="from_name" value="alfafond.com /cases/en/saas-crm">
+    <input type="text" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+    <div class="f-row">
+      <input type="text" name="contact" placeholder="How to reach you: email or @telegram" required aria-label="Contact">
+      <input type="text" name="task" placeholder="What service do you want to build?" aria-label="Task">
+    </div>
+    <textarea name="message" rows="2" placeholder="Business context, core features, integrations (optional)" aria-label="Message"></textarea>
+    <button type="submit" class="btn btn-ok">Send inquiry →</button>
+    <span class="f-note">We reply directly to the contact you provide. Your details are used only to respond.</span>
+  </form>
+</section>
+
+<footer class="af-foot">
+  <div class="wrap">
+    <div class="af-foot-row">
+      <div class="af-foot-brand">
+        <a class="af-foot-logo" href="/dev/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g2)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg><span>ALFAFOND <span class="path">/dev</span></span></a>
+        <span class="af-foot-copy">© 2026 AlfaFond</span>
+      </div>
+      <nav class="af-foot-nav" aria-label="Footer navigation"><a href="/dev/">Services /dev</a><a href="/dev/#cases">Cases</a><a href="/check/en/">Network check</a><a href="/blog/en/">Blog</a><a href="/">Research</a><a href="https://github.com/ev609" target="_blank" rel="noopener">GitHub</a></nav>
+    </div>
+  </div>
+</footer>
+<script src="/assistant.js?v=3"></script>
+  <script src="/lang-suggest.js?v=3"></script>
+<script defer src="/analytics.js?v=2"></script>
+</body>
+</html>

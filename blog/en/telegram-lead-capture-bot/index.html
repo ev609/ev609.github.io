@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Telegram Lead-Capture Bot Architecture That Doesn't Break | AlfaFond /dev</title>
+<meta name="description" content="How to structure a production Telegram bot: decoupling dialog logic from aiogram, finite-state machine (FSM) lead intake, instant manager alerts, and RAG answers.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://alfafond.com/blog/en/telegram-lead-capture-bot/">
+<meta property="og:title" content="Telegram Lead-Capture Bot Architecture That Doesn't Break">
+<meta property="og:description" content="Menus, step-by-step FSM lead intake, instant manager notifications, and knowledge-base answers — with a live bot demo and open code.">
+<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/blog/en/telegram-lead-capture-bot/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/blog/en/telegram-lead-capture-bot/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/blog/telegram-bot-priem-zayavok/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/blog/en/telegram-lead-capture-bot/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Telegram Lead-Capture Bot Architecture That Doesn't Break",
+  "description": "How to structure a production Telegram bot: decoupling dialog logic from aiogram, FSM lead intake, instant manager alerts, and RAG answers.",
+  "url": "https://alfafond.com/blog/en/telegram-lead-capture-bot/",
+  "image": "https://alfafond.com/assets/og-en.png",
+  "datePublished": "2026-06-13",
+  "dateModified": "2026-11-21",
+  "inLanguage": "en",
+  "author": { "@type": "Organization", "name": "AlfaFond", "url": "https://alfafond.com/" },
+  "publisher": { "@type": "Organization", "name": "AlfaFond", "url": "https://alfafond.com/" }
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%234ae39e%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2325b876%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%22.75%22%20y%3D%22.75%22%20width%3D%2230.5%22%20height%3D%2230.5%22%20rx%3D%227.25%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.22%29%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10%208.5H12L16.5%2023.5H13.7L12.75%2020.1H9.25L8.3%2023.5H5.5L10%208.5ZM11%2012.1L9.8%2017.6H12.2L11%2012.1Z%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20d%3D%22M18.2%208.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#8a909b;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.18rem;letter-spacing:.04em;text-transform:uppercase}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar nav a.on{color:var(--ok);background:var(--ok-dim)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:680px){.bar nav{display:none}}
+
+  .hero{padding:84px 28px 52px}
+  h1{font-family:var(--disp);font-weight:600;line-height:1.08;letter-spacing:-.035em;text-wrap:balance}
+  h1 .ok{color:var(--ok)}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;
+    padding:12px 22px;border-radius:9px;transition:transform .15s,box-shadow .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+  .cta-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+
+  .pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+  @media(max-width:760px){.pipeline{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.pipeline{grid-template-columns:1fr}}
+  .pstage{border:1px solid var(--line);border-radius:12px;padding:16px 15px;background:var(--card)}
+  .pstage.demo{border-color:rgba(62,207,142,.4);background:var(--ok-dim)}
+  .pstage .pn{font-family:var(--mono);font-size:.66rem;color:var(--ok);letter-spacing:.14em;margin-bottom:6px}
+  .pstage h4{font-family:var(--disp);font-weight:600;font-size:.92rem;color:var(--txt);margin-bottom:6px}
+  .pstage p{font-size:.8rem!important;line-height:1.5!important;margin:0!important;color:var(--sub)}
+  .pstage .tag{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:.64rem;color:var(--ok);
+    background:rgba(62,207,142,.12);padding:2px 8px;border-radius:99px}
+
+  .art{max-width:740px;margin:0 auto}
+  .art-meta{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--dim);margin-bottom:14px}
+  .art h1{font-size:clamp(1.9rem,4.5vw,2.8rem);max-width:22ch;margin-bottom:8px}
+  .art .lede{color:var(--sub);font-size:1.1rem;line-height:1.7;margin:18px 0 8px;text-wrap:pretty}
+  .art h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.25rem,2.6vw,1.6rem);letter-spacing:-.02em;margin:40px 0 12px;text-wrap:balance}
+  .art h3{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);margin:24px 0 8px}
+  .art p{color:var(--sub);font-size:1.04rem;line-height:1.78;margin:14px 0;text-wrap:pretty}
+  .art ul{margin:14px 0;padding:0;list-style:none}
+  .art ul li{position:relative;padding-left:22px;margin:9px 0;color:var(--sub);font-size:1.04rem;line-height:1.7}
+  .art ul li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  .art b,.art strong{color:var(--txt);font-weight:500}
+  .art a:not(.btn){color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.4)}
+  .art a:not(.btn):hover{border-bottom-color:var(--ok)}
+  .art a.btn-ok{color:#07120c}
+  .art a.btn-ghost{color:var(--txt)}
+  .art code{font-family:var(--mono);font-size:.85em;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:5px;color:var(--txt)}
+  .art pre{background:#06070a;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:18px 0;font-family:var(--mono);font-size:.82rem;color:var(--sub);line-height:1.7}
+  .art blockquote{border-left:2px solid var(--ok);padding:4px 0 4px 18px;margin:18px 0;color:var(--txt);font-size:1.03rem}
+  .lab-note{font-size:.94rem!important;color:var(--txt)!important;padding:14px 18px;border-radius:11px;
+    background:var(--card);border:1px solid var(--line);margin:22px 0!important}
+  .art-cta{border:1px solid rgba(62,207,142,.3);border-radius:14px;padding:26px 28px;margin-top:38px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .art-cta h3{margin-top:0}
+  .art-cta p{font-size:.95rem}
+  a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){.btn{transition:none}html{scroll-behavior:auto}}
+</style>
+<link rel="stylesheet" href="/depth.css?v=2">
+<link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g1)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg>
+      <span>AlfaFond <span class="path">/blog</span></span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="Navigation">
+        <a href="/dev/">Engineering</a><a href="/dev/#cases">Cases</a><a href="/check/en/">Net check</a><a href="/blog/en/" class="on">Blog</a>
+      </nav>
+      <div class="lang" role="group" aria-label="Language">
+        <a href="/blog/telegram-bot-priem-zayavok/" hreflang="ru">RU</a><a href="/blog/en/telegram-lead-capture-bot/" hreflang="en" class="on" aria-current="true">EN</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<article class="hero wrap art">
+  <div class="art-meta">Blog · Telegram Bots · 2026</div>
+  <h1>Telegram lead-capture bot: <span class="ok">an architecture that doesn't break</span></h1>
+  <p class="lede">Businesses lose leads on first contact: a message arrives at night, nobody replies
+  within five minutes, and the prospect moves on. A Telegram bot covers that 24/7 — yet most bots are
+  fragile scripts that break on the first unexpected input. Here is the architecture that scales
+  from a simple menu to reliable lead intake and CRM delivery.</p>
+
+  <h2>Three jobs of a business bot</h2>
+  <p>A useful bot does three distinct jobs that should be designed separately:</p>
+  <ul>
+    <li><b>Navigation (menu).</b> Services, pricing, inquiry, question — one tap instead of
+    "message a manager and wait."</li>
+    <li><b>Step-by-step lead capture.</b> Collects name, contact, and task, shows a summary for
+    confirmation, and <b>immediately alerts the manager</b>.</li>
+    <li><b>Knowledge-base answers.</b> Instant replies on timelines, payment, and warranties — with
+    an honest fallback when a question is outside the knowledge base.</li>
+  </ul>
+
+  <h2>Core principle: decouple dialog logic from Telegram</h2>
+  <p>Mistake #1 is writing business logic directly inside Telegram handlers. That makes the bot
+  impossible to unit-test or reuse. Instead, keep the dialog state machine in a pure Python core
+  that knows nothing about Telegram:</p>
+  <pre>def handle(session, text) -> Reply:
+    # pure function: input = session state + user text,
+    # output = reply text + buttons. Zero Telegram or network imports.</pre>
+  <p>This lets you run the entire bot in an <b>offline CLI simulator without a Telegram token</b>,
+  attach a thin <code>aiogram</code> adapter for Telegram, and reuse the exact same flow in a web
+  widget or WhatsApp.</p>
+
+  <h2>Lead capture as a Finite-State Machine (FSM)</h2>
+  <p>Collecting a lead is a stateful sequence: <code>name → contact → task → confirm → done</code>.
+  Building that with nested <code>if</code> statements breaks as soon as a user clicks "Cancel" or
+  restarts. An explicit FSM defines what each step expects, provides a summary confirmation step
+  before sending, allows canceling back to the main menu at any point, and persists state so a server
+  restart never drops a conversation mid-sentence.</p>
+
+  <div class="pipeline" aria-label="Lead capture flow">
+    <div class="pstage"><div class="pn">01</div><h4>Menu</h4><p>User picks Services, Pricing, Inquiry, or Question.</p></div>
+    <div class="pstage"><div class="pn">02</div><h4>Intake (FSM)</h4><p>Name → contact → task, step by step with Cancel.</p></div>
+    <div class="pstage"><div class="pn">03</div><h4>Confirm</h4><p>Bot shows a summary; user confirms.</p></div>
+    <div class="pstage demo"><div class="pn">04</div><h4>Alert &amp; CRM</h4><p>Qualified lead lands in manager chat / CRM.</p><span class="tag">instant</span></div>
+  </div>
+  <p class="lab-note">→ Want to click through this flow right now? <a href="/cases/en/telegram-bot/?utm_source=blog_en&amp;utm_content=tg-bot-mid">Try the live Telegram bot simulator on the case page →</a></p>
+
+  <h2>From simple FAQ to a grounded RAG knowledge base</h2>
+  <p>Keyword FAQ handles basic questions. When customers ask detailed questions across your documents,
+  the FAQ layer swaps for our <a href="/blog/en/ai-chatbot-without-hallucinations/">grounded RAG engine</a>:
+  deterministic menu + FSM for lead capture, and cited document search for free-form questions.</p>
+
+  <h2>Common pitfalls we avoid</h2>
+  <ul>
+    <li><b>In-memory-only state.</b> A process restart wipes active dialogs. Persist session state in Redis or PostgreSQL.</li>
+    <li><b>Blocking handlers.</b> Slow synchronous I/O stalls the bot for all users. Keep handlers fully async.</li>
+    <li><b>No escape hatch.</b> Always give users a clear "Cancel / Menu" button on every step.</li>
+    <li><b>No funnel metrics.</b> Log step transitions so you see exactly where prospects drop off.</li>
+  </ul>
+
+  <div class="art-cta">
+    <h3>Test the live Telegram bot right in your browser</h3>
+    <p>Visit the <a href="/cases/en/telegram-bot/?utm_source=blog_en&amp;utm_content=tg-bot-cta">turnkey Telegram bot case</a>
+    to walk through "Submit inquiry" end-to-end and inspect the open-source repo.</p>
+    <div class="cta-row">
+      <a class="btn btn-ok" href="/cases/en/telegram-bot/">Open live case &amp; demo →</a>
+      <a class="btn btn-ghost" href="https://github.com/ev609/telegram-bot" target="_blank" rel="noopener">GitHub repo</a>
+    </div>
+  </div>
+</article>
+
+<footer class="af-foot">
+  <div class="wrap">
+    <div class="af-foot-row">
+      <div class="af-foot-brand">
+        <a class="af-foot-logo" href="/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g2)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg><span>ALFAFOND <span class="path">/blog</span></span></a>
+        <span class="af-foot-copy">© 2026 AlfaFond</span>
+      </div>
+      <nav class="af-foot-nav" aria-label="Footer navigation"><a href="/dev/">Engineering /dev</a><a href="/ru/en/">Research</a><a href="/check/en/">Network check</a><a href="/blog/en/">Blog</a><a href="https://github.com/ev609" target="_blank" rel="noopener">GitHub</a></nav>
+    </div>
+  </div>
+</footer>
+<script src="/assistant.js?v=3"></script>
+<script src="/lang-suggest.js?v=3"></script>
+<script defer src="/analytics.js?v=2"></script>
+</body>
+</html>

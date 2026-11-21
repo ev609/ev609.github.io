@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grounded AI Chatbot That Never Hallucinates: How RAG Works | AlfaFond /dev</title>
+<meta name="description" content="Why LLMs hallucinate facts and how retrieval-augmented generation (RAG) fixes it: answering strictly from your documents with source citations and an honest 'I don't know'.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://alfafond.com/blog/en/ai-chatbot-without-hallucinations/">
+<meta property="og:title" content="Grounded AI Chatbot That Never Hallucinates: How RAG Works">
+<meta property="og:description" content="Why bots hallucinate and how RAG prevents it: searching your documents, source citations, and an honest 'I don't know'. With a live demo.">
+<meta property="og:image" content="https://alfafond.com/assets/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alfafond.com/blog/en/ai-chatbot-without-hallucinations/">
+<link rel="alternate" hreflang="en" href="https://alfafond.com/blog/en/ai-chatbot-without-hallucinations/">
+<link rel="alternate" hreflang="ru" href="https://alfafond.com/blog/ai-chatbot-bez-vydumok/">
+<link rel="alternate" hreflang="x-default" href="https://alfafond.com/blog/en/ai-chatbot-without-hallucinations/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Grounded AI Chatbot That Never Hallucinates: How RAG Works",
+  "description": "Why LLMs hallucinate facts and how RAG fixes it: answering strictly from your documents with source citations and an honest 'I don't know'.",
+  "url": "https://alfafond.com/blog/en/ai-chatbot-without-hallucinations/",
+  "image": "https://alfafond.com/assets/og-en.png",
+  "datePublished": "2026-06-13",
+  "dateModified": "2026-11-21",
+  "inLanguage": "en",
+  "author": { "@type": "Organization", "name": "AlfaFond", "url": "https://alfafond.com/" },
+  "publisher": { "@type": "Organization", "name": "AlfaFond", "url": "https://alfafond.com/" }
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%234ae39e%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2325b876%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%22.75%22%20y%3D%22.75%22%20width%3D%2230.5%22%20height%3D%2230.5%22%20rx%3D%227.25%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.22%29%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10%208.5H12L16.5%2023.5H13.7L12.75%2020.1H9.25L8.3%2023.5H5.5L10%208.5ZM11%2012.1L9.8%2017.6H12.2L11%2012.1Z%22%2F%3E%3Cpath%20fill%3D%22%2307120c%22%20d%3D%22M18.2%208.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0e;
+    --card:rgba(255,255,255,.025); --card-h:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.08); --line-h:rgba(255,255,255,.18);
+    --txt:#f4f5f7; --sub:#a0a6b0; --dim:#8a909b;
+    --ok:#3ecf8e; --ok-dim:rgba(62,207,142,.14);
+    --disp:'Geologica',sans-serif; --body:'Golos Text',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(720px 320px at 50% -8%, rgba(62,207,142,.06), transparent 70%),
+      radial-gradient(1100px 480px at 50% -12%, rgba(255,255,255,.04), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+
+  .bar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+    background:rgba(10,11,14,.82);backdrop-filter:blur(8px)}
+  .bar .wrap{display:flex;justify-content:space-between;align-items:center;height:58px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.18rem;letter-spacing:.04em;text-transform:uppercase}
+  .logo a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo .path{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+  .bar nav{display:flex;gap:4px}
+  .bar nav a{font-family:var(--mono);font-size:.72rem;color:var(--sub);text-decoration:none;
+    padding:7px 11px;border-radius:6px;transition:background .15s,color .15s}
+  .bar nav a:hover{background:var(--card-h);color:var(--txt)}
+  .bar nav a.on{color:var(--ok);background:var(--ok-dim)}
+  .bar-right{display:flex;align-items:center;gap:8px}
+  .lang{display:flex;gap:2px;font-family:var(--mono);font-size:.7rem;
+    border:1px solid var(--line);border-radius:8px;padding:2px}
+  .lang a{padding:5px 9px;border-radius:6px;color:var(--dim);text-decoration:none;transition:color .15s,background .15s}
+  .lang a.on{color:var(--ok);background:var(--ok-dim)}
+  .lang a:not(.on):hover{color:var(--txt)}
+  @media(max-width:680px){.bar nav{display:none}}
+
+  .hero{padding:84px 28px 52px}
+  h1{font-family:var(--disp);font-weight:600;line-height:1.08;letter-spacing:-.035em;text-wrap:balance}
+  h1 .ok{color:var(--ok)}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;
+    padding:12px 22px;border-radius:9px;transition:transform .15s,box-shadow .15s}
+  .btn-ok{background:var(--ok);color:#07120c;font-weight:500}
+  .btn-ok:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,142,.28)}
+  .btn-ghost{color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn-ghost:hover{box-shadow:inset 0 0 0 1px var(--line-h)}
+  .cta-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+
+  .pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+  @media(max-width:760px){.pipeline{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.pipeline{grid-template-columns:1fr}}
+  .pstage{border:1px solid var(--line);border-radius:12px;padding:16px 15px;background:var(--card)}
+  .pstage.demo{border-color:rgba(62,207,142,.4);background:var(--ok-dim)}
+  .pstage .pn{font-family:var(--mono);font-size:.66rem;color:var(--ok);letter-spacing:.14em;margin-bottom:6px}
+  .pstage h4{font-family:var(--disp);font-weight:600;font-size:.92rem;color:var(--txt);margin-bottom:6px}
+  .pstage p{font-size:.8rem!important;line-height:1.5!important;margin:0!important;color:var(--sub)}
+  .pstage .tag{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:.64rem;color:var(--ok);
+    background:rgba(62,207,142,.12);padding:2px 8px;border-radius:99px}
+
+  .art{max-width:740px;margin:0 auto}
+  .art-meta{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--dim);margin-bottom:14px}
+  .art h1{font-size:clamp(1.9rem,4.5vw,2.8rem);max-width:20ch;margin-bottom:8px}
+  .art .lede{color:var(--sub);font-size:1.1rem;line-height:1.7;margin:18px 0 8px;text-wrap:pretty}
+  .art h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.25rem,2.6vw,1.6rem);letter-spacing:-.02em;margin:40px 0 12px;text-wrap:balance}
+  .art h3{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--txt);margin:24px 0 8px}
+  .art p{color:var(--sub);font-size:1.04rem;line-height:1.78;margin:14px 0;text-wrap:pretty}
+  .art ul{margin:14px 0;padding:0;list-style:none}
+  .art ul li{position:relative;padding-left:22px;margin:9px 0;color:var(--sub);font-size:1.04rem;line-height:1.7}
+  .art ul li::before{content:"—";position:absolute;left:0;color:var(--ok)}
+  .art b,.art strong{color:var(--txt);font-weight:500}
+  .art a:not(.btn){color:var(--ok);text-decoration:none;border-bottom:1px solid rgba(62,207,142,.4)}
+  .art a:not(.btn):hover{border-bottom-color:var(--ok)}
+  .art a.btn-ok{color:#07120c}
+  .art a.btn-ghost{color:var(--txt)}
+  .art code{font-family:var(--mono);font-size:.85em;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:5px;color:var(--txt)}
+  .art pre{background:#06070a;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:18px 0;font-family:var(--mono);font-size:.82rem;color:var(--sub);line-height:1.7}
+  .art blockquote{border-left:2px solid var(--ok);padding:4px 0 4px 18px;margin:18px 0;color:var(--txt);font-size:1.03rem}
+  .lab-note{font-size:.94rem!important;color:var(--txt)!important;padding:14px 18px;border-radius:11px;
+    background:var(--card);border:1px solid var(--line);margin:22px 0!important}
+  .art-cta{border:1px solid rgba(62,207,142,.3);border-radius:14px;padding:26px 28px;margin-top:38px;
+    background:radial-gradient(600px 240px at 90% 0%, rgba(62,207,142,.08), transparent 60%), var(--card)}
+  .art-cta h3{margin-top:0}
+  .art-cta p{font-size:.95rem}
+  a:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){.btn{transition:none}html{scroll-behavior:auto}}
+</style>
+<link rel="stylesheet" href="/depth.css?v=2">
+<link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="logo"><a href="/">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g1)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg>
+      <span>AlfaFond <span class="path">/blog</span></span>
+    </a></div>
+    <div class="bar-right">
+      <nav aria-label="Navigation">
+        <a href="/dev/">Engineering</a><a href="/dev/#cases">Cases</a><a href="/check/en/">Net check</a><a href="/blog/en/" class="on">Blog</a>
+      </nav>
+      <div class="lang" role="group" aria-label="Language">
+        <a href="/blog/ai-chatbot-bez-vydumok/" hreflang="ru">RU</a><a href="/blog/en/ai-chatbot-without-hallucinations/" hreflang="en" class="on" aria-current="true">EN</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<article class="hero wrap art">
+  <div class="art-meta">Blog · AI &amp; Automation · 2026</div>
+  <h1>An AI chatbot that <span class="ok">never hallucinates</span></h1>
+  <p class="lede">The #1 reason businesses hesitate to put an AI chatbot in front of customers is
+  confident hallucination: invented prices, nonexistent policies, made-up deadlines. Here is why
+  vanilla LLMs do that and how to build a grounded bot that answers strictly from your documents,
+  cites the exact source section, and honestly says "I don't know" when an answer is missing.</p>
+
+  <h2>Why a plain LLM makes things up</h2>
+  <p>A language model does not store your company policies or live catalog — it predicts plausible
+  next tokens. Ask it about your refund policy or pricing tier without grounding, and it will generate
+  a <b>convincing-sounding guess</b>. That is fine for brainstorming, but disastrous in customer
+  support where you are accountable for every promised number.</p>
+
+  <h2>The fix: RAG — retrieve first, answer second</h2>
+  <p>Retrieval-augmented generation (RAG) flips the flow. Instead of answering from memory, on every
+  question the bot first <b>retrieves relevant passages from your knowledge base</b>, and only then
+  formulates an answer <b>strictly from those passages</b>. Three pillars make this reliable:</p>
+  <ul>
+    <li><b>Search over your actual docs.</b> Your SOPs, FAQs, catalog, and guides. Update a document
+    and the bot's answer updates immediately — no model fine-tuning needed.</li>
+    <li><b>Strict grounding + source citation.</b> The model receives only retrieved chunks with a
+    hard constraint to cite the document and section so anyone can verify the answer in one click.</li>
+    <li><b>An honest "I don't know" gate.</b> If no chunk passes the relevance and coverage
+    thresholds, the LLM is not even called — the bot immediately says the answer is not in the knowledge base.</li>
+  </ul>
+
+  <div class="pipeline" aria-label="RAG pipeline">
+    <div class="pstage"><div class="pn">01</div><h4>Documents</h4><p>Your SOPs, FAQs, PDFs, docs, and ticket history.</p></div>
+    <div class="pstage"><div class="pn">02</div><h4>Index</h4><p>Chunked and indexed; updates as your docs change.</p></div>
+    <div class="pstage"><div class="pn">03</div><h4>Retrieval</h4><p>Finds top chunks; if below threshold → honest refusal.</p></div>
+    <div class="pstage demo"><div class="pn">04</div><h4>Answer + source</h4><p>LLM answers strictly from retrieved passages.</p><span class="tag">grounded</span></div>
+  </div>
+
+  <h2>Why skipping the LLM on low relevance is the real guardrail</h2>
+  <p>Most chatbot demos hide refusals by letting the LLM improvise when search comes up empty. A
+  production RAG engine enforces a hard retrieval gate <b>before</b> calling the model: if relevance
+  or query term coverage is below threshold, it returns a deterministic fallback and offers to forward
+  the question to a human.</p>
+  <blockquote>"What is your office address in Paris?" → "There is no answer to this in our knowledge
+  base. The bot answers strictly from uploaded documents and does not guess."</blockquote>
+  <p class="lab-note">→ Want a grounded chatbot over your own docs? <a href="/cases/en/ai-chatbot/?utm_source=blog_en&amp;utm_content=ai-chatbot-mid">Try the live bot and inspect open code on the case page →</a></p>
+
+  <h2>Lexical search vs. semantic embeddings</h2>
+  <p>Lexical search (BM25) is fast, deterministic, and great for exact terminology, SKU codes, and
+  transparent scoring. Its ceiling is paraphrasing: when a customer uses different words than your
+  document. Semantic search (embeddings + pgvector/Qdrant) matches meaning across paraphrases. In
+  production we combine both (hybrid retrieval).</p>
+
+  <h2>Which LLM generates the answer</h2>
+  <p>Because knowledge lives in the index rather than model weights, the LLM is swappable via config:</p>
+  <ul>
+    <li><b>Cloud APIs</b> — Claude (Anthropic), GPT (OpenAI), Gemini (Google): highest answer quality.</li>
+    <li><b>Self-hosted / on-prem</b> — Llama, Qwen, DeepSeek, Mistral on your own server (vLLM / Ollama):
+    data never leaves your perimeter and zero per-token API bills.</li>
+  </ul>
+
+  <h2>Common pitfalls we avoid</h2>
+  <ul>
+    <li><b>Oversized chunks.</b> Dumping whole documents into context dilutes precision; clean
+    heading-based chunking keeps citations sharp.</li>
+    <li><b>No off-topic gate.</b> Matching a single common word without coverage thresholds leads to
+    irrelevant answers.</li>
+    <li><b>No log of unanswered questions.</b> Unanswered queries are your prioritized roadmap for
+    what to add to the knowledge base next.</li>
+  </ul>
+
+  <div class="art-cta">
+    <h3>Try the live RAG bot right now</h3>
+    <p>Open the <a href="/cases/en/ai-chatbot/?utm_source=blog_en&amp;utm_content=ai-chatbot-cta">RAG knowledge-base chatbot case</a>
+    to test the live bot in your browser and inspect the open-source engine, or check out the
+    <a href="/cases/en/telegram-bot/?utm_source=blog_en&amp;utm_content=ai-chatbot-cta">turnkey Telegram bot case</a>.</p>
+    <div class="cta-row">
+      <a class="btn btn-ok" href="/cases/en/ai-chatbot/">Open live case &amp; demo →</a>
+      <a class="btn btn-ghost" href="https://github.com/ev609/rag-chatbot" target="_blank" rel="noopener">GitHub repo</a>
+    </div>
+  </div>
+</article>
+
+<footer class="af-foot">
+  <div class="wrap">
+    <div class="af-foot-row">
+      <div class="af-foot-brand">
+        <a class="af-foot-logo" href="/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="af-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4ae39e"/><stop offset="100%" stop-color="#25b876"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#af-g2)"/><rect x=".75" y=".75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="rgba(255,255,255,.22)"/><path fill="#07120c" fill-rule="evenodd" d="M10 8.5H12L16.5 23.5H13.7L12.75 20.1H9.25L8.3 23.5H5.5L10 8.5ZM11 12.1L9.8 17.6H12.2L11 12.1Z"/><path fill="#07120c" d="M18.2 8.5H26.5V11.1H20.9V14.9H25V17.4H20.9V23.5H18.2V8.5Z"/></svg><span>ALFAFOND <span class="path">/blog</span></span></a>
+        <span class="af-foot-copy">© 2026 AlfaFond</span>
+      </div>
+      <nav class="af-foot-nav" aria-label="Footer navigation"><a href="/dev/">Engineering /dev</a><a href="/ru/en/">Research</a><a href="/check/en/">Network check</a><a href="/blog/en/">Blog</a><a href="https://github.com/ev609" target="_blank" rel="noopener">GitHub</a></nav>
+    </div>
+  </div>
+</footer>
+<script src="/assistant.js?v=3"></script>
+<script src="/lang-suggest.js?v=3"></script>
+<script defer src="/analytics.js?v=2"></script>
+</body>
+</html>
